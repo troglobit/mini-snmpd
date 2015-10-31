@@ -418,7 +418,7 @@ int main(int argc, char *argv[])
 	/* Store the starting time since we need it for MIB updates */
 	if (gettimeofday(&tv_last, NULL) == -1) {
 		memset(&tv_last, 0, sizeof (tv_last));
-		memset(&tv_sleep, 0, sizeof (&tv_sleep));
+		memset(&tv_sleep, 0, sizeof (tv_sleep));
 	} else {
 		tv_sleep.tv_sec = g_timeout / 100;
 		tv_sleep.tv_usec = (g_timeout % 100) * 10000;
