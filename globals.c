@@ -27,6 +27,10 @@
  * Global variables
  */
 
+#ifdef __IPV4__
+const struct in_addr inaddr_any = { INADDR_ANY };
+#endif
+
 in_port_t g_udp_port = 161;
 in_port_t g_tcp_port = 161;
 int g_timeout = 100;
@@ -38,6 +42,7 @@ char *g_vendor = VENDOR;
 char *g_description = "";
 char *g_location = "";
 char *g_contact = "";
+char *g_bind_to_device = "";
 char *g_disk_list[MAX_NR_DISKS];
 int g_disk_list_length = 0;
 char *g_interface_list[MAX_NR_INTERFACES];

@@ -118,8 +118,8 @@ int ticks_since(const struct timeval *tv_last, struct timeval *tv_now)
 
 void dump_packet(const client_t *client)
 {
-	struct in6_addr client_addr;
-	char straddr[INET6_ADDRSTRLEN];
+	struct my_in_addr_t client_addr;
+	char straddr[my_inet_addrstrlen];
 	char buffer[BUFSIZ];
 	int len;
 	int i;
@@ -133,7 +133,7 @@ void dump_packet(const client_t *client)
 			break;
 		}
 	}
-	inet_ntop(AF_INET6, &client_addr, straddr, sizeof(straddr));
+	inet_ntop(my_af_inet, &client_addr, straddr, sizeof(straddr));
 	lprintf(LOG_DEBUG, "%s %u bytes %s %s:%d (%s)\n",
 		client->outgoing ? "transmitted" : "received", (int) client->size,
 		client->outgoing ? "to" : "from", straddr,

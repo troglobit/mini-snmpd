@@ -120,6 +120,34 @@
 	} while (0)
 #endif
 
+#ifdef __IPV4__
+#define my_sockaddr_t		sockaddr_in
+#define my_socklen_t		socklen_t
+#define my_sin_addr			sin_addr
+#define my_sin_port			sin_port
+#define my_sin_family		sin_family
+#define my_af_inet			AF_INET
+#define my_pf_inet			PF_INET
+#define my_in_addr_t		in_addr
+#define my_in_port_t		in_port_t
+#define my_inaddr_any		inaddr_any
+#define my_inet_addrstrlen	INET_ADDRSTRLEN
+#endif
+
+#ifdef __IPV6__
+#define my_sockaddr_t		sockaddr_in6
+#define my_socklen_t		socklen_t
+#define my_sin_addr			sin6_addr
+#define my_sin_port			sin6_port
+#define my_sin_family		sin6_family
+#define my_af_inet			AF_INET6
+#define my_pf_inet			PF_INET6
+#define my_in_addr_t		in6_addr
+#define my_in_port_t		in_port_t
+#define my_inaddr_any		in6addr_any
+#define my_inet_addrstrlen	INET6_ADDRSTRLEN
+#endif
+
 
 
 /* -----------------------------------------------------------------------------
@@ -129,8 +157,8 @@
 typedef struct client_s {
 	time_t timestamp;
 	int sockfd;
-	struct in6_addr addr;
-	in_port_t port;
+	struct my_in_addr_t addr;
+	my_in_port_t port;
 	unsigned char packet[MAX_PACKET_SIZE];
 	size_t size;
 	int outgoing;
@@ -236,6 +264,11 @@ extern char *g_description;
 extern char *g_vendor;
 extern char *g_location;
 extern char *g_contact;
+extern char *g_bind_to_device;
+#ifdef __IPV4__
+extern const struct in_addr inaddr_any;
+#endif
+
 extern char *g_disk_list[MAX_NR_DISKS];
 extern int g_disk_list_length;
 extern char *g_interface_list[MAX_NR_INTERFACES];

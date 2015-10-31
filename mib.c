@@ -68,7 +68,7 @@ static int encode_snmp_element_integer(value_t *value, int integer_value)
 	int length;
 
 	buffer = value->data.buffer;
-	if (integer_value < -16777216 || integer_value > 16777215) {
+	if (integer_value < -8388608 || integer_value > 8388607) {
 		length = 4;
 	} else if (integer_value < -32768 || integer_value > 32767) {
 		length = 3;

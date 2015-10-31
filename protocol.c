@@ -433,7 +433,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 
 static int get_integer_length(int integer_value)
 {
-	if (integer_value < -16777216 || integer_value > 16777215) {
+	if (integer_value < -8388608 || integer_value > 8388607) {
 		return 6;
 	} else if (integer_value < -32768 || integer_value > 32767) {
 		return 5;
@@ -477,7 +477,7 @@ static int encode_snmp_integer(unsigned char *buffer, int integer_value)
 {
 	int length;
 
-	if (integer_value < -16777216 || integer_value > 16777215) {
+	if (integer_value < -8388608 || integer_value > 8388607) {
 		length = 4;
 	} else if (integer_value < -32768 || integer_value > 32767) {
 		length = 3;
