@@ -26,11 +26,10 @@
 # To compile the programm, simply call 'make'
 #
 
-CC	= gcc
 STRIP	= strip
 HEADERS	= mini_snmpd.h
 SOURCES	= mini_snmpd.c protocol.c mib.c globals.c utils.c linux.c freebsd.c
-VERSION = 1.2b
+VERSION = 1.3-dev
 VENDOR	= .1.3.6.1.4.1
 OFLAGS	= -O2 -DDEBUG -g
 CFLAGS	= -W -Wall -DVERSION="\"$(VERSION)\"" -DVENDOR="\"$(VENDOR)\"" \
@@ -47,6 +46,8 @@ DOC 	= CHANGELOG COPYING README.md TODO
 #
 
 .PHONY: build strip install tags clean dist
+
+all: $(TARGET)
 
 $(TARGET): $(SOURCES:.c=.o)
 	$(CC) $(LDFLAGS) $(SOURCES:.c=.o) -o $(TARGET)
