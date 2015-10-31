@@ -757,7 +757,6 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 
 static int handle_snmp_get(request_t *request, response_t *response, client_t *client)
 {
-	int found = 0;
 	int pos;
 	int i;
 
@@ -819,7 +818,6 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 				memcpy(&response->value_list[response->value_list_length],
 					&g_mib[pos], sizeof (g_mib[pos]));
 				response->value_list_length++;
-				found++;
 			} else {
 				lprintf(LOG_ERR, "could not handle SNMP GET: value list overflow\n");
 				return -1;
@@ -827,24 +825,11 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 		}
 	}
 
-	/* If we get here, we found all entries, so make sure the MIB values are
-	 * up to date if we found at least one MIB entry.
-	 */
-	if (found) {
-		if (mib_update() == -1) {
-			exit(EXIT_SYSCALL);
-		}
-#ifdef DEBUG
-		dump_mib(g_mib, g_mib_length);
-#endif
-	}
-
 	return 0;
 }
 
 static int handle_snmp_getnext(request_t *request, response_t *response, client_t *client)
 {
-	int found = 0;
 	int pos;
 	int i;
 
@@ -876,24 +861,11 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 				memcpy(&response->value_list[response->value_list_length],
 					&g_mib[pos], sizeof (g_mib[pos]));
 				response->value_list_length++;
-				found++;
 			} else {
 				lprintf(LOG_ERR, "could not handle SNMP GETNEXT: value list overflow\n");
 				return -1;
 			}
 		}
-	}
-
-	/* If we get here, we found all entries, so make sure the MIB values are
-	 * up to date if we found at least one MIB entry.
-	 */
-	if (found) {
-		if (mib_update() == -1) {
-			exit(EXIT_SYSCALL);
-		}
-#ifdef DEBUG
-		dump_mib(g_mib, g_mib_length);
-#endif
 	}
 
 	return 0;
@@ -912,7 +884,6 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 	oid_t oid_list[MAX_NR_OIDS];
 	int oid_list_length;
 	int found_repeater;
-	int found = 0;
 	int pos;
 	int i;
 	int j;
@@ -953,7 +924,6 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 				memcpy(&response->value_list[response->value_list_length],
 					&g_mib[pos], sizeof (g_mib[pos]));
 				response->value_list_length++;
-				found++;
 			} else {
 				lprintf(LOG_ERR, "could not handle SNMP GETNEXT: value list overflow\n");
 				return -1;
@@ -992,7 +962,6 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 					memcpy(&response->value_list[response->value_list_length],
 						&g_mib[pos], sizeof (g_mib[pos]));
 					response->value_list_length++;
-					found++;
 					memcpy(&oid_list[i], &g_mib[pos].oid, sizeof (g_mib[pos].oid));
 					found_repeater++;
 				} else {
@@ -1004,18 +973,6 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 		if (found_repeater == 0) {
 			break;
 		}
-	}
-
-	/* If we get here, we found all entries, so make sure the MIB values are
-	 * up to date if we found at least one MIB entry.
-	 */
-	if (found) {
-		if (mib_update() == -1) {
-			exit(EXIT_SYSCALL);
-		}
-#ifdef DEBUG
-		dump_mib(g_mib, g_mib_length);
-#endif
 	}
 
 	return 0;

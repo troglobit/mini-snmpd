@@ -129,7 +129,7 @@
 typedef struct client_s {
 	time_t timestamp;
 	int sockfd;
-	in_addr_t addr;
+	struct in6_addr addr;
 	in_port_t port;
 	unsigned char packet[MAX_PACKET_SIZE];
 	size_t size;
@@ -266,6 +266,7 @@ client_t *find_oldest_client(void);
 int read_file(const char *filename, char *buffer, size_t size);
 unsigned int read_value(const char *buffer, const char *prefix);
 void read_values(const char *buffer, const char *prefix, unsigned int *values, int count);
+int ticks_since(const struct timeval *tv_last, struct timeval *tv_now);
 
 unsigned int get_process_uptime(void);
 unsigned int get_system_uptime(void);
@@ -283,7 +284,7 @@ int snmp(client_t *client);
 int snmp_element_as_string(const data_t *data, char *buffer, size_t size);
 
 int mib_build(void);
-int mib_update(void);
+int mib_update(int full);
 int mib_find(const oid_t *oid);
 int mib_findnext(const oid_t *oid);
 

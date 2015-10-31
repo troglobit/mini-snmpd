@@ -90,9 +90,10 @@ static void handle_signal(int signo)
 
 static void handle_udp_client(void)
 {
-	struct sockaddr_in sockaddr;
+	struct sockaddr_in6 sockaddr;
 	socklen_t socklen;
 	int rv;
+	char straddr[INET6_ADDRSTRLEN];
 
 	/* Read the whole UDP packet from the socket at once */
 	socklen = sizeof (sockaddr);
@@ -105,8 +106,8 @@ static void handle_udp_client(void)
 	}
 	g_udp_client.timestamp = time(NULL);
 	g_udp_client.sockfd = g_udp_sockfd;
-	g_udp_client.addr = sockaddr.sin_addr.s_addr;
-	g_udp_client.port = sockaddr.sin_port;
+	g_udp_client.addr = sockaddr.sin6_addr;
+	g_udp_client.port = sockaddr.sin6_port;
 	g_udp_client.size = rv;
 	g_udp_client.outgoing = 0;
 #ifdef DEBUG
@@ -114,13 +115,14 @@ static void handle_udp_client(void)
 #endif
 
 	/* Call the protocol handler which will prepare the response packet */
+	inet_ntop(AF_INET6, &sockaddr.sin6_addr, straddr, sizeof(straddr));
 	if (snmp(&g_udp_client) == -1) {
 		lprintf(LOG_WARNING, "could not handle packet from UDP client %s:%d: %m\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 		return;
 	} else if (g_udp_client.size == 0) {
 		lprintf(LOG_WARNING, "could not handle packet from UDP client %s:%d: ignored\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 		return;
 	}
 	g_udp_client.outgoing = 1;
@@ -128,13 +130,14 @@ static void handle_udp_client(void)
 	/* Send the whole UDP packet to the socket at once */
 	rv = sendto(g_udp_sockfd, g_udp_client.packet, g_udp_client.size,
 		MSG_DONTWAIT, (struct sockaddr *)&sockaddr, socklen);
+	inet_ntop(AF_INET6, &sockaddr.sin6_addr, straddr, sizeof(straddr));
 	if (rv == -1) {
 		lprintf(LOG_WARNING, "could not send packet to UDP client %s:%d: %m\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 	} else if (rv != g_udp_client.size) {
 		lprintf(LOG_WARNING, "could not send packet to UDP client %s:%d: "
-			"only %d of %d bytes written\n", inet_ntoa(sockaddr.sin_addr),
-			sockaddr.sin_port, rv, g_udp_client.size);
+			"only %d of %d bytes written\n", straddr,
+			sockaddr.sin6_port, rv, (int) g_udp_client.size);
 	}
 #ifdef DEBUG
 	dump_packet(&g_udp_client);
@@ -143,11 +146,12 @@ static void handle_udp_client(void)
 
 static void handle_tcp_connect(void)
 {
-	struct sockaddr_in tmp_sockaddr;
-	struct sockaddr_in sockaddr;
+	struct sockaddr_in6 tmp_sockaddr;
+	struct sockaddr_in6 sockaddr;
 	socklen_t socklen;
 	client_t *client;
 	int rv;
+	char straddr[INET6_ADDRSTRLEN];
 
 	/* Accept the new connection (remember the client's IP address and port) */
 	socklen = sizeof (sockaddr);
@@ -168,10 +172,11 @@ static void handle_tcp_connect(void)
 			lprintf(LOG_ERR, "could not accept TCP connection: internal error");
 			exit(EXIT_SYSCALL);
 		}
-		tmp_sockaddr.sin_addr.s_addr = client->addr;
-		tmp_sockaddr.sin_port = client->port;
+		tmp_sockaddr.sin6_addr = client->addr;
+		tmp_sockaddr.sin6_port = client->port;
+		inet_ntop(AF_INET6, &tmp_sockaddr.sin6_addr, straddr, sizeof(straddr));
 		lprintf(LOG_WARNING, "maximum number of %d clients reached, kicking out %s:%d\n",
-			MAX_NR_CLIENTS, inet_ntoa(tmp_sockaddr.sin_addr), tmp_sockaddr.sin_port);
+			MAX_NR_CLIENTS, straddr, tmp_sockaddr.sin6_port);
 		close(client->sockfd);
 	} else {
 		client = malloc(sizeof (client_t));
@@ -183,35 +188,38 @@ static void handle_tcp_connect(void)
 	}
 
 	/* Now fill out the client control structure values */
+	inet_ntop(AF_INET6, &sockaddr.sin6_addr, straddr, sizeof(straddr));
 	lprintf(LOG_DEBUG, "connected TCP client %s:%d\n",
-		inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+		straddr, sockaddr.sin6_port);
 	client->timestamp = time(NULL);
 	client->sockfd = rv;
-	client->addr = sockaddr.sin_addr.s_addr;
-	client->port = sockaddr.sin_port;
+	client->addr = sockaddr.sin6_addr;
+	client->port = sockaddr.sin6_port;
 	client->size = 0;
 	client->outgoing = 0;
 }
 
 static void handle_tcp_client_write(client_t *client)
 {
-	struct sockaddr_in sockaddr;
+	struct sockaddr_in6 sockaddr;
 	int rv;
+	char straddr[INET6_ADDRSTRLEN];
 
 	/* Send the packet atomically and close socket if that did not work */
-	sockaddr.sin_addr.s_addr = client->addr;
-	sockaddr.sin_port = client->port;
+	sockaddr.sin6_addr = client->addr;
+	sockaddr.sin6_port = client->port;
 	rv = send(client->sockfd, client->packet, client->size, 0);
+	inet_ntop(AF_INET6, &sockaddr.sin6_addr, straddr, sizeof(straddr));
 	if (rv == -1) {
 		lprintf(LOG_WARNING, "could not send packet to TCP client %s:%d: %m\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	} else if (rv != client->size) {
 		lprintf(LOG_WARNING, "could not send packet to TCP client %s:%d: "
-			"only %d of %d bytes written\n", inet_ntoa(sockaddr.sin_addr),
-			sockaddr.sin_port, rv, client->size);
+			"only %d of %d bytes written\n", straddr,
+			sockaddr.sin6_port, rv, (int) client->size);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -227,23 +235,25 @@ static void handle_tcp_client_write(client_t *client)
 
 static void handle_tcp_client_read(client_t *client)
 {
-	struct sockaddr_in sockaddr;
+	struct sockaddr_in6 sockaddr;
 	int rv;
+	char straddr[INET6_ADDRSTRLEN];
 
 	/* Read from the socket what arrived and put it into the buffer */
-	sockaddr.sin_addr.s_addr = client->addr;
-	sockaddr.sin_port = client->port;
+	sockaddr.sin6_addr = client->addr;
+	sockaddr.sin6_port = client->port;
 	rv = read(client->sockfd, client->packet + client->size,
 		sizeof (client->packet) - client->size);
+	inet_ntop(AF_INET6, &sockaddr.sin6_addr, straddr, sizeof(straddr));
 	if (rv == -1) {
 		lprintf(LOG_WARNING, "could not read packet from TCP client %s:%d: %m\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	} else if (rv == 0) {
 		lprintf(LOG_DEBUG, "disconnected TCP client %s:%d\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -255,7 +265,7 @@ static void handle_tcp_client_read(client_t *client)
 	rv = snmp_packet_complete(client);
 	if (rv == -1) {
 		lprintf(LOG_WARNING, "could not handle packet from TCP client %s:%d: %m\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -270,13 +280,13 @@ static void handle_tcp_client_read(client_t *client)
 	/* Call the protocol handler which will prepare the response packet */
 	if (snmp(client) == -1) {
 		lprintf(LOG_WARNING, "could not handle packet from TCP client %s:%d: %m\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	} else if (client->size == 0) {
 		lprintf(LOG_WARNING, "could not handle packet from TCP client %s:%d: ignored\n",
-			inet_ntoa(sockaddr.sin_addr), sockaddr.sin_port);
+			straddr, sockaddr.sin6_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -292,7 +302,7 @@ static void handle_tcp_client_read(client_t *client)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "p:P:c:D:V:L:C:d:i:t:avlh";
+	static const char short_options[] = "p:P:c:D:V:L:C:d:i:t:T:avlh";
 	static const struct option long_options[] = {
 		{ "udp-port", 1, 0, 'p' },
 		{ "tcp-port", 1, 0, 'P' },
@@ -304,6 +314,7 @@ int main(int argc, char *argv[])
 		{ "disks", 1, 0, 'd' },
 		{ "interfaces", 1, 0, 'i' },
 		{ "timeout", 1, 0, 't' },
+		{ "traps", 1, 0, 'T' },
 		{ "auth", 0, 0, 'a' },
 		{ "verbose", 0, 0, 'v' },
 		{ "licensing", 0, 0, 'l' },
@@ -313,8 +324,12 @@ int main(int argc, char *argv[])
 	int option_index = 1;
 	int c;
 
-	struct sockaddr_in sockaddr;
+	struct sockaddr_in6 sockaddr;
 	socklen_t socklen;
+	struct timeval tv_last;
+	struct timeval tv_now;
+	struct timeval tv_sleep;
+	int ticks;
 	fd_set rfds;
 	fd_set wfds;
 	int nfds;
@@ -388,10 +403,19 @@ int main(int argc, char *argv[])
 	lprintf(LOG_INFO, "started, listening on port %d/udp and %d/tcp\n",
 		g_udp_port, g_tcp_port);
 
+	/* Store the starting time since we need it for MIB updates */
+	if (gettimeofday(&tv_last, NULL) == -1) {
+		memset(&tv_last, 0, sizeof (tv_last));
+		memset(&tv_sleep, 0, sizeof (&tv_sleep));
+	} else {
+		tv_sleep.tv_sec = g_timeout / 100;
+		tv_sleep.tv_usec = (g_timeout % 100) * 10000;
+	}
+
 	/* Build the MIB and execute the first MIB update to get actual values */
 	if (mib_build() == -1) {
 		exit(EXIT_SYSCALL);
-	} else if (mib_update() == -1) {
+	} else if (mib_update(1) == -1) {
 		exit(EXIT_SYSCALL);
 	}
 #ifdef DEBUG
@@ -399,14 +423,14 @@ int main(int argc, char *argv[])
 #endif
 
 	/* Open the server's UDP port and prepare it for listening */
-	g_udp_sockfd = socket(PF_INET, SOCK_DGRAM, 0);
+	g_udp_sockfd = socket(PF_INET6, SOCK_DGRAM, 0);
 	if (g_udp_sockfd == -1) {
 		lprintf(LOG_ERR, "could not create UDP socket: %m\n");
 		exit(EXIT_SYSCALL);
 	}
-	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_port = htons(g_udp_port);
-	sockaddr.sin_addr.s_addr = INADDR_ANY;
+	sockaddr.sin6_family = AF_INET6;
+	sockaddr.sin6_port = htons(g_udp_port);
+	sockaddr.sin6_addr = in6addr_any;
 	socklen = sizeof (sockaddr);
 	if (bind(g_udp_sockfd, (struct sockaddr *)&sockaddr, socklen) == -1) {
 		lprintf(LOG_ERR, "could not bind UDP socket to port %d: %m\n", g_udp_port);
@@ -414,7 +438,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Open the server's TCP port and prepare it for listening */
-	g_tcp_sockfd = socket(PF_INET, SOCK_STREAM, 0);
+	g_tcp_sockfd = socket(PF_INET6, SOCK_STREAM, 0);
 	if (g_tcp_sockfd == -1) {
 		lprintf(LOG_ERR, "could not create TCP socket: %m\n");
 		exit(EXIT_SYSCALL);
@@ -424,9 +448,9 @@ int main(int argc, char *argv[])
 		lprintf(LOG_WARNING, "could not set SO_REUSEADDR on TCP socket: %m\n");
 		exit(EXIT_SYSCALL);
 	}
-	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_port = htons(g_tcp_port);
-	sockaddr.sin_addr.s_addr = INADDR_ANY;
+	sockaddr.sin6_family = AF_INET6;
+	sockaddr.sin6_port = htons(g_tcp_port);
+	sockaddr.sin6_addr = in6addr_any;
 	socklen = sizeof (sockaddr);
 	if (bind(g_tcp_sockfd, (struct sockaddr *)&sockaddr, socklen) == -1) {
 		lprintf(LOG_ERR, "could not bind TCP socket to port %d: %m\n", g_tcp_port);
@@ -439,7 +463,7 @@ int main(int argc, char *argv[])
 
 	/* Handle incoming connect requests and incoming data */
 	while (!g_quit) {
-		/* Sleep until we get data or a connection request */
+		/* Sleep until we get a request or the timeout is over */
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
 		FD_SET(g_udp_sockfd, &rfds);
@@ -455,13 +479,34 @@ int main(int argc, char *argv[])
 				nfds = g_tcp_client_list[i]->sockfd;
 			}
 		}
-		if (select(nfds + 1, &rfds, &wfds, NULL, NULL) == -1) {
+		if (select(nfds + 1, &rfds, &wfds, NULL, &tv_sleep) == -1) {
 			if (g_quit) {
 				break;
 			}
 			lprintf(LOG_ERR, "could not select from sockets: %m\n");
 			exit(EXIT_SYSCALL);
 		}
+		/* Determine whether to update the MIB and the next ticks to sleep */
+		ticks = ticks_since(&tv_last, &tv_now);
+		if (ticks < 0 || ticks >= g_timeout) {
+			lprintf(LOG_DEBUG, "updating the MIB (full)\n");
+			if (mib_update(1) == -1) {
+				exit(EXIT_SYSCALL);
+			}
+			memcpy(&tv_last, &tv_now, sizeof (tv_now));
+			tv_sleep.tv_sec = g_timeout / 100;
+			tv_sleep.tv_usec = (g_timeout % 100) * 10000;
+		} else {
+			lprintf(LOG_DEBUG, "updating the MIB (partial)\n");
+			if (mib_update(0) == -1) {
+				exit(EXIT_SYSCALL);
+			}
+			tv_sleep.tv_sec = (g_timeout - ticks) / 100;
+			tv_sleep.tv_usec = ((g_timeout - ticks) % 100) * 10000;
+		}
+#ifdef DEBUG
+		dump_mib(g_mib, g_mib_length);
+#endif
 		/* Handle UDP packets, TCP packets and TCP connection connects */
 		if (FD_ISSET(g_udp_sockfd, &rfds)) {
 			handle_udp_client();

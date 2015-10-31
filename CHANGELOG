@@ -1,3 +1,7 @@
+Changes in version 1.1 (released 2010-02-25):
+
+   *) added support for IPv6
+
 Changes in version 1.0 (released 2009-01-27):
 
    *) fixed calculation of ticks since last MIB update (integer calculation

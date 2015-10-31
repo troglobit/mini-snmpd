@@ -29,7 +29,7 @@
 
 in_port_t g_udp_port = 161;
 in_port_t g_tcp_port = 161;
-int g_timeout = 1;
+int g_timeout = 100;
 int g_auth = 0;
 int g_verbose = 0;
 int g_quit = 0;

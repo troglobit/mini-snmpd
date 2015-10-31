@@ -266,6 +266,20 @@ static int mib_build_entry(const oid_t *prefix, int column, int row, int type,
 	}
 	value->oid.encoded_length = length;
 
+	/* Paranoia check against invalid default parameter (null pointer) */
+	switch (type) {
+		case BER_TYPE_OCTET_STRING:
+		case BER_TYPE_OID:
+			if (default_value == NULL) {
+				lprintf(LOG_ERR, "could not create MIB entry '%s.%d.%d': invalid default value\n",
+					oid_ntoa(prefix), column, row);
+				return -1;
+			}
+			break;
+		default:
+			break;
+	}
+
 	/* Create a data buffer for the value depending on the type:
 	 *
 	 * - strings and oids are assumed to be static or have the maximum allowed length
@@ -365,6 +379,20 @@ static int mib_update_entry(const oid_t *prefix, int column, int row,
 		return -1;
 	}
 
+	/* Paranoia check against invalid value parameter (null pointer) */
+	switch (type) {
+		case BER_TYPE_OCTET_STRING:
+		case BER_TYPE_OID:
+			if (new_value == NULL) {
+				lprintf(LOG_ERR, "could not update MIB entry '%s.%d.%d': invalid default value\n",
+					oid_ntoa(prefix), column, row);
+				return -1;
+			}
+			break;
+		default:
+			break;
+	}
+
 	/* Update the data buffer for the value depending on the type. Note that we
 	 * assume the buffer was allocated to hold the maximum possible value when
 	 * the MIB was built!
@@ -393,7 +421,7 @@ static int mib_update_entry(const oid_t *prefix, int column, int row,
 			}
 			break;
 		default:
-			lprintf(LOG_ERR, "could not create MIB entry '%s.%d.%d': unsupported type %d\n",
+			lprintf(LOG_ERR, "could not update MIB entry '%s.%d.%d': unsupported type %d\n",
 				oid_ntoa(prefix), column, row, type);
 			return -1;
 	}
@@ -576,10 +604,8 @@ int mib_build(void)
 	return 0;
 }
 
-int mib_update(void)
+int mib_update(int full)
 {
-	static struct timeval tv_update = { 0, 0 };
-	struct timeval tv_now;
 	union {
 		diskinfo_t diskinfo;
 		loadinfo_t loadinfo;
@@ -591,28 +617,8 @@ int mib_update(void)
 #endif
 	} u;
 	char nr[16];
-	float ticks;
-	int update;
 	int pos;
 	int i;
-
-	/* First, calculate wheter we must update the MIB variables */
-	if (gettimeofday(&tv_now, NULL) != -1) {
-		ticks = (float)(tv_now.tv_sec - 1 - tv_update.tv_sec) * 100.0
-			+ (float)((tv_now.tv_usec + 1000000 - tv_update.tv_usec) / 10000);
-		if (ticks >= g_timeout) {
-			memcpy(&tv_update, &tv_now, sizeof (tv_now));
-			update = 1;
-		} else {
-			update = 0;
-		}
-#ifdef DEBUG
-		lprintf(LOG_DEBUG, "seconds since last update: %.2f (%supdating)\n",
-			ticks, update ? "" : "not ");
-#endif
-	} else {
-		update = 0;
-	}
 
 	/* Begin searching at the first MIB entry */
 	pos = 0;
@@ -627,7 +633,7 @@ int mib_update(void)
 	/* The interface MIB: network interfaces (IF-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-	if (update) {
+	if (full) {
 		if (g_interface_list_length > 0) {
 			get_netinfo(&u.netinfo);
 			for (i = 0; i < g_interface_list_length; i++) {
@@ -688,7 +694,7 @@ int mib_update(void)
 	/* The memory MIB: total/free memory (UCD-SNMP-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-	if (update) {
+	if (full) {
 		get_meminfo(&u.meminfo);
 		if (mib_update_entry(&m_memory_oid, 5, 0, &pos, BER_TYPE_INTEGER, (const void *)u.meminfo.total) == -1
 			|| mib_update_entry(&m_memory_oid, 6, 0, &pos, BER_TYPE_INTEGER, (const void *)u.meminfo.free) == -1
@@ -702,7 +708,7 @@ int mib_update(void)
 	/* The disk MIB: mounted partitions (UCD-SNMP-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-	if (update) {
+	if (full) {
 		if (g_disk_list_length > 0) {
 			get_diskinfo(&u.diskinfo);
 			for (i = 0; i < g_disk_list_length; i++) {
@@ -736,7 +742,7 @@ int mib_update(void)
 	/* The load MIB: CPU load averages (UCD-SNMP-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-	if (update) {
+	if (full) {
 		get_loadinfo(&u.loadinfo);
 		for (i = 0; i < 3; i++) {
 			snprintf(nr, sizeof (nr), "%d.%02d", u.loadinfo.avg[i] / 100, u.loadinfo.avg[i] % 100);
@@ -754,7 +760,7 @@ int mib_update(void)
 	/* The cpu MIB: CPU statistics (UCD-SNMP-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-	if (update) {
+	if (full) {
 		get_cpuinfo(&u.cpuinfo);
 		if (mib_update_entry(&m_cpu_oid, 50, 0, &pos, BER_TYPE_COUNTER, (const void *)u.cpuinfo.user) == -1
 			|| mib_update_entry(&m_cpu_oid, 51, 0, &pos, BER_TYPE_COUNTER, (const void *)u.cpuinfo.nice) == -1
@@ -772,7 +778,7 @@ int mib_update(void)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
 #ifdef __DEMO__
-	if (update) {
+	if (full) {
 		get_demoinfo(&u.demoinfo);
 		if (mib_update_entry(&m_demo_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)u.demoinfo.random_value_1) == -1
 			|| mib_update_entry(&m_demo_oid, 2, 0, &pos, BER_TYPE_INTEGER, (const void *)u.demoinfo.random_value_2) == -1) {

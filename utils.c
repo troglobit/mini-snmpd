@@ -89,14 +89,42 @@ void read_values(const char *buffer, const char *prefix, unsigned int *values, i
 	}
 }
 
+int ticks_since(const struct timeval *tv_last, struct timeval *tv_now)
+{
+	float ticks;
+
+	if (gettimeofday(tv_now, NULL) == -1) {
+		lprintf(LOG_WARNING, "could not get ticks: %m\n");
+		return -1;
+	} else if (tv_now->tv_sec < tv_last->tv_sec
+		|| (tv_now->tv_sec == tv_last->tv_sec && tv_now->tv_usec < tv_last->tv_usec)) {
+		lprintf(LOG_WARNING, "could not get ticks: time running backwards\n");
+		return -1;
+	} else {
+		ticks = (float)(tv_now->tv_sec - 1 - tv_last->tv_sec) * 100.0
+			+ (float)((tv_now->tv_usec + 1000000 - tv_last->tv_usec) / 10000);
+#ifdef DEBUG
+		lprintf(LOG_DEBUG, "seconds since last update: %.2f\n", ticks / 100);
+#endif
+		if (ticks < INT_MIN) {
+			return INT_MIN;
+		} else if (ticks > INT_MAX) {
+			return INT_MAX;
+		} else {
+			return ticks;
+		}
+	}
+}
+
 void dump_packet(const client_t *client)
 {
-	struct in_addr client_addr;
+	struct in6_addr client_addr;
+	char straddr[INET6_ADDRSTRLEN];
 	char buffer[BUFSIZ];
 	int len;
 	int i;
 
-	client_addr.s_addr = client->addr;
+	client_addr = client->addr;
 	len = 0;
 	for (i = 0; i < client->size; i++) {
 		len += snprintf(buffer + len, sizeof (buffer) - len,
@@ -105,9 +133,10 @@ void dump_packet(const client_t *client)
 			break;
 		}
 	}
+	inet_ntop(AF_INET6, &client_addr, straddr, sizeof(straddr));
 	lprintf(LOG_DEBUG, "%s %u bytes %s %s:%d (%s)\n",
-		client->outgoing ? "transmitted" : "received", client->size,
-		client->outgoing ? "to" : "from", inet_ntoa(client_addr),
+		client->outgoing ? "transmitted" : "received", (int) client->size,
+		client->outgoing ? "to" : "from", straddr,
 		ntohs(client->port), buffer);
 }
 
