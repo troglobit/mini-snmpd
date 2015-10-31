@@ -1,0 +1,7 @@
+This program is just a quick and dirty hack to get mini_snmpd accessible over
+an SSH tunnel for users that run their SSH server on Windows. It is by no means
+a replacement for more mature and robust software tools. If you are running a
+Unix-like operating system, socat (http://www.dest-unreach.org/socat/) should
+be a better solution.
+
+Robert Ernst <robert.ernst@aon.at>.

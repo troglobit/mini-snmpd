@@ -1,0 +1,39 @@
+.TH UdpToTcp 8 
+.\" NAME should be all caps, SECTION should be 1-8, maybe w/ subsection
+.\" other parms are allowed: see man(7), man(1)
+.SH NAME
+UdpToTcp \- a minimal implementation of an UDP to TCP forwarder.
+.SH SYNOPSIS
+.B java -cp . UdpToTcp.class
+.I "options"
+.SH "DESCRIPTION"
+.B UdpToTcp
+is a program that can be used to forward packets sent to an UDP port to a TCP
+connection and vice versa. This is needed if you want to tunnel UDP traffic
+over a TCP connection. It was written to support UDP-only SNMP clients
+accessing a
+.I mini_snmpd
+server that can only be reached over an SSH tunnel.
+.TP
+.I -udp-port:nnn
+The UDP port where the program listens (default is 161)
+.TP
+.I -port:nnn
+The TCP port where the program connects to (default is 161)
+.TP
+.I -host:nnn
+The hostname where the program connects to (default is localhost)
+.PP
+.B UdpToTcp
+can be told to exit by entering
+.I Ctrl-C
+.SH "EXAMPLES"
+java -cp . UdpToTcp -udp-port:9020 -host:remote.somewhere.net
+.PP
+This command starts the program and tells it to forward UDP traffic received
+on the local port 9020 to the remote host. Thus, you now can point an SNMP
+client only supporting UDP to localhost:9020 and it will query SNMP data from
+remote.somewhere.net (this assumes that the SNMP daemon on the remote host
+answers requests over TCP too).
+.SH "AUTHOR"
+This manual page was written by Robert Ernst <robert.ernst@aon.at>.

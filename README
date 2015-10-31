@@ -1,0 +1,29 @@
+Mini SNMP Daemon Version 1.0
+
+This program is a minimal implementation of an SNMP daemon. It does not support
+the flexibility and features of the standard solution, net-snmp, but does not
+have the memory requirements either (in fact, it uses about of 1/10th of RAM as
+net-snmp on my development system).
+
+The supported features are:
+
+* SNMP version 1 and 2c
+* Community string authentication when using 2c or explicitely configured
+* Read-only access (writing is not supported)
+* Includes basic system info like CPU load, memory, disk and network interfaces
+* Does not need a configuation file
+* Supports UDP and TCP (thus supports SSH tunneling of SNMP connections)
+* Supports linux kernel versions 2.4 and 2.6
+* Supports FreeBSD (needs procfs mounted using "mount_linprocfs procfs /proc")
+
+The current version is the first official release; it is tested on IA32 and ARM
+platforms using net-snmp as client.
+
+For info about licensing, see the file 'COPYING'
+For info about using the program, see the file 'mini_snmpd.8'
+For info about how to (cross)compile the program, see the file 'Makefile'
+For info about how to extend the MIB, see the file 'README.develop'
+
+
+
+Robert Ernst <robert.ernst@aon.at>

@@ -1,0 +1,66 @@
+The Mini SNMP daemon does not support passing through SNMP requests to other
+processes or loading plugins. Thus, if you want to extend mini_snmpd by your
+own MIB variables, you need to do the following:
+
+
+
+1.)  Obtain a vendor OID
+
+The default vendor OID is only a placeholder where you need to insert the PEN
+(private enterprise number) of your organization. If you do not have one, you
+can get one assigned by the IANA (internet assigned numbers authority) free of
+charge. See their PEN application webpage at http://pen.iana.org/.
+
+The vendor is set in the Makefile (the "VENDOR=" make variable).
+
+
+
+2.) Write the MIB file
+
+This is not needed for mini_snmpd, but you should be prepared to deliver the
+MIB description in text form to your users for convenience. Examples of MIBs
+can be found in the net-snmp package.
+
+
+
+3.) Add a define and the code for your extension
+
+You should make your extension a compile-time option and put all specific code
+in #ifdef/#endif blocks to make it easier to distinguish between build-in and
+added code.
+
+The "demo" extension example, which provides two random integers, shows how to
+do this (look for __DEMO__ in the sources). Note that it uses the PEN 99999,
+which is not yet assigned by the IANA, but since there is no warranty that this
+doesn't happen, do not enable the demo extension in a release version!
+
+
+
+4.) Things to consider
+
+The MIB table has a fixed maximum length (set by the MAX_NR_VALUES define). If
+you get a runtime error about a table overflow when creating the MIB entry, you
+need to increase that value.
+
+The mib_update() function is called on every received request, to give the
+handlers the possibility to decide whether to update their corresponding MIB
+variables everytime (for example the system uptime) or only in the interval
+specified by the -t commandline parameter (for example the disk info). To save
+CPU cycles, time-consuming updates or updates of values that change only slowly
+should made dependent on the timeout counter.
+
+For variables of type "octet string", you need to call mib_build_entry() with
+a string with the maximum length that your variable can have during runtime.
+This is needed by mib_build_entry() to determine the size of the data buffer
+for that MIB entry.
+
+If the function you use to determine the new MIB values is operating system
+dependent, you should add your code to both linux.c and/or freebsd.c instead
+of utils.c (which should only be used for os-independent functions).
+
+For debugging output, use the lprintf() macro instead of hardcoding printf() or
+syslog() calls.
+
+
+
+Robert Ernst <robert.ernst@aon.at>

@@ -1,0 +1,34 @@
+Changes in version 1.0 (released 2009-01-27):
+
+   *) fixed calculation of ticks since last MIB update (integer calculation
+      resulted in overflows, updates not done in cases of error or time
+      running backwards)
+
+Changes in version 0.8 (released 2008-10-08):
+
+   *) fixed calculation of free inodes in percent for filesystems that don't
+      support getting the number of inodes (for example FAT)
+
+Changes in version 0.7 (released 2008-10-06):
+
+   *) fixed get_process_uptime() function to work regardless of time changes
+
+Changes in version 0.6 (released 2008-10-04):
+
+   *) split utils.c into common and operating-system specific functions
+
+   *) added an install target
+
+   *) reduced memory consumption: the get*info() functions now use a buffer
+      provided by the caller rather than their static buffers
+
+   *) added some developer information
+
+
+
+Changes in version 0.5 (released 2008-09-29):
+
+   *) added CHANGELOG and TODO file
+
+   *) added a check for the file descriptors of TCP connections
+
