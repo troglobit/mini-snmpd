@@ -37,7 +37,7 @@ CFLAGS	= -W -Wall -DVERSION="\"$(VERSION)\"" -DVENDOR="\"$(VENDOR)\"" \
 LDFLAGS	= $(OFLAGS)
 TARGET	= mini_snmpd
 MAN 	= mini_snmpd.8
-DOC 	= CHANGELOG COPYING README.md TODO
+DOC 	= ChangeLog.md COPYING README.md TODO
 
 
 
