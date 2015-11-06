@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>		/* intptr_t/uintptr_t */
 #include <errno.h>
 #include <time.h>
 
@@ -288,7 +289,7 @@ static int mib_build_entry(const oid_t *prefix, int column, int row, int type,
 			value->data.max_length = sizeof (int) + 2;
 			value->data.encoded_length = 0;
 			value->data.buffer = malloc(value->data.max_length);
-			if (encode_snmp_element_integer(value, (int)default_value) == -1) {
+			if (encode_snmp_element_integer(value, (intptr_t)default_value) == -1) {
 				return -1;
 			}
 			break;
@@ -314,7 +315,7 @@ static int mib_build_entry(const oid_t *prefix, int column, int row, int type,
 			value->data.max_length = sizeof (unsigned int) + 2;
 			value->data.encoded_length = 0;
 			value->data.buffer = malloc(value->data.max_length);
-			if (encode_snmp_element_unsigned(value, type, (unsigned int)default_value) == -1) {
+			if (encode_snmp_element_unsigned(value, type, (uintptr_t)default_value) == -1) {
 				return -1;
 			}
 			break;
@@ -397,7 +398,7 @@ static int mib_update_entry(const oid_t *prefix, int column, int row,
 	 */
 	switch (type) {
 		case BER_TYPE_INTEGER:
-			if (encode_snmp_element_integer(&g_mib[*pos], (int)new_value) == -1) {
+			if (encode_snmp_element_integer(&g_mib[*pos], (intptr_t)new_value) == -1) {
 				return -1;
 			}
 			break;
@@ -414,7 +415,7 @@ static int mib_update_entry(const oid_t *prefix, int column, int row,
 		case BER_TYPE_COUNTER:
 		case BER_TYPE_GAUGE:
 		case BER_TYPE_TIME_TICKS:
-			if (encode_snmp_element_unsigned(&g_mib[*pos], type, (unsigned int)new_value) == -1) {
+			if (encode_snmp_element_unsigned(&g_mib[*pos], type, (uintptr_t)new_value) == -1) {
 				return -1;
 			}
 			break;
@@ -472,7 +473,7 @@ int mib_build(void)
 	 */
 	if (mib_build_entry(&m_system_oid, 1, 0, BER_TYPE_OCTET_STRING, g_description) == -1
 		|| mib_build_entry(&m_system_oid, 2, 0, BER_TYPE_OID, g_vendor) == -1
-		|| mib_build_entry(&m_system_oid, 3, 0, BER_TYPE_TIME_TICKS, (const void *)0) == -1
+		|| mib_build_entry(&m_system_oid, 3, 0, BER_TYPE_TIME_TICKS, (const void *)(uintptr_t)0) == -1
 		|| mib_build_entry(&m_system_oid, 4, 0, BER_TYPE_OCTET_STRING, g_contact) == -1
 		|| mib_build_entry(&m_system_oid, 5, 0, BER_TYPE_OCTET_STRING, hostname) == -1
 		|| mib_build_entry(&m_system_oid, 6, 0, BER_TYPE_OCTET_STRING, g_location) == -1) {
@@ -483,11 +484,11 @@ int mib_build(void)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
 	if (g_interface_list_length > 0) {
-		if (mib_build_entry(&m_if_1_oid, 1, 0, BER_TYPE_INTEGER, (const void *)g_interface_list_length) == -1) {
+		if (mib_build_entry(&m_if_1_oid, 1, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)g_interface_list_length) == -1) {
 			return -1;
 		}
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(i + 1)) == -1) {
+			if (mib_build_entry(&m_if_2_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)(i + 1)) == -1) {
 				return -1;
 			}
 		}
@@ -496,15 +497,15 @@ int mib_build(void)
 				return -1;
 			}
 		}
-		if (mib_build_entries(&m_if_2_oid, 8, 1, g_interface_list_length, BER_TYPE_INTEGER, (const void *)4) == -1
-			|| mib_build_entries(&m_if_2_oid, 10, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)0) == -1
-			|| mib_build_entries(&m_if_2_oid, 11, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)0) == -1
-			|| mib_build_entries(&m_if_2_oid, 13, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)0) == -1
-			|| mib_build_entries(&m_if_2_oid, 14, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)0) == -1
-			|| mib_build_entries(&m_if_2_oid, 16, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)0) == -1
-			|| mib_build_entries(&m_if_2_oid, 17, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)0) == -1
-			|| mib_build_entries(&m_if_2_oid, 19, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)0) == -1
-			|| mib_build_entries(&m_if_2_oid, 20, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)0) == -1) {
+		if (mib_build_entries(&m_if_2_oid, 8, 1, g_interface_list_length, BER_TYPE_INTEGER, (const void *)(intptr_t)4) == -1
+			|| mib_build_entries(&m_if_2_oid, 10, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+			|| mib_build_entries(&m_if_2_oid, 11, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+			|| mib_build_entries(&m_if_2_oid, 13, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+			|| mib_build_entries(&m_if_2_oid, 14, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+			|| mib_build_entries(&m_if_2_oid, 16, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+			|| mib_build_entries(&m_if_2_oid, 17, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+			|| mib_build_entries(&m_if_2_oid, 19, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+			|| mib_build_entries(&m_if_2_oid, 20, 1, g_interface_list_length, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1) {
 			return -1;
 		}
 	}
@@ -512,18 +513,18 @@ int mib_build(void)
 	/* The host MIB: additional host info (HOST-RESOURCES-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
-	if (mib_build_entry(&m_host_oid, 1, 0, BER_TYPE_TIME_TICKS, (const void *)0) == -1) {
+	if (mib_build_entry(&m_host_oid, 1, 0, BER_TYPE_TIME_TICKS, (const void *)(uintptr_t)0) == -1) {
 		return -1;
 	}
 
 	/* The memory MIB: total/free memory (UCD-SNMP-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
-	if (mib_build_entry(&m_memory_oid, 5, 0, BER_TYPE_INTEGER, (const void *)0) == -1
-		|| mib_build_entry(&m_memory_oid, 6, 0, BER_TYPE_INTEGER, (const void *)0) == -1
-		|| mib_build_entry(&m_memory_oid, 13, 0, BER_TYPE_INTEGER, (const void *)0) == -1
-		|| mib_build_entry(&m_memory_oid, 14, 0, BER_TYPE_INTEGER, (const void *)0) == -1
-		|| mib_build_entry(&m_memory_oid, 15, 0, BER_TYPE_INTEGER, (const void *)0) == -1) {
+	if (mib_build_entry(&m_memory_oid, 5, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+		|| mib_build_entry(&m_memory_oid, 6, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+		|| mib_build_entry(&m_memory_oid, 13, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+		|| mib_build_entry(&m_memory_oid, 14, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+		|| mib_build_entry(&m_memory_oid, 15, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1) {
 		return -1;
 	}
 
@@ -532,7 +533,7 @@ int mib_build(void)
 	 */
 	if (g_disk_list_length > 0) {
 		for (i = 0; i < g_disk_list_length; i++) {
-			if (mib_build_entry(&m_disk_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(i + 1)) == -1) {
+			if (mib_build_entry(&m_disk_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)(i + 1)) == -1) {
 				return -1;
 			}
 		}
@@ -541,11 +542,11 @@ int mib_build(void)
 				return -1;
 			}
 		}
-		if (mib_build_entries(&m_disk_oid, 6, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)0) == -1
-			|| mib_build_entries(&m_disk_oid, 7, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)0) == -1
-			|| mib_build_entries(&m_disk_oid, 8, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)0) == -1
-			|| mib_build_entries(&m_disk_oid, 9, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)0) == -1
-			|| mib_build_entries(&m_disk_oid, 10, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)0) == -1) {
+		if (mib_build_entries(&m_disk_oid, 6, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+			|| mib_build_entries(&m_disk_oid, 7, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+			|| mib_build_entries(&m_disk_oid, 8, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+			|| mib_build_entries(&m_disk_oid, 9, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+			|| mib_build_entries(&m_disk_oid, 10, 1, g_disk_list_length, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1) {
 			return -1;
 		}
 	}
@@ -554,7 +555,7 @@ int mib_build(void)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
 	for (i = 0; i < 3; i++) {
-		if (mib_build_entry(&m_load_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(i + 1)) == -1) {
+		if (mib_build_entry(&m_load_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)(i + 1)) == -1) {
 			return -1;
 		}
 	}
@@ -573,19 +574,19 @@ int mib_build(void)
 			return -1;
 		}
 	}
-	if (mib_build_entries(&m_load_oid, 5, 1, 3, BER_TYPE_INTEGER, (const void *)0) == -1) {
+	if (mib_build_entries(&m_load_oid, 5, 1, 3, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1) {
 		return -1;
 	}
 
 	/* The cpu MIB: CPU statistics (UCD-SNMP-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
-	if (mib_build_entry(&m_cpu_oid, 50, 0, BER_TYPE_COUNTER, (const void *)0) == -1	
-		|| mib_build_entry(&m_cpu_oid, 51, 0, BER_TYPE_COUNTER, (const void *)0) == -1
-		|| mib_build_entry(&m_cpu_oid, 52, 0, BER_TYPE_COUNTER, (const void *)0) == -1
-		|| mib_build_entry(&m_cpu_oid, 53, 0, BER_TYPE_COUNTER, (const void *)0) == -1
-		|| mib_build_entry(&m_cpu_oid, 59, 0, BER_TYPE_COUNTER, (const void *)0) == -1
-		|| mib_build_entry(&m_cpu_oid, 60, 0, BER_TYPE_COUNTER, (const void *)0) == -1) {
+	if (mib_build_entry(&m_cpu_oid, 50, 0, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+		|| mib_build_entry(&m_cpu_oid, 51, 0, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+		|| mib_build_entry(&m_cpu_oid, 52, 0, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+		|| mib_build_entry(&m_cpu_oid, 53, 0, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+		|| mib_build_entry(&m_cpu_oid, 59, 0, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1
+		|| mib_build_entry(&m_cpu_oid, 60, 0, BER_TYPE_COUNTER, (const void *)(uintptr_t)0) == -1) {
 		return -1;
 	}
 
@@ -593,8 +594,8 @@ int mib_build(void)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
 #ifdef CONFIG_ENABLE_DEMO
-	if (mib_build_entry(&m_demo_oid, 1, 0, BER_TYPE_INTEGER, (const void *)0) == -1	
-		|| mib_build_entry(&m_demo_oid, 2, 0, BER_TYPE_INTEGER, (const void *)0) == -1) {
+	if (mib_build_entry(&m_demo_oid, 1, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1
+		|| mib_build_entry(&m_demo_oid, 2, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)0) == -1) {
 		return -1;
 	}
 #endif
@@ -624,7 +625,7 @@ int mib_update(int full)
 	/* The system MIB: basic info about the host (SNMPv2-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-	if (mib_update_entry(&m_system_oid, 3, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)get_process_uptime()) == -1) {
+	if (mib_update_entry(&m_system_oid, 3, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)(uintptr_t)get_process_uptime()) == -1) {
 		return -1;
 	}
 
@@ -635,47 +636,47 @@ int mib_update(int full)
 		if (g_interface_list_length > 0) {
 			get_netinfo(&u.netinfo);
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.netinfo.status[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.netinfo.status[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 10, i + 1, &pos, BER_TYPE_COUNTER, (const void *)u.netinfo.rx_bytes[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 10, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_bytes[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 11, i + 1, &pos, BER_TYPE_COUNTER, (const void *)u.netinfo.rx_packets[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 11, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_packets[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 13, i + 1, &pos, BER_TYPE_COUNTER, (const void *)u.netinfo.rx_drops[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 13, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_drops[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 14, i + 1, &pos, BER_TYPE_COUNTER, (const void *)u.netinfo.rx_errors[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 14, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_errors[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 16, i + 1, &pos, BER_TYPE_COUNTER, (const void *)u.netinfo.tx_bytes[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 16, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.tx_bytes[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 17, i + 1, &pos, BER_TYPE_COUNTER, (const void *)u.netinfo.tx_packets[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 17, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.tx_packets[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 19, i + 1, &pos, BER_TYPE_COUNTER, (const void *)u.netinfo.tx_drops[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 19, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.tx_drops[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 20, i + 1, &pos, BER_TYPE_COUNTER, (const void *)u.netinfo.tx_errors[i]) == -1) {
+				if (mib_update_entry(&m_if_2_oid, 20, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.tx_errors[i]) == -1) {
 					return -1;
 				}
 			}
@@ -685,7 +686,7 @@ int mib_update(int full)
 	/* The host MIB: additional host info (HOST-RESOURCES-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-	if (mib_update_entry(&m_host_oid, 1, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)get_system_uptime()) == -1) {
+	if (mib_update_entry(&m_host_oid, 1, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)(uintptr_t)get_system_uptime()) == -1) {
 		return -1;
 	}
 
@@ -694,11 +695,11 @@ int mib_update(int full)
 	 */
 	if (full) {
 		get_meminfo(&u.meminfo);
-		if (mib_update_entry(&m_memory_oid, 5, 0, &pos, BER_TYPE_INTEGER, (const void *)u.meminfo.total) == -1
-			|| mib_update_entry(&m_memory_oid, 6, 0, &pos, BER_TYPE_INTEGER, (const void *)u.meminfo.free) == -1
-			|| mib_update_entry(&m_memory_oid, 13, 0, &pos, BER_TYPE_INTEGER, (const void *)u.meminfo.shared) == -1
-			|| mib_update_entry(&m_memory_oid, 14, 0, &pos, BER_TYPE_INTEGER, (const void *)u.meminfo.buffers) == -1
-			|| mib_update_entry(&m_memory_oid, 15, 0, &pos, BER_TYPE_INTEGER, (const void *)u.meminfo.cached) == -1) {
+		if (mib_update_entry(&m_memory_oid, 5, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.total) == -1
+			|| mib_update_entry(&m_memory_oid, 6, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.free) == -1
+			|| mib_update_entry(&m_memory_oid, 13, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.shared) == -1
+			|| mib_update_entry(&m_memory_oid, 14, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.buffers) == -1
+			|| mib_update_entry(&m_memory_oid, 15, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.cached) == -1) {
 			return -1;
 		}
 	}
@@ -710,27 +711,27 @@ int mib_update(int full)
 		if (g_disk_list_length > 0) {
 			get_diskinfo(&u.diskinfo);
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 6, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.diskinfo.total[i]) == -1) {
+				if (mib_update_entry(&m_disk_oid, 6, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.total[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 7, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.diskinfo.free[i]) == -1) {
+				if (mib_update_entry(&m_disk_oid, 7, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.free[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.diskinfo.used[i]) == -1) {
+				if (mib_update_entry(&m_disk_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.used[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 9, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.diskinfo.blocks_used_percent[i]) == -1) {
+				if (mib_update_entry(&m_disk_oid, 9, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.blocks_used_percent[i]) == -1) {
 					return -1;
 				}
 			}
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 10, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.diskinfo.inodes_used_percent[i]) == -1) {
+				if (mib_update_entry(&m_disk_oid, 10, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.inodes_used_percent[i]) == -1) {
 					return -1;
 				}
 			}
@@ -749,7 +750,7 @@ int mib_update(int full)
 			}
 		}
 		for (i = 0; i < 3; i++) {
-			if (mib_update_entry(&m_load_oid, 5, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.loadinfo.avg[i]) == -1) {
+			if (mib_update_entry(&m_load_oid, 5, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.loadinfo.avg[i]) == -1) {
 				return -1;
 			}
 		}
@@ -760,12 +761,12 @@ int mib_update(int full)
 	 */
 	if (full) {
 		get_cpuinfo(&u.cpuinfo);
-		if (mib_update_entry(&m_cpu_oid, 50, 0, &pos, BER_TYPE_COUNTER, (const void *)u.cpuinfo.user) == -1
-			|| mib_update_entry(&m_cpu_oid, 51, 0, &pos, BER_TYPE_COUNTER, (const void *)u.cpuinfo.nice) == -1
-			|| mib_update_entry(&m_cpu_oid, 52, 0, &pos, BER_TYPE_COUNTER, (const void *)u.cpuinfo.system) == -1
-			|| mib_update_entry(&m_cpu_oid, 53, 0, &pos, BER_TYPE_COUNTER, (const void *)u.cpuinfo.idle) == -1
-			|| mib_update_entry(&m_cpu_oid, 59, 0, &pos, BER_TYPE_COUNTER, (const void *)u.cpuinfo.irqs) == -1
-			|| mib_update_entry(&m_cpu_oid, 60, 0, &pos, BER_TYPE_COUNTER, (const void *)u.cpuinfo.cntxts) == -1) {
+		if (mib_update_entry(&m_cpu_oid, 50, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.user) == -1
+			|| mib_update_entry(&m_cpu_oid, 51, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.nice) == -1
+			|| mib_update_entry(&m_cpu_oid, 52, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.system) == -1
+			|| mib_update_entry(&m_cpu_oid, 53, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.idle) == -1
+			|| mib_update_entry(&m_cpu_oid, 59, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.irqs) == -1
+			|| mib_update_entry(&m_cpu_oid, 60, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.cntxts) == -1) {
 			return -1;
 		}
 	}
@@ -778,8 +779,8 @@ int mib_update(int full)
 #ifdef CONFIG_ENABLE_DEMO
 	if (full) {
 		get_demoinfo(&u.demoinfo);
-		if (mib_update_entry(&m_demo_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)u.demoinfo.random_value_1) == -1
-			|| mib_update_entry(&m_demo_oid, 2, 0, &pos, BER_TYPE_INTEGER, (const void *)u.demoinfo.random_value_2) == -1) {
+		if (mib_update_entry(&m_demo_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.demoinfo.random_value_1) == -1
+			|| mib_update_entry(&m_demo_oid, 2, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.demoinfo.random_value_2) == -1) {
 			return -1;
 		}
 	}
