@@ -12,8 +12,6 @@
  * See COPYING for GPL licensing information.
  */
 
-
-
 #include <sys/time.h>
 #include <unistd.h>
 #include <syslog.h>
@@ -50,7 +48,7 @@ static const oid_t m_memory_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 4,	}, 8, 10 };
 static const oid_t m_disk_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 9, 1	}, 9, 11 };
 static const oid_t m_load_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 10, 1	}, 9, 11 };
 static const oid_t m_cpu_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 11	}, 8, 10 };
-#ifdef __DEMO__
+#ifdef CONFIG_ENABLE_DEMO
 static const oid_t m_demo_oid		= { { 1, 3, 6, 1, 4, 1, 99999		}, 7, 10 };
 #endif
 
@@ -594,7 +592,7 @@ int mib_build(void)
 	/* The demo MIB: two random integers
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
-#ifdef __DEMO__
+#ifdef CONFIG_ENABLE_DEMO
 	if (mib_build_entry(&m_demo_oid, 1, 0, BER_TYPE_INTEGER, (const void *)0) == -1	
 		|| mib_build_entry(&m_demo_oid, 2, 0, BER_TYPE_INTEGER, (const void *)0) == -1) {
 		return -1;
@@ -612,7 +610,7 @@ int mib_update(int full)
 		meminfo_t meminfo;
 		cpuinfo_t cpuinfo;
 		netinfo_t netinfo;
-#ifdef __DEMO__
+#ifdef CONFIG_ENABLE_DEMO
 		demoinfo_t demoinfo;
 #endif
 	} u;
@@ -777,7 +775,7 @@ int mib_update(int full)
 	 * request, remove the enclosing "if" block).
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-#ifdef __DEMO__
+#ifdef CONFIG_ENABLE_DEMO
 	if (full) {
 		get_demoinfo(&u.demoinfo);
 		if (mib_update_entry(&m_demo_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)u.demoinfo.random_value_1) == -1

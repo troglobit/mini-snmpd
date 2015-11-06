@@ -13,7 +13,6 @@
  */
 
 
-
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -27,7 +26,7 @@
  * Global variables
  */
 
-#ifdef __IPV4__
+#ifndef CONFIG_ENABLE_IPV6
 const struct in_addr inaddr_any = { INADDR_ANY };
 #endif
 
@@ -54,8 +53,6 @@ int g_udp_sockfd = -1;
 int g_tcp_sockfd = -1;
 value_t g_mib[MAX_NR_VALUES];
 int g_mib_length = 0;
-
-
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */

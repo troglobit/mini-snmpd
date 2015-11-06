@@ -12,8 +12,6 @@
  * See COPYING for GPL licensing information.
  */
 
-
-
 #include <syslog.h>
 #include <string.h>
 #include <stdlib.h>

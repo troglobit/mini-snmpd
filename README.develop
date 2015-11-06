@@ -26,11 +26,11 @@ can be found in the net-snmp package.
 3.) Add a define and the code for your extension
 
 You should make your extension a compile-time option and put all specific code
-in #ifdef/#endif blocks to make it easier to distinguish between build-in and
+in #ifdef/#endif blocks to make it easier to distinguish between built-in and
 added code.
 
 The "demo" extension example, which provides two random integers, shows how to
-do this (look for __DEMO__ in the sources). Note that it uses the PEN 99999,
+do this (CONFIG_ENABLE_DEMO in the sources). Note that it uses the PEN 99999,
 which is not yet assigned by the IANA, but since there is no warranty that this
 doesn't happen, do not enable the demo extension in a release version!
 

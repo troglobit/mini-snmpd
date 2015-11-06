@@ -12,23 +12,15 @@
  * See COPYING for GPL licensing information.
  */
 
+#ifndef MINI_SNMPD_H_
+#define MINI_SNMPD_H_
 
-
-#ifndef __MINI_SNMPD_HEADER__
-#define __MINI_SNMPD_HEADER__
-
-
-
-/* -----------------------------------------------------------------------------
- * External defines
- */
-
+#include "config.h"
 #include <sys/types.h>
 #include <netinet/in.h>
 
 
-
-/* -----------------------------------------------------------------------------
+/*
  * Project dependent defines
  */
 
@@ -46,9 +38,7 @@
 #define MAX_PACKET_SIZE						2048
 #define MAX_STRING_SIZE						64
 
-
-
-/* -----------------------------------------------------------------------------
+/*
  * SNMP dependent defines
  */
 
@@ -99,8 +89,7 @@
 #define SNMP_STATUS_INCONSISTENT_NAME		18
 
 
-
-/* -----------------------------------------------------------------------------
+/*
  * Macros
  */
 
@@ -120,7 +109,7 @@
 	} while (0)
 #endif
 
-#ifdef __IPV4__
+#ifndef CONFIG_ENABLE_IPV6
 #define my_sockaddr_t		sockaddr_in
 #define my_socklen_t		socklen_t
 #define my_sin_addr			sin_addr
@@ -132,9 +121,9 @@
 #define my_in_port_t		in_port_t
 #define my_inaddr_any		inaddr_any
 #define my_inet_addrstrlen	INET_ADDRSTRLEN
-#endif
 
-#ifdef __IPV6__
+#else /* IPv6 */
+
 #define my_sockaddr_t		sockaddr_in6
 #define my_socklen_t		socklen_t
 #define my_sin_addr			sin6_addr
@@ -146,11 +135,10 @@
 #define my_in_port_t		in_port_t
 #define my_inaddr_any		in6addr_any
 #define my_inet_addrstrlen	INET6_ADDRSTRLEN
-#endif
+#endif/* CONFIG_ENABLE_IPV6 */
 
 
-
-/* -----------------------------------------------------------------------------
+/*
  * Data types
  */
 
@@ -240,7 +228,7 @@ typedef struct netinfo_s {
 	unsigned int tx_drops[MAX_NR_INTERFACES];
 } netinfo_t;
 
-#ifdef __DEMO__
+#ifdef CONFIG_ENABLE_DEMO
 typedef struct demoinfo_s {
 	unsigned int random_value_1;
 	unsigned int random_value_2;
@@ -248,8 +236,7 @@ typedef struct demoinfo_s {
 #endif
 
 
-
-/* -----------------------------------------------------------------------------
+/*
  * Global variables
  */
 
@@ -265,7 +252,7 @@ extern char *g_vendor;
 extern char *g_location;
 extern char *g_contact;
 extern char *g_bind_to_device;
-#ifdef __IPV4__
+#ifndef CONFIG_ENABLE_IPV6
 extern const struct in_addr inaddr_any;
 #endif
 
@@ -283,8 +270,7 @@ extern int g_mib_length;
 extern time_t g_mib_timestamp;
 
 
-
-/* -----------------------------------------------------------------------------
+/*
  * Functions
  */
 
@@ -308,7 +294,7 @@ void get_meminfo(meminfo_t *meminfo);
 void get_cpuinfo(cpuinfo_t *cpuinfo);
 void get_diskinfo(diskinfo_t *diskinfo);
 void get_netinfo(netinfo_t *netinfo);
-#ifdef __DEMO__
+#ifdef CONFIG_ENABLE_DEMO
 void get_demoinfo(demoinfo_t *demoinfo);
 #endif
 
@@ -321,11 +307,7 @@ int mib_update(int full);
 int mib_find(const oid_t *oid);
 int mib_findnext(const oid_t *oid);
 
-
-
-#endif
-
-
+#endif /* MINI_SNMPD_H_ */
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */

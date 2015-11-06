@@ -12,8 +12,6 @@
  * See COPYING for GPL licensing information.
  */
 
-
-
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
@@ -27,7 +25,6 @@
 #include <time.h>
 
 #include "mini_snmpd.h"
-
 
 
 int read_file(const char *filename, char *buffer, size_t size)
@@ -266,7 +263,7 @@ client_t *find_oldest_client(void)
 	return (pos != -1) ? g_tcp_client_list[i] : NULL;
 }
 
-#ifdef __DEMO__
+#ifdef CONFIG_ENABLE_DEMO
 void get_demoinfo(demoinfo_t *demoinfo)
 {
 	static int did_init = 0;
@@ -279,8 +276,6 @@ void get_demoinfo(demoinfo_t *demoinfo)
 	demoinfo->random_value_2 = rand();
 }
 #endif
-
-
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */

@@ -1,4 +1,15 @@
-mini_snmpd.tar.gz
-mini_snmpd
 *.o
+*~
+*.map
 tags
+Makefile.in
+aclocal.m4
+autom4te.cache/*
+compile
+config.h.in
+configure
+depcomp
+install-sh
+missing
+mini_snmpd
+mini_snmpd.tar.gz
