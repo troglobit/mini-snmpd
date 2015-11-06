@@ -11,12 +11,7 @@
  *
  * See COPYING for GPL licensing information.
  */
-
-
-
-#ifdef __LINUX__
-
-
+#ifdef __linux__
 
 #include <sys/sysinfo.h>
 #include <sys/socket.h>
@@ -38,7 +33,6 @@
 #include <math.h>
 
 #include "mini_snmpd.h"
-
 
 
 unsigned int get_process_uptime(void)
@@ -193,11 +187,7 @@ void get_netinfo(netinfo_t *netinfo)
 	}
 }
 
-
-
-#endif /* __LINUX__ */
-
-
+#endif /* __linux__ */
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */

@@ -33,7 +33,7 @@ VERSION = 1.3-dev
 VENDOR	= .1.3.6.1.4.1
 OFLAGS	= -O2 -DDEBUG -g
 CFLAGS	= -W -Wall -DVERSION="\"$(VERSION)\"" -DVENDOR="\"$(VENDOR)\"" \
-	  $(OFLAGS) -D__TRAPS__ -D__LINUX__ -D__IPV6__
+	  $(OFLAGS) -D__TRAPS__ -D__IPV6__
 LDFLAGS	= $(OFLAGS)
 TARGET	= mini_snmpd
 MAN 	= mini_snmpd.8
