@@ -317,8 +317,8 @@ int snmp_element_as_string (const data_t *data, char *buffer, size_t size);
 int mib_build    (void);
 int mib_update   (int full);
 
-void mib_find    (const oid_t *oid, int *pos);
-int mib_findnext (const oid_t *oid);
+value_t *mib_find     (const oid_t *oid, int *pos);
+value_t *mib_findnext (const oid_t *oid);
 
 #endif /* MINI_SNMPD_H_ */
 
