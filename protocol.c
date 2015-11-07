@@ -22,10 +22,10 @@
 #include "mini_snmpd.h"
 
 
-static const data_t m_null					= { (unsigned char *)"\x05\x00", 2, 2 };
-static const data_t m_no_such_object		= { (unsigned char *)"\x80\x00", 2, 2 };
-static const data_t m_no_such_instance		= { (unsigned char *)"\x81\x00", 2, 2 };
-static const data_t m_end_of_mib_view		= { (unsigned char *)"\x82\x00", 2, 2 };
+static const data_t m_null              = { (unsigned char *)"\x05\x00", 2, 2 };
+static const data_t m_no_such_object    = { (unsigned char *)"\x80\x00", 2, 2 };
+static const data_t m_no_such_instance  = { (unsigned char *)"\x81\x00", 2, 2 };
+static const data_t m_end_of_mib_view   = { (unsigned char *)"\x82\x00", 2, 2 };
 
 
 static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int *type, int *len)
@@ -116,7 +116,7 @@ static int decode_int(const unsigned char *packet, size_t size, size_t *pos, int
 		return -1;
 	}
 
-	memset(&tmp_value, (packet[*pos] & 0x80) ? 0xFF : 0x00, sizeof (tmp_value));
+	memset(&tmp_value, (packet[*pos] & 0x80) ? 0xFF : 0x00, sizeof(tmp_value));
 	while (len--) {
 		tmp_value = (tmp_value << 8) | packet[*pos];
 		*pos = *pos + 1;
@@ -281,13 +281,13 @@ static int decode_snmp_request(request_t *request, client_t *client)
 	if (decode_len(client->packet, client->size, &pos, &type, &len) == -1)
 		return -1;
 
-	if (type != BER_TYPE_OCTET_STRING || len >= sizeof (request->community)) {
+	if (type != BER_TYPE_OCTET_STRING || len >= sizeof(request->community)) {
 		lprintf(LOG_DEBUG, "unexpected SNMP community type %02X length %d\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (decode_str(client->packet, client->size, &pos, len, request->community, sizeof (request->community)) == -1)
+	if (decode_str(client->packet, client->size, &pos, len, request->community, sizeof(request->community)) == -1)
 		return -1;
 
 	if (strlen(request->community) < 1) {
@@ -624,8 +624,8 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 		}
 
 		for (i = 0; i < request->oid_list_length; i++) {
-			memcpy(&response->value_list[i].oid, &request->oid_list[i], sizeof (request->oid_list[i]));
-			memcpy(&response->value_list[i].data, &m_null, sizeof (m_null));
+			memcpy(&response->value_list[i].oid, &request->oid_list[i], sizeof(request->oid_list[i]));
+			memcpy(&response->value_list[i].data, &m_null, sizeof(m_null));
 		}
 		response->value_list_length = request->oid_list_length;
 	}
@@ -745,8 +745,8 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 			}
 
 			if (response->value_list_length < MAX_NR_VALUES) {
-				memcpy(&response->value_list[response->value_list_length].oid, &request->oid_list[i], sizeof (request->oid_list[i]));
-				memcpy(&response->value_list[response->value_list_length].data, &m_no_such_object, sizeof (m_no_such_object));
+				memcpy(&response->value_list[response->value_list_length].oid, &request->oid_list[i], sizeof(request->oid_list[i]));
+				memcpy(&response->value_list[response->value_list_length].data, &m_no_such_object, sizeof(m_no_such_object));
 				response->value_list_length++;
 				continue;
 			}
@@ -763,8 +763,8 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 			}
 
 			if (response->value_list_length < MAX_NR_VALUES) {
-				memcpy(&response->value_list[response->value_list_length].oid, &request->oid_list[i], sizeof (request->oid_list[i]));
-				memcpy(&response->value_list[response->value_list_length].data, &m_no_such_instance, sizeof (m_no_such_instance));
+				memcpy(&response->value_list[response->value_list_length].oid, &request->oid_list[i], sizeof(request->oid_list[i]));
+				memcpy(&response->value_list[response->value_list_length].data, &m_no_such_instance, sizeof(m_no_such_instance));
 				response->value_list_length++;
 				continue;
 			}
@@ -781,8 +781,8 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 			}
 
 			if (response->value_list_length < MAX_NR_VALUES) {
-				memcpy(&response->value_list[response->value_list_length].oid, &request->oid_list[i], sizeof (request->oid_list[i]));
-				memcpy(&response->value_list[response->value_list_length].data, &m_no_such_object, sizeof (m_no_such_object));
+				memcpy(&response->value_list[response->value_list_length].oid, &request->oid_list[i], sizeof(request->oid_list[i]));
+				memcpy(&response->value_list[response->value_list_length].data, &m_no_such_object, sizeof(m_no_such_object));
 				response->value_list_length++;
 				continue;
 			}
@@ -792,7 +792,7 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 		}
 
 		if (response->value_list_length < MAX_NR_VALUES) {
-			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof (g_mib[pos]));
+			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof(g_mib[pos]));
 			response->value_list_length++;
 			continue;
 
@@ -828,8 +828,8 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 			}
 
 			if (response->value_list_length < MAX_NR_VALUES) {
-				memcpy(&response->value_list[response->value_list_length].oid, &request->oid_list[i], sizeof (request->oid_list[i]));
-				memcpy(&response->value_list[response->value_list_length].data, &m_end_of_mib_view, sizeof (m_end_of_mib_view));
+				memcpy(&response->value_list[response->value_list_length].oid, &request->oid_list[i], sizeof(request->oid_list[i]));
+				memcpy(&response->value_list[response->value_list_length].data, &m_end_of_mib_view, sizeof(m_end_of_mib_view));
 				response->value_list_length++;
 				continue;
 			}
@@ -839,7 +839,7 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 		}
 
 		if (response->value_list_length < MAX_NR_VALUES) {
-			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof (g_mib[pos]));
+			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof(g_mib[pos]));
 			response->value_list_length++;
 			continue;
 		}
@@ -869,7 +869,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 	int j;
 
 	/* Make a local copy of the OID list since we are going to modify it */
-	memcpy(oid_list, request->oid_list, sizeof (request->oid_list));
+	memcpy(oid_list, request->oid_list, sizeof(request->oid_list));
 	oid_list_length = request->oid_list_length;
 
 	/* Limit the non-repeaters and the maximum repetitions to zero */
@@ -889,8 +889,8 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 
 		if (pos >= g_mib_length) {
 			if (response->value_list_length < MAX_NR_VALUES) {
-				memcpy(&response->value_list[response->value_list_length].oid, &oid_list[i], sizeof (oid_list[i]));
-				memcpy(&response->value_list[response->value_list_length].data, &m_end_of_mib_view, sizeof (m_end_of_mib_view));
+				memcpy(&response->value_list[response->value_list_length].oid, &oid_list[i], sizeof(oid_list[i]));
+				memcpy(&response->value_list[response->value_list_length].data, &m_end_of_mib_view, sizeof(m_end_of_mib_view));
 				response->value_list_length++;
 				continue;
 			}
@@ -900,7 +900,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 		}
 		
 		if (response->value_list_length < MAX_NR_VALUES) {
-			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof (g_mib[pos]));
+			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof(g_mib[pos]));
 			response->value_list_length++;
 			continue;
 		}
@@ -928,8 +928,8 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 
 			if (pos >= g_mib_length) {
 				if (response->value_list_length < MAX_NR_VALUES) {
-					memcpy(&response->value_list[response->value_list_length].oid, &oid_list[i], sizeof (oid_list[i]));
-					memcpy(&response->value_list[response->value_list_length].data, &m_end_of_mib_view, sizeof (m_end_of_mib_view));
+					memcpy(&response->value_list[response->value_list_length].oid, &oid_list[i], sizeof(oid_list[i]));
+					memcpy(&response->value_list[response->value_list_length].data, &m_end_of_mib_view, sizeof(m_end_of_mib_view));
 					response->value_list_length++;
 					continue;
 				}
@@ -939,9 +939,9 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 			}
 
 			if (response->value_list_length < MAX_NR_VALUES) {
-				memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof (g_mib[pos]));
+				memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof(g_mib[pos]));
 				response->value_list_length++;
-				memcpy(&oid_list[i], &g_mib[pos].oid, sizeof (g_mib[pos].oid));
+				memcpy(&oid_list[i], &g_mib[pos].oid, sizeof(g_mib[pos].oid));
 				found_repeater++;
 				continue;
 			}
@@ -992,8 +992,8 @@ int snmp(client_t *client)
 	request_t request;
 
 	/* Setup request and response (other code only changes non-defaults) */
-	memset(&request, 0, sizeof (request));
-	memset(&response, 0, sizeof (response));
+	memset(&request, 0, sizeof(request));
+	memset(&response, 0, sizeof(response));
 
 	/* Decode the request (only checks for syntax of the packet) */
 	if (decode_snmp_request(&request, client) == -1)
