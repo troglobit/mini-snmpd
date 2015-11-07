@@ -117,7 +117,7 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 
 void get_diskinfo(diskinfo_t *diskinfo)
 {
-	int i;
+	size_t i;
 	struct statfs fs;
 
 	for (i = 0; i < g_disk_list_length; i++) {
@@ -144,7 +144,8 @@ void get_diskinfo(diskinfo_t *diskinfo)
 
 void get_netinfo(netinfo_t *netinfo)
 {
-	int i, fd;
+	int fd;
+	size_t i;
 	char buf[BUFSIZ];
 	char name[16];
 	unsigned int values[16];

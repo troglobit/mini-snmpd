@@ -16,6 +16,7 @@
 #define MINI_SNMPD_H_
 
 #include "config.h"
+#include <stdint.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 
@@ -92,6 +93,10 @@
  * Macros
  */
 
+#ifndef UNUSED
+#define UNUSED(x) x __attribute__((unused))
+#endif
+
 #ifdef SYSLOG
 #define lprintf(level, format...)				\
 	do {							\
@@ -153,13 +158,13 @@ typedef struct client_s {
 
 typedef struct oid_s {
 	unsigned int subid_list[MAX_NR_SUBIDS];
-	short        subid_list_length;
+	size_t       subid_list_length;
 	short        encoded_length;
 } oid_t;
 
 typedef struct data_s {
 	unsigned char *buffer;
-	short          max_length;
+	size_t         max_length;
 	short          encoded_length;
 } data_t;
 
@@ -169,21 +174,21 @@ typedef struct value_s {
 } value_t;
 
 typedef struct request_s {
-	char  community[MAX_STRING_SIZE];
-	int   type;
-	int   version;
-	int   id;
-	int   non_repeaters;
-	int   max_repetitions;
-	oid_t oid_list[MAX_NR_OIDS];
-	int   oid_list_length;
+	char      community[MAX_STRING_SIZE];
+	int       type;
+	int       version;
+	int       id;
+	uint32_t  non_repeaters;
+	uint32_t  max_repetitions;
+	oid_t     oid_list[MAX_NR_OIDS];
+	size_t    oid_list_length;
 } request_t;
 
 typedef struct response_s {
 	int     error_status;
 	int     error_index;
 	value_t value_list[MAX_NR_VALUES];
-	int     value_list_length;
+	size_t  value_list_length;
 } response_t;
 
 typedef struct loadinfo_s {
@@ -256,23 +261,23 @@ extern char     *g_contact;
 extern char     *g_bind_to_device;
 
 extern char     *g_disk_list[MAX_NR_DISKS];
-extern int       g_disk_list_length;
+extern size_t    g_disk_list_length;
 
 extern char     *g_interface_list[MAX_NR_INTERFACES];
-extern int       g_interface_list_length;
+extern size_t    g_interface_list_length;
 
 extern in_port_t g_udp_port;
 extern in_port_t g_tcp_port;
 
 extern client_t  g_udp_client;
 extern client_t *g_tcp_client_list[MAX_NR_CLIENTS];
-extern int       g_tcp_client_list_length;
+extern size_t    g_tcp_client_list_length;
 
 extern int       g_udp_sockfd;
 extern int       g_tcp_sockfd;
 
 extern value_t   g_mib[MAX_NR_VALUES];
-extern int       g_mib_length;
+extern size_t    g_mib_length;
 
 
 /*
@@ -317,7 +322,7 @@ int snmp_element_as_string (const data_t *data, char *buffer, size_t size);
 int mib_build    (void);
 int mib_update   (int full);
 
-value_t *mib_find     (const oid_t *oid, int *pos);
+value_t *mib_find     (const oid_t *oid, size_t *pos);
 value_t *mib_findnext (const oid_t *oid);
 
 #endif /* MINI_SNMPD_H_ */

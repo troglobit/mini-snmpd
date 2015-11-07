@@ -118,7 +118,7 @@ int ticks_since(const struct timeval *tv_last, struct timeval *tv_now)
 
 void dump_packet(const client_t *client)
 {
-	int i, len = 0;
+	size_t i, len = 0;
 	char buf[BUFSIZ];
 	char straddr[my_inet_addrstrlen];
 	struct my_in_addr_t client_addr;
@@ -146,34 +146,34 @@ void dump_mib(const value_t *value, int size)
 		if (snmp_element_as_string(&value[i].data, buf, sizeof(buf)) == -1)
 			strncpy(buf, "?", sizeof(buf));
 
-		lprintf(LOG_DEBUG, "mib entry[%d]: oid='%s', max_length=%d, data='%s'\n",
+		lprintf(LOG_DEBUG, "mib entry[%d]: oid='%s', max_length=%zu, data='%s'\n",
 			i, oid_ntoa(&value[i].oid), value[i].data.max_length, buf);
 	}
 }
 
 void dump_response(const response_t *response)
 {
-	int i;
+	size_t i;
 	char buf[MAX_PACKET_SIZE];
 
-	lprintf(LOG_DEBUG, "response: status=%d, index=%d, nr_entries=%d\n",
+	lprintf(LOG_DEBUG, "response: status=%d, index=%d, nr_entries=%zu\n",
 		response->error_status, response->error_index, response->value_list_length);
 	for (i = 0; i < response->value_list_length; i++) {
 		if (snmp_element_as_string(&response->value_list[i].data, buf, sizeof(buf)) == -1)
 			strncpy(buf, "?", sizeof(buf));
 
-		lprintf(LOG_DEBUG, "response: entry[%d]='%s','%s'\n", i, oid_ntoa(&response->value_list[i].oid), buf);
+		lprintf(LOG_DEBUG, "response: entry[%zu]='%s','%s'\n", i, oid_ntoa(&response->value_list[i].oid), buf);
 	}
 }
 
 char *oid_ntoa(const oid_t *oid)
 {
-	int i, len = 0;
+	size_t i, len = 0;
 	static char buf[MAX_NR_SUBIDS * 10 + 2];
 
 	buf[0] = '\0';
 	for (i = 0; i < oid->subid_list_length; i++) {
-		len += snprintf(buf + len, sizeof(buf) - len, ".%d", oid->subid_list[i]);
+		len += snprintf(buf + len, sizeof(buf) - len, ".%u", oid->subid_list[i]);
 		if (len >= sizeof(buf))
 			break;
 	}
@@ -209,11 +209,12 @@ oid_t *oid_aton(const char *str)
 
 int oid_cmp(const oid_t *oid1, const oid_t *oid2)
 {
-	int i, subid1, subid2;
+	int subid1, subid2;
+	size_t i;
 
 	for (i = 0; i < MAX_NR_OIDS; i++) {
-		subid1 = (oid1->subid_list_length > i) ? oid1->subid_list[i] : -1;
-		subid2 = (oid2->subid_list_length > i) ? oid2->subid_list[i] : -1;
+		subid1 = (oid1->subid_list_length > i) ? (int)oid1->subid_list[i] : -1;
+		subid2 = (oid2->subid_list_length > i) ? (int)oid2->subid_list[i] : -1;
 
 		if (subid1 == -1 && subid2 == -1)
 			return 0;
@@ -243,17 +244,18 @@ int split(const char *str, char *delim, char **list, int max_list_length)
 
 client_t *find_oldest_client(void)
 {
-	int i, pos = -1;
+	size_t i, found = 0, pos = 0;
 	time_t timestamp = (time_t)LONG_MAX;
 
 	for (i = 0; i < g_tcp_client_list_length; i++) {
 		if (timestamp > g_tcp_client_list[i]->timestamp) {
 			timestamp = g_tcp_client_list[i]->timestamp;
+			found = 1;
 			pos = i;
 		}
 	}
 
-	return (pos != -1) ? g_tcp_client_list[i] : NULL;
+	return found ? g_tcp_client_list[pos] : NULL;
 }
 
 #ifdef CONFIG_ENABLE_DEMO

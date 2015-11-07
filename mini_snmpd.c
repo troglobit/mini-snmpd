@@ -78,14 +78,14 @@ static void print_version(void)
 	       "\n");
 }
 
-static void handle_signal(int signo)
+static void handle_signal(int UNUSED(signo))
 {
 	g_quit = 1;
 }
 
 static void handle_udp_client(void)
 {
-	int rv;
+	ssize_t rv;
 	char straddr[my_inet_addrstrlen] = "";
 	my_socklen_t socklen;
 	struct my_sockaddr_t sockaddr;
@@ -130,10 +130,10 @@ static void handle_udp_client(void)
 	if (rv == -1) {
 		lprintf(LOG_WARNING, "could not send packet to UDP client %s:%d: %m\n",
 			straddr, sockaddr.my_sin_port);
-	} else if (rv != g_udp_client.size) {
+	} else if ((size_t)rv != g_udp_client.size) {
 		lprintf(LOG_WARNING, "could not send packet to UDP client %s:%d: "
-			"only %d of %d bytes written\n", straddr,
-			sockaddr.my_sin_port, rv, (int) g_udp_client.size);
+			"only %zd of %zu bytes written\n", straddr,
+			sockaddr.my_sin_port, rv, g_udp_client.size);
 	}
 
 #ifdef DEBUG
@@ -200,7 +200,7 @@ static void handle_tcp_connect(void)
 
 static void handle_tcp_client_write(client_t *client)
 {
-	int rv;
+	ssize_t rv;
 	char straddr[my_inet_addrstrlen] = "";
 	struct my_sockaddr_t sockaddr;
 
@@ -216,10 +216,10 @@ static void handle_tcp_client_write(client_t *client)
 		client->sockfd = -1;
 		return;
 	}
-	if (rv != client->size) {
+	if ((size_t)rv != client->size) {
 		lprintf(LOG_WARNING, "could not send packet to TCP client %s:%d: "
-			"only %d of %d bytes written\n", straddr,
-			sockaddr.my_sin_port, rv, (int) client->size);
+			"only %zd of %zu bytes written\n", straddr,
+			sockaddr.my_sin_port, rv, client->size);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -322,7 +322,8 @@ int main(int argc, char *argv[])
 		{ "help", 0, 0, 'h' },
 		{ NULL, 0, 0, 0 }
 	};
-	int i, ticks, nfds, c, option_index = 1;
+	int ticks, nfds, c, option_index = 1;
+	size_t i;
 	fd_set rfds, wfds;
 	struct ifreq ifreq;
 	struct timeval tv_last;

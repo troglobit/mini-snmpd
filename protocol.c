@@ -53,9 +53,9 @@ static const data_t m_no_such_instance  = { (unsigned char *)"\x81\x00", 2, 2 };
 static const data_t m_end_of_mib_view   = { (unsigned char *)"\x82\x00", 2, 2 };
 
 
-static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int *type, int *len)
+static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int *type, size_t *len)
 {
-	int length_of_len;
+	size_t length_of_len;
 
 	if (*pos >= size) {
 		lprintf(LOG_DEBUG, "underflow for element type\n");
@@ -131,9 +131,9 @@ static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int
 }
 
 /* Fetch the value as unsigned integer (copy sign bit into all bytes first) */
-static int decode_int(const unsigned char *packet, size_t size, size_t *pos, int len, int *value)
+static int decode_int(const unsigned char *packet, size_t size, size_t *pos, size_t len, int *value)
 {
-	unsigned int tmp_value;
+	unsigned int tmp;
 
 	if (*pos >= (size - len + 1)) {
 		lprintf(LOG_DEBUG, "underflow for integer\n");
@@ -141,18 +141,18 @@ static int decode_int(const unsigned char *packet, size_t size, size_t *pos, int
 		return -1;
 	}
 
-	memset(&tmp_value, (packet[*pos] & 0x80) ? 0xFF : 0x00, sizeof(tmp_value));
+	memset(&tmp, (packet[*pos] & 0x80) ? 0xFF : 0x00, sizeof(tmp));
 	while (len--) {
-		tmp_value = (tmp_value << 8) | packet[*pos];
+		tmp = (tmp << 8) | packet[*pos];
 		*pos = *pos + 1;
 	}
-	*(int *)value = tmp_value;
+	*(int *)value = tmp;
 
 	return 0;
 }
 
 /* Fetch the value as unsigned integer (copy sign bit into all bytes first) */
-static int decode_cnt(const unsigned char *packet, size_t size, size_t *pos, int len, unsigned int *value)
+static int decode_cnt(const unsigned char *packet, size_t size, size_t *pos, size_t len, uint32_t *value)
 {
 	if (*pos >= (size - len + 1)) {
 		lprintf(LOG_DEBUG, "underflow for unsigned\n");
@@ -170,7 +170,7 @@ static int decode_cnt(const unsigned char *packet, size_t size, size_t *pos, int
 }
 
 /* Fetch the value as C string (user must have made sure the length is ok) */
-static int decode_str(const unsigned char *packet, size_t size, size_t *pos, int len, char *value, size_t value_size)
+static int decode_str(const unsigned char *packet, size_t size, size_t *pos, size_t len, char *str, size_t str_len)
 {
 	if (*pos >= (size - len + 1)) {
 		lprintf(LOG_DEBUG, "underflow for string\n");
@@ -178,14 +178,14 @@ static int decode_str(const unsigned char *packet, size_t size, size_t *pos, int
 		return -1;
 	}
 
-	snprintf(value, value_size, "%.*s", len, &packet[*pos]);
+	snprintf(str, str_len, "%.*s", (int)len, &packet[*pos]);
 	*pos = *pos + len;
 
 	return 0;
 }
 
 /* Fetch the value as C string (user must have made sure the length is ok) */
-static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, int len, oid_t *value)
+static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, size_t len, oid_t *value)
 {
 	if (*pos >= (size - len + 1)) {
 		lprintf(LOG_DEBUG, "underflow for oid\n");
@@ -254,7 +254,7 @@ static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, int
 }
 
 /* Fetch the value as pointer (user must make sure not to overwrite packet) */
-static int decode_ptr(const unsigned char *packet, size_t size, size_t *pos, int len)
+static int decode_ptr(const unsigned char UNUSED(*packet), size_t size, size_t *pos, int len)
 {
 	if (*pos >= (size - len + 1)) {
 		lprintf(LOG_DEBUG, "underflow for ptr\n");
@@ -269,16 +269,15 @@ static int decode_ptr(const unsigned char *packet, size_t size, size_t *pos, int
 
 static int decode_snmp_request(request_t *request, client_t *client)
 {
-	size_t pos = 0;
-	int len;
 	int type;
+	size_t pos = 0, len = 0;
 
 	/* The SNMP message is enclosed in a sequence */
 	if (decode_len(client->packet, client->size, &pos, &type, &len) == -1)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP header type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP header type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -288,7 +287,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len != 1) {
-		lprintf(LOG_DEBUG, "unexpected SNMP version type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP version type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -307,7 +306,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_OCTET_STRING || len >= sizeof(request->community)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP community type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP community type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -326,7 +325,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP request type type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP request type type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -337,7 +336,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "unexpected SNMP request id type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP request id type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -345,30 +344,30 @@ static int decode_snmp_request(request_t *request, client_t *client)
 	if (decode_int(client->packet, client->size, &pos, len, &request->id) == -1)
 		return -1;
 
-	/* The second element of the SNMP request is the error state / non repeaters */
+	/* The second element of the SNMP request is the error state / non repeaters (0..2147483647) */
 	if (decode_len(client->packet, client->size, &pos, &type, &len) == -1)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "unexpected SNMP error state type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP error state type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (decode_int(client->packet, client->size, &pos, len, &request->non_repeaters) == -1)
+	if (decode_cnt(client->packet, client->size, &pos, len, &request->non_repeaters) == -1)
 		return -1;
 
-	/* The third element of the SNMP request is the error index / max repetitions */
+	/* The third element of the SNMP request is the error index / max repetitions (0..2147483647) */
 	if (decode_len(client->packet, client->size, &pos, &type, &len) == -1)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "unexpected SNMP error index type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP error index type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (decode_int(client->packet, client->size, &pos, len, &request->max_repetitions) == -1)
+	if (decode_cnt(client->packet, client->size, &pos, len, &request->max_repetitions) == -1)
 		return -1;
 
 	/* The fourth element of the SNMP request are the variable bindings */
@@ -376,7 +375,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP varbindings type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP varbindings type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -396,7 +395,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if (type != BER_TYPE_SEQUENCE || len < 1) {
-			lprintf(LOG_DEBUG, "unexpected SNMP varbinding type %02X length %d\n", type, len);
+			lprintf(LOG_DEBUG, "unexpected SNMP varbinding type %02X length %zu\n", type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -406,7 +405,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if (type != BER_TYPE_OID || len < 1) {
-			lprintf(LOG_DEBUG, "unexpected SNMP varbinding OID type %02X length %d\n", type, len);
+			lprintf(LOG_DEBUG, "unexpected SNMP varbinding OID type %02X length %zu\n", type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -419,7 +418,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if ((type == BER_TYPE_NULL && len) || (type != BER_TYPE_NULL && !len)) {
-			lprintf(LOG_DEBUG, "unexpected SNMP varbinding value type %02X length %d\n", type, len);
+			lprintf(LOG_DEBUG, "unexpected SNMP varbinding value type %02X length %zu\n", type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -435,7 +434,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 }
 
 
-static int get_intlen(int val)
+static size_t get_intlen(int val)
 {
 	if (val < -8388608 || val > 8388607)
 		return 6;
@@ -447,7 +446,7 @@ static int get_intlen(int val)
 	return 3;
 }
 
-static int get_strlen(const char *str)
+static size_t get_strlen(const char *str)
 {
 	size_t len = strlen(str);
 
@@ -461,7 +460,7 @@ static int get_strlen(const char *str)
 	return len + 2;
 }
 
-static int get_hdrlen(int len)
+static size_t get_hdrlen(size_t len)
 {
 	if (len > 0xFFFF)
 		return MAX_PACKET_SIZE;
@@ -475,7 +474,7 @@ static int get_hdrlen(int len)
 
 static int encode_snmp_integer(unsigned char *buf, int val)
 {
-	int len;
+	size_t len;
 
 	if (val < -8388608 || val > 8388607)
 		len = 4;
@@ -518,7 +517,7 @@ static int encode_snmp_string(unsigned char *buf, const char *str)
 	return 0;
 }
 
-static int encode_snmp_sequence_header(unsigned char *buf, int len, int type)
+static int encode_snmp_sequence_header(unsigned char *buf, size_t len, int type)
 {
 	if (len > 0xFFFF)
 		return -1;
@@ -540,8 +539,7 @@ static int encode_snmp_sequence_header(unsigned char *buf, int len, int type)
 
 static int encode_snmp_oid(unsigned char *buf, const oid_t *oid)
 {
-	int len;
-	int i;
+	size_t i, len;
 
 	len = 1;
 	for (i = 2; i < oid->subid_list_length; i++) {
@@ -598,9 +596,9 @@ static int encode_snmp_oid(unsigned char *buf, const oid_t *oid)
 	return 0;
 }
 
-static int encode_snmp_varbind(unsigned char *buf, int *pos, const value_t *value)
+static int encode_snmp_varbind(unsigned char *buf, size_t *pos, const value_t *value)
 {
-	int len;
+	size_t len;
 
 	/* The value of the variable binding (NULL for error responses) */
 	len = value->data.encoded_length;
@@ -635,9 +633,7 @@ static int encode_snmp_varbind(unsigned char *buf, int *pos, const value_t *valu
 
 static int encode_snmp_response(request_t *request, response_t *response, client_t *client)
 {
-	int len;
-	int pos;
-	int i;
+	size_t i, len, pos;
 
 	/* If there was an error, we have to encode the original varbind list, but
 	 * omit any varbind values (replace them with NULL values)
@@ -666,7 +662,7 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 	 * buffer, but at offset (bufsize-size..bufsize-1)!
 	 */
 	pos = MAX_PACKET_SIZE;
-	for (i = response->value_list_length -1; i >= 0; i--) {
+	for (i = 0; i < response->value_list_length; i++) {
 		if (encode_snmp_varbind(client->packet, &pos, &response->value_list[i]) == -1)
 			return -1;
 	}
@@ -747,9 +743,9 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 	return 0;
 }
 
-static int handle_snmp_get(request_t *request, response_t *response, client_t *client)
+static int handle_snmp_get(request_t *request, response_t *response, client_t *UNUSED(client))
 {
-	int i, pos = 0;
+	size_t i, pos = 0;
 	value_t *value;
 
 	/*
@@ -787,9 +783,9 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 	return 0;
 }
 
-static int handle_snmp_getnext(request_t *request, response_t *response, client_t *client)
+static int handle_snmp_getnext(request_t *request, response_t *response, client_t *UNUSED(client))
 {
-	int i;
+	size_t i;
 	value_t *value;
 
 	/*
@@ -816,26 +812,20 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 	return 0;
 }
 
-static int handle_snmp_set(request_t *request, response_t *response, client_t *client)
+static int handle_snmp_set(request_t *request, response_t *response, client_t *UNUSED(client))
 {
 	SNMP_VERSION_1_ERROR(response, (request->version == SNMP_VERSION_1)
 			     ? SNMP_STATUS_NO_SUCH_NAME : SNMP_STATUS_NO_ACCESS, 0);
 }
 
-static int handle_snmp_getbulk(request_t *request, response_t *response, client_t *client)
+static int handle_snmp_getbulk(request_t *request, response_t *response, client_t *UNUSED(client))
 {
-	int i, j;
+	size_t i, j;
 	oid_t oid_list[MAX_NR_OIDS];
 	value_t *value;
 
 	/* Make a local copy of the OID list since we are going to modify it */
 	memcpy(oid_list, request->oid_list, sizeof(request->oid_list));
-
-	/* Limit the non-repeaters and the maximum repetitions to zero */
-	if (request->non_repeaters < 0)
-		request->non_repeaters = 0;
-	if (request->max_repetitions < 0)
-		request->max_repetitions = 0;
 
 	/* The non-repeaters are handled like with the GETNEXT request */
 	for (i = 0; i < request->oid_list_length; i++) {
@@ -898,9 +888,8 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 
 int snmp_packet_complete(const client_t *client)
 {
-	size_t pos = 0;
-	int len;
 	int type;
+	size_t pos = 0, len = 0;
 
 	/*
 	 * The SNMP message must be at least have a header containing sequence,
@@ -915,7 +904,7 @@ int snmp_packet_complete(const client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len < 1 || len > (client->size - pos)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP header type %02X length %d\n", type, len);
+		lprintf(LOG_DEBUG, "unexpected SNMP header type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -990,13 +979,10 @@ done:
 
 int snmp_element_as_string(const data_t *data, char *buf, size_t size)
 {
-	size_t pos = 0;
-	unsigned int cnt;
-	int val;
+	size_t i, len, pos = 0;
+	int type, val;
 	oid_t oid;
-	int len;
-	int type;
-	int i;
+	unsigned int cnt;
 
 	/* Decode the element type and length */
 	if (decode_len(data->buffer, data->encoded_length, &pos, &type, &len) == -1)
@@ -1011,7 +997,7 @@ int snmp_element_as_string(const data_t *data, char *buf, size_t size)
 			break;
 
 		case BER_TYPE_OCTET_STRING:
-			snprintf(buf, size, "%.*s", len, &data->buffer[pos]);
+			snprintf(buf, size, "%.*s", (int)len, &data->buffer[pos]);
 			break;
 
 		case BER_TYPE_OID:

@@ -38,10 +38,10 @@ char     *g_contact        = NULL;
 char     *g_bind_to_device = NULL;
 
 char     *g_disk_list[MAX_NR_DISKS] = { "/" };
-int       g_disk_list_length        = 1;
+size_t    g_disk_list_length        = 1;
 
 char     *g_interface_list[MAX_NR_INTERFACES];
-int       g_interface_list_length = 0;
+size_t    g_interface_list_length = 0;
 
 in_port_t g_udp_port = 161;
 in_port_t g_tcp_port = 161;
@@ -51,10 +51,10 @@ int       g_tcp_sockfd = -1;
 
 client_t  g_udp_client = { 0, };
 client_t *g_tcp_client_list[MAX_NR_CLIENTS];
-int       g_tcp_client_list_length = 0;
+size_t    g_tcp_client_list_length = 0;
 
 value_t   g_mib[MAX_NR_VALUES];
-int       g_mib_length = 0;
+size_t    g_mib_length = 0;
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */

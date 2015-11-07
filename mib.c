@@ -129,8 +129,7 @@ static int encode_string(data_t *data, const char *string)
 
 static int encode_oid(data_t *data, const oid_t *oid)
 {
-	int i;
-	size_t len;
+	size_t i, len;
 	unsigned char *buffer;
 
 	if (!oid)
@@ -300,33 +299,35 @@ static int oid_build(oid_t *oid, const oid_t *prefix, int column, int row)
  */
 static int oid_encode(oid_t *oid)
 {
-	int i;
+	uint32_t len = 1;
+	size_t i;
 
-	oid->encoded_length = 1;
 	for (i = 2; i < oid->subid_list_length; i++) {
 		if (oid->subid_list[i] >= (1 << 28))
-			oid->encoded_length += 5;
+			len += 5;
 		else if (oid->subid_list[i] >= (1 << 21))
-			oid->encoded_length += 4;
+			len += 4;
 		else if (oid->subid_list[i] >= (1 << 14))
-			oid->encoded_length += 3;
+			len += 3;
 		else if (oid->subid_list[i] >= (1 << 7))
-			oid->encoded_length += 2;
+			len += 2;
 		else
-			oid->encoded_length += 1;
+			len += 1;
 	}
 
-	if (oid->encoded_length > 0xFFFF) {
+	if (len > 0xFFFF) {
 		oid->encoded_length = -1;
 		return -1;
 	}
 
-	if (oid->encoded_length > 0xFF)
-		oid->encoded_length += 4;
-	else if (oid->encoded_length > 0x7F)
-		oid->encoded_length += 3;
+	if (len > 0xFF)
+		len += 4;
+	else if (len > 0x7F)
+		len += 3;
 	else
-		oid->encoded_length += 2;
+		len += 2;
+
+	oid->encoded_length = (short)len;
 
 	return 0;
 }
@@ -420,7 +421,7 @@ static int mib_build_entries(const oid_t *prefix, int column, int row_from, int 
 	return 0;
 }
 
-static int mib_update_entry(const oid_t *prefix, int column, int row, int *pos, int type, const void *arg)
+static int mib_update_entry(const oid_t *prefix, int column, int row, size_t *pos, int type, const void *arg)
 {
 	int ret;
 	oid_t oid;
@@ -488,7 +489,7 @@ int mib_build(void)
 {
 	char hostname[MAX_STRING_SIZE];
 	char name[16];
-	int i;
+	size_t i;
 
 	/* Determine some static values that are not known at compile-time */
 	if (gethostname(hostname, sizeof(hostname)) == -1)
@@ -631,6 +632,8 @@ int mib_build(void)
 
 int mib_update(int full)
 {
+	char nr[16];
+	size_t i, pos;
 	union {
 		diskinfo_t diskinfo;
 		loadinfo_t loadinfo;
@@ -641,9 +644,6 @@ int mib_update(int full)
 		demoinfo_t demoinfo;
 #endif
 	} u;
-	char nr[16];
-	int pos;
-	int i;
 
 	/* Begin searching at the first MIB entry */
 	pos = 0;
@@ -815,7 +815,7 @@ int mib_update(int full)
 	return 0;
 }
 
-value_t *mib_find(const oid_t *oid, int *pos)
+value_t *mib_find(const oid_t *oid, size_t *pos)
 {
 	/* Find the OID in the MIB that is exactly the given one or a subid */
 	while (*pos < g_mib_length) {
@@ -833,7 +833,7 @@ value_t *mib_find(const oid_t *oid, int *pos)
 
 value_t *mib_findnext(const oid_t *oid)
 {
-	int pos;
+	size_t pos;
 
 	/* Find the OID in the MIB that is the one after the given one */
 	for (pos = 0; pos < g_mib_length; pos++) {
