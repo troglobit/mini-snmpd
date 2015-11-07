@@ -36,6 +36,17 @@
 	continue;							\
 }
 
+#define SNMP_GET_ERROR(resp, req, index, code, err, msg) {		\
+	if ((req)->version == SNMP_VERSION_1)				\
+		SNMP_VERSION_1_ERROR((resp), (code), (index));		\
+									\
+	if ((resp)->value_list_length < MAX_NR_VALUES)			\
+		SNMP_VERSION_2_ERROR((resp), (req), (index), err); 	\
+									\
+	lprintf(LOG_ERR, msg);						\
+	return -1;							\
+}
+
 static const data_t m_null              = { (unsigned char *)"\x05\x00", 2, 2 };
 static const data_t m_no_such_object    = { (unsigned char *)"\x80\x00", 2, 2 };
 static const data_t m_no_such_instance  = { (unsigned char *)"\x81\x00", 2, 2 };
@@ -751,38 +762,17 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 		if (pos == -1)
 			return -1;
 
-		if (pos >= g_mib_length) {
-			if (request->version == SNMP_VERSION_1)
-				SNMP_VERSION_1_ERROR(response, SNMP_STATUS_NO_SUCH_NAME, i);
+		if (pos >= g_mib_length)
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_object,
+				       "could not handle SNMP GET: value list overflow\n");
 
-			if (response->value_list_length < MAX_NR_VALUES)
-				SNMP_VERSION_2_ERROR(response, request, i, m_no_such_object);
+		if (g_mib[pos].oid.subid_list_length == (request->oid_list[i].subid_list_length + 1))
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_instance,
+				       "could not handle SNMP GET: value list overflow\n");
 
-			lprintf(LOG_ERR, "could not handle SNMP GET: value list overflow\n");
-			return -1;
-		}
-
-		if (g_mib[pos].oid.subid_list_length == (request->oid_list[i].subid_list_length + 1)) {
-			if (request->version == SNMP_VERSION_1)
-				SNMP_VERSION_1_ERROR(response, SNMP_STATUS_NO_SUCH_NAME, i);
-
-			if (response->value_list_length < MAX_NR_VALUES)
-				SNMP_VERSION_2_ERROR(response, request, i, m_no_such_instance);
-
-			lprintf(LOG_ERR, "could not handle SNMP GET: value list overflow\n");
-			return -1;
-		}
-
-		if (g_mib[pos].oid.subid_list_length != request->oid_list[i].subid_list_length) {
-			if (request->version == SNMP_VERSION_1)
-				SNMP_VERSION_1_ERROR(response, SNMP_STATUS_NO_SUCH_NAME, i);
-
-			if (response->value_list_length < MAX_NR_VALUES)
-				SNMP_VERSION_2_ERROR(response, request, i, m_no_such_object);
-
-			lprintf(LOG_ERR, "could not handle SNMP GET: value list overflow\n");
-			return -1;
-		}
+		if (g_mib[pos].oid.subid_list_length != request->oid_list[i].subid_list_length)
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_object,
+				       "could not handle SNMP GET: value list overflow\n");
 
 		if (response->value_list_length < MAX_NR_VALUES) {
 			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof(g_mib[pos]));
@@ -812,16 +802,9 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 		if (pos == -1)
 			return -1;
 
-		if (pos >= g_mib_length) {
-			if (request->version == SNMP_VERSION_1)
-				SNMP_VERSION_1_ERROR(response, SNMP_STATUS_NO_SUCH_NAME, i);
-
-			if (response->value_list_length < MAX_NR_VALUES)
-				SNMP_VERSION_2_ERROR(response, request, i, m_end_of_mib_view);
-
-			lprintf(LOG_ERR, "could not handle SNMP GETNEXT: value list overflow\n");
-			return -1;
-		}
+		if (pos >= g_mib_length)
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_end_of_mib_view,
+				       "could not handle SNMP GETNEXT: value list overflow\n");
 
 		if (response->value_list_length < MAX_NR_VALUES) {
 			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof(g_mib[pos]));
@@ -870,13 +853,10 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 		if (pos == -1)
 			return -1;
 
-		if (pos >= g_mib_length) {
-			if (response->value_list_length < MAX_NR_VALUES)
-				SNMP_VERSION_2_ERROR(response, request, i, m_end_of_mib_view);
-			
-			lprintf(LOG_ERR, "could not handle SNMP GETNEXT: value list overflow\n");
-			return -1;
-		}
+		/* Use same error handler, even though bulk requests are not part of SNMP v1 */
+		if (pos >= g_mib_length)
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_end_of_mib_view,
+				       "could not handle SNMP GETBULK: value list overflow\n");
 		
 		if (response->value_list_length < MAX_NR_VALUES) {
 			memcpy(&response->value_list[response->value_list_length], &g_mib[pos], sizeof(g_mib[pos]));
