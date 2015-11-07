@@ -55,7 +55,8 @@ static const int m_load_avg_times[3] = { 1, 5, 15 };
 
 static int oid_build(oid_t *dest, const oid_t *prefix, int column, int row);
 static int oid_encode_length(oid_t *oid);
-static int mib_value_alloc(data_t *data, int type, short max_lenght);
+static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int type);
+static int mib_value_alloc(data_t *data, int type);
 static int mib_set_value(data_t *data, int type, const void *dataval);
 
 
@@ -205,16 +206,15 @@ static int encode_snmp_element_unsigned(data_t *data, int type, unsigned int tic
 	return 0;
 }
 
-static int mib_build_entry(const oid_t *prefix, int column, int row, int type, const void *default_value)
+static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int type)
 {
-	int ret, len;
 	value_t *value;
 
 	/* Create a new entry in the MIB table */
 	if (g_mib_length >= MAX_NR_VALUES) {
 		lprintf(LOG_ERR, "could not create MIB entry '%s.%d.%d': table overflow\n",
 			oid_ntoa(prefix), column, row);
-		return -1;
+		return NULL;
 	}
 
 	value = &g_mib[g_mib_length++];
@@ -224,18 +224,29 @@ static int mib_build_entry(const oid_t *prefix, int column, int row, int type, c
 	if (oid_build(&value->oid, prefix, column, row)) {
 		lprintf(LOG_ERR, "could not create MIB entry '%s.%d.%d': oid overflow\n",
 			oid_ntoa(prefix), column, row);
-		return -1;
+		return NULL;
 	}
 
 	if (oid_encode_length(&value->oid))
 		lprintf(LOG_ERR, "could not encode '%s': oid overflow\n", oid_ntoa(&value->oid));
 
-	len = (type == BER_TYPE_OCTET_STRING) ? strlen((const char *)default_value) : -1;
-	if (mib_value_alloc(&value->data, type, len)) {
+	if (mib_value_alloc(&value->data, type)) {
 		lprintf(LOG_ERR, "could not create MIB entry '%s.%d.%d': unsupported type %d\n",
 			oid_ntoa(&value->oid), column, row, type);
-		return -1;
+		return NULL;
 	}
+
+	return value;
+}
+
+static int mib_build_entry(const oid_t *prefix, int column, int row, int type, const void *default_value)
+{
+	int ret;
+	value_t *value;
+
+	value = mib_alloc_entry(prefix, column, row, type);
+	if (!value)
+		return -1;
 
 	ret = mib_set_value(&value->data, type, default_value);
 	if (ret) {
@@ -312,17 +323,17 @@ static int oid_encode_length(oid_t *oid)
  * - strings and oids are assumed to be static or have the maximum allowed length
  * - integers are assumed to be dynamic and don't have more than 32 bits
  */
-int mib_value_alloc(data_t *data, int type, short max_length)
+int mib_value_alloc(data_t *data, int type)
 {
 	switch (type) {
 		case BER_TYPE_INTEGER:
-			data->max_length = sizeof (int) + 2;
+			data->max_length = sizeof(int) + 2;
 			data->encoded_length = 0;
 			data->buffer = malloc(data->max_length);
 			break;
 
 		case BER_TYPE_OCTET_STRING:
-			data->max_length = max_length + 4;
+			data->max_length = 4;
 			data->encoded_length = 0;
 			data->buffer = malloc(data->max_length);
 			break;
@@ -336,7 +347,7 @@ int mib_value_alloc(data_t *data, int type, short max_length)
 		case BER_TYPE_COUNTER:
 		case BER_TYPE_GAUGE:
 		case BER_TYPE_TIME_TICKS:
-			data->max_length = sizeof (unsigned int) + 2;
+			data->max_length = sizeof(unsigned int) + 2;
 			data->encoded_length = 0;
 			data->buffer = malloc(data->max_length);
 			break;
@@ -354,6 +365,8 @@ int mib_value_alloc(data_t *data, int type, short max_length)
  */
 int mib_set_value(data_t *data, int type, const void *value)
 {
+	size_t len;
+
 	/* Paranoia check against invalid default parameter (null pointer) */
 	switch (type) {
 		case BER_TYPE_OCTET_STRING:
@@ -373,6 +386,11 @@ int mib_set_value(data_t *data, int type, const void *value)
 			break;
 
 		case BER_TYPE_OCTET_STRING:
+			len = strlen((const char *)value);
+			if ((len + 4) > data->max_length) {
+				data->max_length = len + 4;
+				data->buffer = realloc(data->buffer, data->max_length);
+			}
 			if (encode_snmp_element_string(data, (const char *)value) == -1)
 				return -1;
 			break;
