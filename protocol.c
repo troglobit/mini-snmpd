@@ -749,7 +749,7 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 
 static int handle_snmp_get(request_t *request, response_t *response, client_t *client)
 {
-	int pos;
+	int pos = 0;
 	int i;
 
 	/*
@@ -758,7 +758,7 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *c
 	 * subid of the requested one (table cell of table column)!
 	 */
 	for (i = 0; i < request->oid_list_length; i++) {
-		pos = mib_find(&request->oid_list[i]);
+		mib_find(&request->oid_list[i], &pos);
 		if (pos == -1)
 			return -1;
 
