@@ -1,5 +1,6 @@
-/* -----------------------------------------------------------------------------
- * Copyright (C) 2008 Robert Ernst <robert.ernst@linux-solutions.at>
+/* Main program
+ *
+ * Copyright (C) 2008-2010  Robert Ernst <robert.ernst@linux-solutions.at>
  *
  * This file may be distributed and/or modified under the terms of the
  * GNU General Public License version 2 as published by the Free Software
@@ -11,8 +12,6 @@
  *
  * See COPYING for GPL licensing information.
  */
-
-
 
 #define _GNU_SOURCE
 
@@ -35,54 +34,48 @@
 #include "mini_snmpd.h"
 
 
-
-/* -----------------------------------------------------------------------------
- * Helper functions
- */
-
 static void print_help(void)
 {
-	fprintf(stderr, "usage: mini_snmpd [options]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "-p, --udp-port nnn     set the UDP port to bind to (161)\n");
-	fprintf(stderr, "-P, --tcp-port nnn     set the TCP port to bind to (161)\n");
-	fprintf(stderr, "-c, --community nnn    set the community string (public)\n");
-	fprintf(stderr, "-D, --description nnn  set the system description (empty)\n");
-	fprintf(stderr, "-V, --vendor nnn       set the system vendor (empty)\n");
-	fprintf(stderr, "-L, --location nnn     set the system location (empty)\n");
-	fprintf(stderr, "-C, --contact nnn      set the system contact (empty)\n");
-	fprintf(stderr, "-d, --disks nnn        set the disks to monitor (/)\n");
-	fprintf(stderr, "-i, --interfaces nnn   set the network interfaces to monitor (lo)\n");
-	fprintf(stderr, "-I, --listen nnn       set the network interface to listen (all)\n");
-	fprintf(stderr, "-t, --timeout nnn      set the timeout for MIB updates (1 second)\n");
-	fprintf(stderr, "-a, --auth             require authentication (thus SNMP version 2c)\n");
-	fprintf(stderr, "-v, --verbose          verbose syslog messages \n");
-	fprintf(stderr, "-l, --licensing        print licensing info and exit\n");
-	fprintf(stderr, "-h, --help             print this help and exit\n");
-	fprintf(stderr, "\n");
+	printf("Usage: mini_snmpd [options]\n"
+	       "\n"
+	       "-p, --udp-port PORT    UDP port to bind to, default: 161\n"
+	       "-P, --tcp-port PORT    TCP port to bind to, default: 161\n"
+	       "-c, --community STR    Community string, default: public\n"
+	       "-D, --description STR  System description, default: none\n"
+	       "-V, --vendor OID       System vendor, default: none\n"
+	       "-L, --location STR     System location, default: none\n"
+	       "-C, --contact STR      System contact, default: none\n"
+	       "-d, --disks PATH       Disks to monitor, default: /\n"
+	       "-i, --interfaces IFACE Network interfaces to monitor, default: lo\n"
+	       "-I, --listen IFACE     Network interface to listen, default: all\n"
+	       "-t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
+	       "-a, --auth             Require authentication, i.e. SNMP version 2c)\n"
+	       "-v, --verbose          Verbose syslog messages\n"
+	       "-l, --licensing        Show licensing info and exit\n"
+	       "-h, --help             Show this help and exit\n"
+	       "\n");
 }
 
 static void print_version(void)
 {
-	fprintf(stderr, "Mini SNMP Daemon Version " VERSION "\n");
-	fprintf(stderr, "A minimal simple network management protocol daemon for embedded Linux\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Copyright (C) 2008 Robert Ernst <robert.ernst@aon.at>\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "This program is free software; you can redistribute it and/or modify\n");
-	fprintf(stderr, "it under the terms of the GNU General Public License as published by\n");
-	fprintf(stderr, "the Free Software Foundation; either version 2 of the License, or\n");
-	fprintf(stderr, "(at your option) any later version.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "This program is distributed in the hope that it will be useful,\n");
-	fprintf(stderr, "but WITHOUT ANY WARRANTY; without even the implied warranty of\n");
-	fprintf(stderr, "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n");
-	fprintf(stderr, "GNU General Public License for more details.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "You should have received a copy of the GNU General Public License\n");
-	fprintf(stderr, "along with this program; if not, write to the Free Software\n");
-	fprintf(stderr, "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA\n");
-	fprintf(stderr, "\n");
+	printf("Mini snmpd v" VERSION " -- Minimal SNMP daemon for embedded UNIX systems\n"
+	       "\n"
+	       "Copyright (C) 2008-2010  Robert Ernst <robert.ernst@aon.at>\n"
+	       "\n"
+	       "This program is free software; you can redistribute it and/or modify\n"
+	       "it under the terms of the GNU General Public License as published by\n"
+	       "the Free Software Foundation; either version 2 of the License, or\n"
+	       "(at your option) any later version.\n"
+	       "\n"
+	       "This program is distributed in the hope that it will be useful,\n"
+	       "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+	       "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+	       "GNU General Public License for more details.\n"
+	       "\n"
+	       "You should have received a copy of the GNU General Public License along\n"
+	       "with this program; if not, write to the Free Software Foundation, Inc.,\n"
+	       "51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.\n"
+	       "\n");
 }
 
 static void handle_signal(int signo)
@@ -92,20 +85,20 @@ static void handle_signal(int signo)
 
 static void handle_udp_client(void)
 {
-	struct my_sockaddr_t sockaddr;
-	my_socklen_t socklen;
 	int rv;
-	char straddr[my_inet_addrstrlen];
+	char straddr[my_inet_addrstrlen] = "";
+	my_socklen_t socklen;
+	struct my_sockaddr_t sockaddr;
 
 	/* Read the whole UDP packet from the socket at once */
-	socklen = sizeof (sockaddr);
-	rv = recvfrom(g_udp_sockfd, g_udp_client.packet, sizeof (g_udp_client.packet),
-		0, (struct sockaddr *)&sockaddr, &socklen);
-	if (g_udp_client.size == -1) {
-		lprintf(LOG_WARNING, "could not receive packet on UDP port %d: %m\n",
-			g_udp_port);
+	socklen = sizeof(sockaddr);
+	rv = recvfrom(g_udp_sockfd, g_udp_client.packet, sizeof(g_udp_client.packet),
+		      0, (struct sockaddr *)&sockaddr, &socklen);
+	if (rv == -1) {
+		lprintf(LOG_WARNING, "could not receive packet on UDP port %d: %m\n", g_udp_port);
 		return;
 	}
+
 	g_udp_client.timestamp = time(NULL);
 	g_udp_client.sockfd = g_udp_sockfd;
 	g_udp_client.addr = sockaddr.my_sin_addr;
@@ -122,7 +115,8 @@ static void handle_udp_client(void)
 		lprintf(LOG_WARNING, "could not handle packet from UDP client %s:%d: %m\n",
 			straddr, sockaddr.my_sin_port);
 		return;
-	} else if (g_udp_client.size == 0) {
+	}
+	if (g_udp_client.size == 0) {
 		lprintf(LOG_WARNING, "could not handle packet from UDP client %s:%d: ignored\n",
 			straddr, sockaddr.my_sin_port);
 		return;
@@ -141,6 +135,7 @@ static void handle_udp_client(void)
 			"only %d of %d bytes written\n", straddr,
 			sockaddr.my_sin_port, rv, (int) g_udp_client.size);
 	}
+
 #ifdef DEBUG
 	dump_packet(&g_udp_client);
 #endif
@@ -148,20 +143,21 @@ static void handle_udp_client(void)
 
 static void handle_tcp_connect(void)
 {
+	int rv;
+	char straddr[my_inet_addrstrlen] = "";
+	client_t *client;
+	my_socklen_t socklen;
 	struct my_sockaddr_t tmp_sockaddr;
 	struct my_sockaddr_t sockaddr;
-	my_socklen_t socklen;
-	client_t *client;
-	int rv;
-	char straddr[my_inet_addrstrlen];
 
 	/* Accept the new connection (remember the client's IP address and port) */
-	socklen = sizeof (sockaddr);
+	socklen = sizeof(sockaddr);
 	rv = accept(g_tcp_sockfd, (struct sockaddr *)&sockaddr, &socklen);
 	if (rv == -1) {
 		lprintf(LOG_ERR, "could not accept TCP connection: %m\n");
 		return;
-	} else if (rv >= FD_SETSIZE) {
+	}
+	if (rv >= FD_SETSIZE) {
 		lprintf(LOG_ERR, "could not accept TCP connection: FD set overflow\n");
 		close(rv);
 		return;
@@ -170,10 +166,11 @@ static void handle_tcp_connect(void)
 	/* Create a new client control structure or overwrite the oldest one */
 	if (g_tcp_client_list_length >= MAX_NR_CLIENTS) {
 		client = find_oldest_client();
-		if (client == NULL) {
+		if (!client) {
 			lprintf(LOG_ERR, "could not accept TCP connection: internal error");
 			exit(EXIT_SYSCALL);
 		}
+
 		tmp_sockaddr.my_sin_addr = client->addr;
 		tmp_sockaddr.my_sin_port = client->port;
 		inet_ntop(my_af_inet, &tmp_sockaddr.my_sin_addr, straddr, sizeof(straddr));
@@ -181,8 +178,8 @@ static void handle_tcp_connect(void)
 			MAX_NR_CLIENTS, straddr, tmp_sockaddr.my_sin_port);
 		close(client->sockfd);
 	} else {
-		client = malloc(sizeof (client_t));
-		if (client == NULL) {
+		client = malloc(sizeof(client_t));
+		if (!client) {
 			lprintf(LOG_ERR, "could not accept TCP connection: %m");
 			exit(EXIT_SYSCALL);
 		}
@@ -203,9 +200,9 @@ static void handle_tcp_connect(void)
 
 static void handle_tcp_client_write(client_t *client)
 {
-	struct my_sockaddr_t sockaddr;
 	int rv;
-	char straddr[my_inet_addrstrlen];
+	char straddr[my_inet_addrstrlen] = "";
+	struct my_sockaddr_t sockaddr;
 
 	/* Send the packet atomically and close socket if that did not work */
 	sockaddr.my_sin_addr = client->addr;
@@ -218,7 +215,8 @@ static void handle_tcp_client_write(client_t *client)
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
-	} else if (rv != client->size) {
+	}
+	if (rv != client->size) {
 		lprintf(LOG_WARNING, "could not send packet to TCP client %s:%d: "
 			"only %d of %d bytes written\n", straddr,
 			sockaddr.my_sin_port, rv, (int) client->size);
@@ -226,6 +224,7 @@ static void handle_tcp_client_write(client_t *client)
 		client->sockfd = -1;
 		return;
 	}
+
 #ifdef DEBUG
 	dump_packet(client);
 #endif
@@ -237,15 +236,14 @@ static void handle_tcp_client_write(client_t *client)
 
 static void handle_tcp_client_read(client_t *client)
 {
-	struct my_sockaddr_t sockaddr;
 	int rv;
-	char straddr[my_inet_addrstrlen];
+	char straddr[my_inet_addrstrlen] = "";
+	struct my_sockaddr_t sockaddr;
 
 	/* Read from the socket what arrived and put it into the buffer */
 	sockaddr.my_sin_addr = client->addr;
 	sockaddr.my_sin_port = client->port;
-	rv = read(client->sockfd, client->packet + client->size,
-		sizeof (client->packet) - client->size);
+	rv = read(client->sockfd, client->packet + client->size, sizeof(client->packet) - client->size);
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (rv == -1) {
 		lprintf(LOG_WARNING, "could not read packet from TCP client %s:%d: %m\n",
@@ -253,7 +251,8 @@ static void handle_tcp_client_read(client_t *client)
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
-	} else if (rv == 0) {
+	}
+	if (rv == 0) {
 		lprintf(LOG_DEBUG, "disconnected TCP client %s:%d\n",
 			straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
@@ -271,10 +270,12 @@ static void handle_tcp_client_read(client_t *client)
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
-	} else if (rv == 0) {
+	}
+	if (rv == 0) {
 		return;
 	}
 	client->outgoing = 0;
+
 #ifdef DEBUG
 	dump_packet(client);
 #endif
@@ -286,21 +287,18 @@ static void handle_tcp_client_read(client_t *client)
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
-	} else if (client->size == 0) {
+	}
+	if (client->size == 0) {
 		lprintf(LOG_WARNING, "could not handle packet from TCP client %s:%d: ignored\n",
 			straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	}
+
 	client->outgoing = 1;
 }
 
-
-
-/* -----------------------------------------------------------------------------
- * Main program
- */
 
 int main(int argc, char *argv[])
 {
@@ -324,20 +322,14 @@ int main(int argc, char *argv[])
 		{ "help", 0, 0, 'h' },
 		{ NULL, 0, 0, 0 }
 	};
-	int option_index = 1;
-	int c;
-
-	struct my_sockaddr_t sockaddr;
-	my_socklen_t socklen;
+	int i, ticks, nfds, c, option_index = 1;
+	fd_set rfds, wfds;
+	struct ifreq ifreq;
 	struct timeval tv_last;
 	struct timeval tv_now;
 	struct timeval tv_sleep;
-	struct ifreq ifreq;
-	int ticks;
-	fd_set rfds;
-	fd_set wfds;
-	int nfds;
-	int i;
+	my_socklen_t socklen;
+	struct my_sockaddr_t sockaddr;
 
 	/* Prevent TERM and HUP signals from interrupting system calls */
 	signal(SIGTERM, handle_signal);
@@ -353,53 +345,67 @@ int main(int argc, char *argv[])
 	/* Parse commandline options */
 	while (1) {
 		c = getopt_long(argc, argv, short_options, long_options, &option_index);
-		if (c == -1) {
+		if (c == -1)
 			break;
-		}
+
 		switch (c) {
 			case 'p':
 				g_udp_port = atoi(optarg);
 				break;
+
 			case 'P':
 				g_tcp_port = atoi(optarg);
 				break;
+
 			case 'c':
 				g_community = strdup(optarg);
 				break;
+
 			case 'D':
 				g_description = strdup(optarg);
 				break;
+
 			case 'V':
 				g_vendor = strdup(optarg);
 				break;
+
 			case 'L':
 				g_location = strdup(optarg);
 				break;
+
 			case 'C':
 				g_contact = strdup(optarg);
 				break;
+
 			case 'I':
 				g_bind_to_device = strdup(optarg);
 				break;
+
 			case 'd':
 				g_disk_list_length = split(optarg, ",:;", g_disk_list, MAX_NR_DISKS);
 				break;
+
 			case 'i':
 				g_interface_list_length = split(optarg, ",:;", g_interface_list, MAX_NR_INTERFACES);
 				break;
+
 			case 't':
 				g_timeout = atoi(optarg) * 100;
 				break;
+
 			case 'a':
 				g_auth = 1;
 				break;
+
 			case 'v':
 				g_verbose = 1;
 				break;
+
 			case 'l':
 				print_version();
 				exit(EXIT_ARGS);
 				break;
+
 			default:
 				print_help();
 				exit(EXIT_ARGS);
@@ -407,29 +413,28 @@ int main(int argc, char *argv[])
 	}
 
 	/* Print a starting message (so the user knows the args were ok) */
-	if (g_bind_to_device[0] != '\0') {
+	if (g_bind_to_device) {
 		lprintf(LOG_INFO, "started, listening on port %d/udp and %d/tcp on interface %s\n",
 			g_udp_port, g_tcp_port, g_bind_to_device);
 	} else {
-		lprintf(LOG_INFO, "started, listening on port %d/udp and %d/tcp\n",
-			g_udp_port, g_tcp_port);
+		lprintf(LOG_INFO, "started, listening on port %d/udp and %d/tcp\n", g_udp_port, g_tcp_port);
 	}
 
 	/* Store the starting time since we need it for MIB updates */
 	if (gettimeofday(&tv_last, NULL) == -1) {
-		memset(&tv_last, 0, sizeof (tv_last));
-		memset(&tv_sleep, 0, sizeof (tv_sleep));
+		memset(&tv_last, 0, sizeof(tv_last));
+		memset(&tv_sleep, 0, sizeof(tv_sleep));
 	} else {
 		tv_sleep.tv_sec = g_timeout / 100;
 		tv_sleep.tv_usec = (g_timeout % 100) * 10000;
 	}
 
 	/* Build the MIB and execute the first MIB update to get actual values */
-	if (mib_build() == -1) {
+	if (mib_build() == -1)
 		exit(EXIT_SYSCALL);
-	} else if (mib_update(1) == -1) {
+	if (mib_update(1) == -1)
 		exit(EXIT_SYSCALL);
-	}
+
 #ifdef DEBUG
 	dump_mib(g_mib, g_mib_length);
 #endif
@@ -440,19 +445,21 @@ int main(int argc, char *argv[])
 		lprintf(LOG_ERR, "could not create UDP socket: %m\n");
 		exit(EXIT_SYSCALL);
 	}
+
 	sockaddr.my_sin_family = my_af_inet;
 	sockaddr.my_sin_port = htons(g_udp_port);
 	sockaddr.my_sin_addr = my_inaddr_any;
-	socklen = sizeof (sockaddr);
+	socklen = sizeof(sockaddr);
 	if (bind(g_udp_sockfd, (struct sockaddr *)&sockaddr, socklen) == -1) {
 		lprintf(LOG_ERR, "could not bind UDP socket to port %d: %m\n", g_udp_port);
 		exit(EXIT_SYSCALL);
 	}
-	if (g_bind_to_device[0] != '\0') {
-		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof (ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
+
+	if (g_bind_to_device) {
+		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof(ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
 		if (setsockopt(g_udp_sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifreq, sizeof(ifreq)) == -1) {
 			lprintf(LOG_WARNING, "could not bind UDP socket to device %s: %m\n", g_bind_to_device);
-		    exit(EXIT_SYSCALL);    
+			exit(EXIT_SYSCALL);
 		}
 	}
 
@@ -462,26 +469,30 @@ int main(int argc, char *argv[])
 		lprintf(LOG_ERR, "could not create TCP socket: %m\n");
 		exit(EXIT_SYSCALL);
 	}
-	if (g_bind_to_device[0] != '\0') {
-		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof (ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
+
+	if (g_bind_to_device) {
+		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof(ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
 		if (setsockopt(g_tcp_sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifreq, sizeof(ifreq)) == -1) {
 			lprintf(LOG_WARNING, "could not bind TCP socket to device %s: %m\n", g_bind_to_device);
-		    exit(EXIT_SYSCALL);    
+			exit(EXIT_SYSCALL);
 		}
 	}
-	i = 1;
-	if (setsockopt(g_tcp_sockfd, SOL_SOCKET, SO_REUSEADDR, &c, sizeof (i)) == -1) {
+
+	c = 1;
+	if (setsockopt(g_tcp_sockfd, SOL_SOCKET, SO_REUSEADDR, &c, sizeof(c)) == -1) {
 		lprintf(LOG_WARNING, "could not set SO_REUSEADDR on TCP socket: %m\n");
 		exit(EXIT_SYSCALL);
 	}
+
 	sockaddr.my_sin_family = my_af_inet;
 	sockaddr.my_sin_port = htons(g_tcp_port);
 	sockaddr.my_sin_addr = my_inaddr_any;
-	socklen = sizeof (sockaddr);
+	socklen = sizeof(sockaddr);
 	if (bind(g_tcp_sockfd, (struct sockaddr *)&sockaddr, socklen) == -1) {
 		lprintf(LOG_ERR, "could not bind TCP socket to port %d: %m\n", g_tcp_port);
 		exit(EXIT_SYSCALL);
 	}
+
 	if (listen(g_tcp_sockfd, 128) == -1) {
 		lprintf(LOG_ERR, "could not prepare TCP socket for listening: %m\n");
 		exit(EXIT_SYSCALL);
@@ -495,70 +506,74 @@ int main(int argc, char *argv[])
 		FD_SET(g_udp_sockfd, &rfds);
 		FD_SET(g_tcp_sockfd, &rfds);
 		nfds = (g_udp_sockfd > g_tcp_sockfd) ? g_udp_sockfd : g_tcp_sockfd;
+
 		for (i = 0; i < g_tcp_client_list_length; i++) {
-			if (g_tcp_client_list[i]->outgoing) {
+			if (g_tcp_client_list[i]->outgoing)
 				FD_SET(g_tcp_client_list[i]->sockfd, &wfds);
-			} else {
+			else
 				FD_SET(g_tcp_client_list[i]->sockfd, &rfds);
-			}
-			if (nfds < g_tcp_client_list[i]->sockfd) {
+
+			if (nfds < g_tcp_client_list[i]->sockfd)
 				nfds = g_tcp_client_list[i]->sockfd;
-			}
 		}
+
 		if (select(nfds + 1, &rfds, &wfds, NULL, &tv_sleep) == -1) {
-			if (g_quit) {
+			if (g_quit)
 				break;
-			}
+
 			lprintf(LOG_ERR, "could not select from sockets: %m\n");
 			exit(EXIT_SYSCALL);
 		}
+
 		/* Determine whether to update the MIB and the next ticks to sleep */
 		ticks = ticks_since(&tv_last, &tv_now);
 		if (ticks < 0 || ticks >= g_timeout) {
 			lprintf(LOG_DEBUG, "updating the MIB (full)\n");
-			if (mib_update(1) == -1) {
+			if (mib_update(1) == -1)
 				exit(EXIT_SYSCALL);
-			}
-			memcpy(&tv_last, &tv_now, sizeof (tv_now));
+
+			memcpy(&tv_last, &tv_now, sizeof(tv_now));
 			tv_sleep.tv_sec = g_timeout / 100;
 			tv_sleep.tv_usec = (g_timeout % 100) * 10000;
 		} else {
 			lprintf(LOG_DEBUG, "updating the MIB (partial)\n");
-			if (mib_update(0) == -1) {
+			if (mib_update(0) == -1)
 				exit(EXIT_SYSCALL);
-			}
+
 			tv_sleep.tv_sec = (g_timeout - ticks) / 100;
 			tv_sleep.tv_usec = ((g_timeout - ticks) % 100) * 10000;
 		}
+
 #ifdef DEBUG
 		dump_mib(g_mib, g_mib_length);
 #endif
+
 		/* Handle UDP packets, TCP packets and TCP connection connects */
-		if (FD_ISSET(g_udp_sockfd, &rfds)) {
+		if (FD_ISSET(g_udp_sockfd, &rfds))
 			handle_udp_client();
-		}
-		if (FD_ISSET(g_tcp_sockfd, &rfds)) {
+
+		if (FD_ISSET(g_tcp_sockfd, &rfds))
 			handle_tcp_connect();
-		}
+
 		for (i = 0; i < g_tcp_client_list_length; i++) {
 			if (g_tcp_client_list[i]->outgoing) {
-				if (FD_ISSET(g_tcp_client_list[i]->sockfd, &wfds)) {
+				if (FD_ISSET(g_tcp_client_list[i]->sockfd, &wfds))
 					handle_tcp_client_write(g_tcp_client_list[i]);
-				}
 			} else {
-				if (FD_ISSET(g_tcp_client_list[i]->sockfd, &rfds)) {
+				if (FD_ISSET(g_tcp_client_list[i]->sockfd, &rfds))
 					handle_tcp_client_read(g_tcp_client_list[i]);
-				}
 			}
 		}
+
 		/* If there was a TCP disconnect, remove the client from the list */
 		for (i = 0; i < g_tcp_client_list_length; i++) {
 			if (g_tcp_client_list[i]->sockfd == -1) {
 				g_tcp_client_list_length--;
 				if (i < g_tcp_client_list_length) {
+					size_t len = (g_tcp_client_list_length - i) * sizeof(g_tcp_client_list[i]);
+
 					free(g_tcp_client_list[i]);
-					memmove(&g_tcp_client_list[i], &g_tcp_client_list[i + 1],
-						(g_tcp_client_list_length - i) * sizeof (g_tcp_client_list[i]));
+					memmove(&g_tcp_client_list[i], &g_tcp_client_list[i + 1], len);
 				}
 			}
 		}
@@ -569,8 +584,6 @@ int main(int argc, char *argv[])
 
 	return EXIT_OK;
 }
-
-
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */

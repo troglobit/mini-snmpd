@@ -1,5 +1,6 @@
-/* -----------------------------------------------------------------------------
- * Copyright (C) 2008 Robert Ernst <robert.ernst@linux-solutions.at>
+/* Global variables
+ *
+ * Copyright (C) 2008-2010  Robert Ernst <robert.ernst@linux-solutions.at>
  *
  * This file may be distributed and/or modified under the terms of the
  * GNU General Public License version 2 as published by the Free Software
@@ -12,7 +13,7 @@
  * See COPYING for GPL licensing information.
  */
 
-
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -20,39 +21,40 @@
 
 #include "mini_snmpd.h"
 
-
-
-/* -----------------------------------------------------------------------------
- * Global variables
- */
-
 #ifndef CONFIG_ENABLE_IPV6
 const struct in_addr inaddr_any = { INADDR_ANY };
 #endif
 
+int       g_timeout = 100;
+int       g_auth    = 0;
+int       g_verbose = 0;
+int       g_quit    = 0;
+
+char     *g_community      = "public";
+char     *g_vendor         = VENDOR;
+char     *g_description    = NULL;
+char     *g_location       = NULL;
+char     *g_contact        = NULL;
+char     *g_bind_to_device = NULL;
+
+char     *g_disk_list[MAX_NR_DISKS];
+int       g_disk_list_length = 0;
+
+char     *g_interface_list[MAX_NR_INTERFACES];
+int       g_interface_list_length = 0;
+
 in_port_t g_udp_port = 161;
 in_port_t g_tcp_port = 161;
-int g_timeout = 100;
-int g_auth = 0;
-int g_verbose = 0;
-int g_quit = 0;
-char *g_community = "public";
-char *g_vendor = VENDOR;
-char *g_description = "";
-char *g_location = "";
-char *g_contact = "";
-char *g_bind_to_device = "";
-char *g_disk_list[MAX_NR_DISKS];
-int g_disk_list_length = 0;
-char *g_interface_list[MAX_NR_INTERFACES];
-int g_interface_list_length = 0;
-client_t g_udp_client = { 0, };
+
+int       g_udp_sockfd = -1;
+int       g_tcp_sockfd = -1;
+
+client_t  g_udp_client = { 0, };
 client_t *g_tcp_client_list[MAX_NR_CLIENTS];
-int g_tcp_client_list_length = 0;
-int g_udp_sockfd = -1;
-int g_tcp_sockfd = -1;
-value_t g_mib[MAX_NR_VALUES];
-int g_mib_length = 0;
+int       g_tcp_client_list_length = 0;
+
+value_t   g_mib[MAX_NR_VALUES];
+int       g_mib_length = 0;
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */
