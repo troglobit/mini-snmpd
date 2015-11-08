@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
 				break;
 
 			case 'i':
-				g_interface_list_length = split(optarg, ",:;", g_interface_list, MAX_NR_INTERFACES);
+				g_interface_list_length = split(optarg, ",;", g_interface_list, MAX_NR_INTERFACES);
 				break;
 
 			case 't':
