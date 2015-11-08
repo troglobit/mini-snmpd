@@ -1,6 +1,7 @@
 Joachim Nilsson
     Contributions:  New maintainer
-    Web:            http://troglobit.com/mini-snmpd/
+    Web:            http://troglobit.com/mini-snmpd.html
+    GitHub:         https://github.com/troglobit/mini-snmpd
 
 Robert Ernst
     Contributios:   Main branch of mini_snmpd
@@ -13,4 +14,7 @@ Tofig Suleymanov
 
 Linus Lüssing
     Contributions:  Patches for IPv6 support
+
+Javier Palacios
+    Contributions:  Lots of cleanup and code simplification
 
