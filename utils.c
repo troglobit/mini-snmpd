@@ -60,6 +60,9 @@ unsigned int read_value(const char *buf, const char *prefix)
 		return 0;
 
 	buf += strlen(prefix);
+	if (*buf == ':')
+		buf++;
+
 	while (isspace(*buf))
 		buf++;
 
@@ -77,6 +80,9 @@ void read_values(const char *buf, const char *prefix, unsigned int *values, int 
 	}
 
 	buf += strlen(prefix);
+	if (*buf == ':')
+		buf++;
+
 	for (i = 0; i < count; i++) {
 		while (isspace(*buf))
 			buf++;

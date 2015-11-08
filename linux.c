@@ -89,11 +89,11 @@ void get_meminfo(meminfo_t *meminfo)
 		return;
 	}
 
-	meminfo->total   = read_value(buf, "MemTotal:");
-	meminfo->free    = read_value(buf, "MemFree:");
-	meminfo->shared  = read_value(buf, "MemShared:");
-	meminfo->buffers = read_value(buf, "Buffers:");
-	meminfo->cached  = read_value(buf, "Cached:");
+	meminfo->total   = read_value(buf, "MemTotal");
+	meminfo->free    = read_value(buf, "MemFree");
+	meminfo->shared  = read_value(buf, "MemShared");
+	meminfo->buffers = read_value(buf, "Buffers");
+	meminfo->cached  = read_value(buf, "Cached");
 }
 
 void get_cpuinfo(cpuinfo_t *cpuinfo)
@@ -147,7 +147,6 @@ void get_netinfo(netinfo_t *netinfo)
 	int fd;
 	size_t i;
 	char buf[BUFSIZ];
-	char name[16];
 	unsigned int values[16];
 	struct ifreq ifreq;
 
@@ -167,13 +166,7 @@ void get_netinfo(netinfo_t *netinfo)
 				netinfo->status[i] = 2;
 		}
 
-		if (buf[0] == 0) {
-			memset(values, 0, sizeof(values));
-		} else {
-			snprintf(name, sizeof(name), "%s:", g_interface_list[i]);
-			read_values(buf, name, values, 16);
-		}
-
+		read_values(buf, g_interface_list[i], values, 16);
 		netinfo->rx_bytes[i]   = values[0];
 		netinfo->rx_packets[i] = values[1];
 		netinfo->rx_errors[i]  = values[2];
