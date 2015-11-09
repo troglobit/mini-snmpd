@@ -44,7 +44,7 @@
 	if ((resp)->value_list_length < MAX_NR_VALUES)			\
 		SNMP_VERSION_2_ERROR((resp), (req), (index), err); 	\
 									\
-	lprintf(LOG_ERR, msg);						\
+	lprintf(LOG_ERR, "%s", msg);					\
 	return -1;							\
 }
 
@@ -272,13 +272,19 @@ static int decode_snmp_request(request_t *request, client_t *client)
 {
 	int type;
 	size_t pos = 0, len = 0;
+	const char *header_msg  = "Unexpected SNMP header";
+	const char *error_msg   = "Unexpected SNMP error";
+	const char *request_msg = "Unexpected SNMP request";
+	const char *varbind_msg = "Unexpected SNMP varbindings";
+	const char *commun_msg  = "SNMP community";
+	const char *version_msg = "SNMP version";
 
 	/* The SNMP message is enclosed in a sequence */
 	if (decode_len(client->packet, client->size, &pos, &type, &len) == -1)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP header type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "%s type %02X length %zu\n", header_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -288,7 +294,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len != 1) {
-		lprintf(LOG_DEBUG, "unexpected SNMP version type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "Unexpected %s type %02X length %zu\n", version_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -297,7 +303,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (request->version != SNMP_VERSION_1 && request->version != SNMP_VERSION_2C) {
-		lprintf(LOG_DEBUG, "unsupported SNMP version %d\n", request->version);
+		lprintf(LOG_DEBUG, "Unsupported %s %d\n", version_msg, request->version);
 		errno = EINVAL;
 		return -1;
 	}
@@ -307,7 +313,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_OCTET_STRING || len >= sizeof(request->community)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP community type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "Unexpected %s type %02X length %zu\n", commun_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -316,7 +322,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (strlen(request->community) < 1) {
-		lprintf(LOG_DEBUG, "unsupported SNMP community '%s'\n", request->community);
+		lprintf(LOG_DEBUG, "unsupported %s '%s'\n", commun_msg, request->community);
 		errno = EINVAL;
 		return -1;
 	}
@@ -326,7 +332,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP request type type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "%s type type %02X length %zu\n", request_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -337,7 +343,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "unexpected SNMP request id type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "%s id type %02X length %zu\n", request_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -350,7 +356,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "unexpected SNMP error state type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "%s state type %02X length %zu\n", error_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -363,7 +369,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "unexpected SNMP error index type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "%s index type %02X length %zu\n", error_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -376,7 +382,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP varbindings type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "%s type %02X length %zu\n", varbind_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -386,7 +392,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 	while (pos < client->size) {
 		/* If there is not enough room in the OID list, bail out now */
 		if (request->oid_list_length >= MAX_NR_OIDS) {
-			lprintf(LOG_DEBUG, "overflow for OID list\n");
+			lprintf(LOG_DEBUG, "Overflow in OID list\n");
 			errno = EFAULT;
 			return -1;
 		}
@@ -396,7 +402,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if (type != BER_TYPE_SEQUENCE || len < 1) {
-			lprintf(LOG_DEBUG, "unexpected SNMP varbinding type %02X length %zu\n", type, len);
+			lprintf(LOG_DEBUG, "%s type %02X length %zu\n", varbind_msg, type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -406,7 +412,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if (type != BER_TYPE_OID || len < 1) {
-			lprintf(LOG_DEBUG, "unexpected SNMP varbinding OID type %02X length %zu\n", type, len);
+			lprintf(LOG_DEBUG, "%s OID type %02X length %zu\n", varbind_msg, type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -419,7 +425,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if ((type == BER_TYPE_NULL && len) || (type != BER_TYPE_NULL && !len)) {
-			lprintf(LOG_DEBUG, "unexpected SNMP varbinding value type %02X length %zu\n", type, len);
+			lprintf(LOG_DEBUG, "%s value type %02X length %zu\n", varbind_msg, type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -597,35 +603,37 @@ static int encode_snmp_oid(unsigned char *buf, const oid_t *oid)
 	return 0;
 }
 
+static int log_encoding_error(const char *what, const char *why)
+{
+	lprintf(LOG_ERR, "Failed encoding %s: %s\n", what, why);
+	return -1;
+}
+
 static int encode_snmp_varbind(unsigned char *buf, size_t *pos, const value_t *value)
 {
 	size_t len;
 
 	/* The value of the variable binding (NULL for error responses) */
 	len = value->data.encoded_length;
-	if (*pos >= len) {
-		memcpy(&buf[*pos - len], value->data.buffer, len);
-		*pos = *pos - len;
-	} else {
-		lprintf(LOG_ERR, "could not encode '%s': DATA overflow\n", oid_ntoa(&value->oid));
-		return -1;
-	}
+	if (*pos < len)
+		return log_encoding_error(oid_ntoa(&value->oid), "DATA overflow");
+
+	memcpy(&buf[*pos - len], value->data.buffer, len);
+	*pos = *pos - len;
 
 	/* The OID of the variable binding */
 	len = value->oid.encoded_length;
-	if (*pos < len) {
-		lprintf(LOG_ERR, "could not encode '%s': OID overflow\n", oid_ntoa(&value->oid));
-		return -1;
-	}
+	if (*pos < len)
+		return log_encoding_error(oid_ntoa(&value->oid), "OID overflow");
+
 	encode_snmp_oid(&buf[*pos - len], &value->oid);
 	*pos = *pos - len;
 
 	/* The sequence header (type and length) of the variable binding */
 	len = get_hdrlen(value->oid.encoded_length + value->data.encoded_length);
-	if (*pos < len) {
-		lprintf(LOG_ERR, "could not encode '%s': VARBIND overflow\n", oid_ntoa(&value->oid));
-		return -1;
-	}
+	if (*pos < len)
+		return log_encoding_error(oid_ntoa(&value->oid), "VARBIND overflow");
+
 	encode_snmp_sequence_header(&buf[*pos - len], value->oid.encoded_length + value->data.encoded_length, BER_TYPE_SEQUENCE);
 	*pos = *pos - len;
 
@@ -640,10 +648,8 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 	 * omit any varbind values (replace them with NULL values)
 	 */
 	if (response->error_status != SNMP_STATUS_OK) {
-		if (request->oid_list_length > MAX_NR_VALUES) {
-			lprintf(LOG_ERR, "could not encode SNMP response: value list overflow\n");
-			return -1;
-		}
+		if (request->oid_list_length > MAX_NR_VALUES)
+			return log_encoding_error("SNMP response", "value list overflow");
 
 		for (i = 0; i < request->oid_list_length; i++) {
 			memcpy(&response->value_list[i].oid, &request->oid_list[i], sizeof(request->oid_list[i]));
@@ -669,66 +675,58 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 	}
 
 	len = get_hdrlen(MAX_PACKET_SIZE - pos);
-	if (pos < len) {
-		lprintf(LOG_ERR, "could not encode response: VARBINDS overflow\n");
-		return -1;
-	}
+	if (pos < len)
+		return log_encoding_error("SNMP response", "VARBINDS overflow");
+
 	encode_snmp_sequence_header(&client->packet[pos - len], MAX_PACKET_SIZE - pos, BER_TYPE_SEQUENCE);
 	pos = pos - len;
 
 	len = get_intlen(response->error_index);
-	if (pos < len) {
-		lprintf(LOG_ERR, "could not encode response: ERROR INDEX overflow\n");
-		return -1;
-	}
+	if (pos < len)
+		return log_encoding_error("SNMP response", "ERROR INDEX overflow");
+
 	encode_snmp_integer(&client->packet[pos - len], response->error_index);
 	pos = pos - len;
 
 	len = get_intlen(response->error_status);
-	if (pos < len) {
-		lprintf(LOG_ERR, "could not encode response: ERROR STATUS overflow\n");
-		return -1;
-	}
+	if (pos < len)
+		return log_encoding_error("SNMP response", "ERROR STATUS overflow");
+
 	encode_snmp_integer(&client->packet[pos - len], response->error_status);
 	pos = pos - len;
 
 	len = get_intlen(request->id);
-	if (pos < len) {
-		lprintf(LOG_ERR, "could not encode response: ID overflow\n");
-		return -1;
-	}
+	if (pos < len)
+		return log_encoding_error("SNMP response", "ID overflow");
+
 	encode_snmp_integer(&client->packet[pos - len], request->id);
 	pos = pos - len;
 
 	len = get_hdrlen(MAX_PACKET_SIZE - pos);
-	if (pos < len) {
-		lprintf(LOG_ERR, "could not encode response: PDU overflow\n");
-		return -1;
-	}
+	if (pos < len)
+		return log_encoding_error("SNMP response", "PDU overflow");
+
 	encode_snmp_sequence_header(&client->packet[pos - len], MAX_PACKET_SIZE - pos, BER_TYPE_SNMP_RESPONSE);
 	pos = pos - len;
 
 	len = get_strlen(request->community);
-	if (pos < len) {
-		lprintf(LOG_ERR, "could not encode response: COMMUNITY overflow\n");
-		return -1;
-	}
+	if (pos < len)
+		return log_encoding_error("SNMP response", "COMMUNITY overflow");
+
 	encode_snmp_string(&client->packet[pos - len], request->community);
 	pos = pos - len;
 
 	len = get_intlen(request->version);
-	if (pos < len) {
-		lprintf(LOG_ERR, "could not encode response: VERSION overflow\n");
-		return -1;
-	}
+	if (pos < len)
+		return log_encoding_error("SNMP response", "VERSION overflow");
+
 	encode_snmp_integer(&client->packet[pos - len], request->version);
 	pos = pos - len;
 
 	len = get_hdrlen(MAX_PACKET_SIZE - pos);
-	if (pos < len) {
-		lprintf(LOG_ERR, "could not encode response: RESPONSE overflow\n");
-		return -1;
-	}
+	if (pos < len)
+		return log_encoding_error("SNMP response", "RESPONSE overflow");
+
 	encode_snmp_sequence_header(&client->packet[pos - len], MAX_PACKET_SIZE - pos, BER_TYPE_SEQUENCE);
 	pos = pos - len;
 
@@ -748,6 +746,7 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *U
 {
 	size_t i, pos = 0;
 	value_t *value;
+	const char *msg = "Failed handling SNMP GET: value list overflow\n";
 
 	/*
 	 * Search each varbinding of the request and append the value to the
@@ -757,19 +756,16 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *U
 	for (i = 0; i < request->oid_list_length; i++) {
 		value = mib_find(&request->oid_list[i], &pos);
 		if (!value)
-			return -1;
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_object, msg);
 
 		if (pos >= g_mib_length)
-			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_object,
-				       "could not handle SNMP GET: value list overflow\n");
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_object, msg);
 
 		if (value->oid.subid_list_length == (request->oid_list[i].subid_list_length + 1))
-			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_instance,
-				       "could not handle SNMP GET: value list overflow\n");
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_instance, msg);
 
 		if (value->oid.subid_list_length != request->oid_list[i].subid_list_length)
-			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_object,
-				       "could not handle SNMP GET: value list overflow\n");
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_object, msg);
 
 		if (response->value_list_length < MAX_NR_VALUES) {
 			memcpy(&response->value_list[response->value_list_length], value, sizeof(*value));
@@ -777,7 +773,7 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *U
 			continue;
 		}
 
-		lprintf(LOG_ERR, "could not handle SNMP GET: value list overflow\n");
+		lprintf(LOG_ERR, "%s", msg);
 		return -1;
 	}
 
@@ -788,6 +784,7 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 {
 	size_t i;
 	value_t *value;
+	const char *msg = "Failed handling SNMP GETNEXT: value list overflow\n";
 
 	/*
 	 * Search each varbinding of the request and append the value to the
@@ -797,8 +794,7 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 	for (i = 0; i < request->oid_list_length; i++) {
 		value = mib_findnext(&request->oid_list[i]);
 		if (!value)
-			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_end_of_mib_view,
-				       "could not handle SNMP GETNEXT: value list overflow\n");
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_end_of_mib_view, msg);
 
 		if (response->value_list_length < MAX_NR_VALUES) {
 			memcpy(&response->value_list[response->value_list_length], value, sizeof(*value));
@@ -806,7 +802,7 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 			continue;
 		}
 
-		lprintf(LOG_ERR, "could not handle SNMP GETNEXT: value list overflow\n");
+		lprintf(LOG_ERR, "%s", msg);
 		return -1;
 	}
 
@@ -824,6 +820,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 	size_t i, j;
 	oid_t oid_list[MAX_NR_OIDS];
 	value_t *value;
+	const char *msg = "Failed handling SNMP GETBULK: value list overflow\n";
 
 	/* Make a local copy of the OID list since we are going to modify it */
 	memcpy(oid_list, request->oid_list, sizeof(request->oid_list));
@@ -835,8 +832,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 
 		value = mib_findnext(&oid_list[i]);
 		if (!value)
-			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_end_of_mib_view,
-				       "could not handle SNMP GETBULK: value list overflow\n");
+			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_end_of_mib_view, msg);
 
 		if (response->value_list_length < MAX_NR_VALUES) {
 			memcpy(&response->value_list[response->value_list_length], value, sizeof(*value));
@@ -844,7 +840,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 			continue;
 		}
 
-		lprintf(LOG_ERR, "could not handle SNMP GETNEXT: value list overflow\n");
+		lprintf(LOG_ERR, "%s", msg);
 		return -1;
 	}
 
@@ -864,8 +860,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 		for (i = request->non_repeaters; i < request->oid_list_length; i++) {
 			value = mib_findnext(&oid_list[i]);
 			if (!value)
-				SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_end_of_mib_view,
-					       "could not handle SNMP GETBULK: value list overflow\n");
+				SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_end_of_mib_view, msg);
 
 			if (response->value_list_length < MAX_NR_VALUES) {
 				memcpy(&response->value_list[response->value_list_length], value, sizeof(*value));
@@ -875,7 +870,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 				continue;
 			}
 
-			lprintf(LOG_ERR, "could not handle SNMP GETNEXT: value list overflow\n");
+			lprintf(LOG_ERR, "%s", msg);
 			return -1;
 		}
 
@@ -905,7 +900,7 @@ int snmp_packet_complete(const client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len < 1 || len > (client->size - pos)) {
-		lprintf(LOG_DEBUG, "unexpected SNMP header type %02X length %zu\n", type, len);
+		lprintf(LOG_DEBUG, "Unexpected SNMP header type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -966,6 +961,7 @@ int snmp(client_t *client)
 			break;
 
 		default:
+			lprintf(LOG_ERR, "UNHANDLED REQUEST TYPE %d\n", request.type);
 			client->size = 0;
 			return 0;
 	}
@@ -978,6 +974,7 @@ done:
 	return 0;
 }
 
+#ifdef DEBUG
 int snmp_element_as_string(const data_t *data, char *buf, size_t size)
 {
 	size_t i, len, pos = 0;
@@ -1040,6 +1037,7 @@ int snmp_element_as_string(const data_t *data, char *buf, size_t size)
 
 	return 0;
 }
+#endif /* DEBUG */
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */
