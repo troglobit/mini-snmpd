@@ -393,7 +393,7 @@ static int data_alloc(data_t *data, int type)
  * assume the buffer was allocated to hold the maximum possible value when
  * the MIB was built!
  */
-int data_set(data_t *data, int type, const void *arg)
+static int data_set(data_t *data, int type, const void *arg)
 {
 	switch (type) {
 		case BER_TYPE_INTEGER:
