@@ -509,18 +509,63 @@ int mib_build(void)
 		if (mib_build_entry(&m_if_1_oid, 1, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)g_interface_list_length) == -1)
 			return -1;
 
+		/* ifIndex -- XXX: Should be system ifindex! */
 		for (i = 0; i < g_interface_list_length; i++) {
 			if (mib_build_entry(&m_if_2_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)(i + 1)) == -1)
 				return -1;
 		}
 
+		/* ifDescription */
 		for (i = 0; i < g_interface_list_length; i++) {
 			if (mib_build_entry(&m_if_2_oid, 2, i + 1, BER_TYPE_OCTET_STRING, g_interface_list[i]) == -1)
 				return -1;
 		}
 
-		if (mib_build_entries(&m_if_2_oid,  8, 1, g_interface_list_length, BER_TYPE_INTEGER) == -1 ||
-		    mib_build_entries(&m_if_2_oid, 10, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
+		/* ifType: ENUM, ethernetCsmacd(6) <-- recommended for all types of Ethernets */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_if_2_oid, 3, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)6) == -1)
+				return -1;
+		}
+
+		/* ifMtu */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_if_2_oid, 4, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)1500) == -1)
+				return -1;
+		}
+
+		/* ifSpeed (in bps) */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_if_2_oid, 5, i + 1, BER_TYPE_COUNTER, (const void *)(intptr_t)1000000000) == -1)
+				return -1;
+		}
+
+		/* ifPhysAddress */
+		for (i = 0; i < g_interface_list_length; i++) {
+			unsigned char mac[] = { 0xc0, 0xff, 0xee, 0xde, 0xad, i + 1, 0x00 };
+
+			if (mib_build_entry(&m_if_2_oid, 6, i + 1, BER_TYPE_OCTET_STRING, mac) == -1)
+				return -1;
+		}
+
+		/* ifAdminStatus: up(1), down(2), testing(3) */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_if_2_oid, 7, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)1) == -1)
+				return -1;
+		}
+
+		/* ifOperStatus: up(1), down(2), testing(3), unknown(4), dormant(5), notPresent(6), lowerLayerDown(7) */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_if_2_oid, 8, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)1) == -1)
+				return -1;
+		}
+
+		/* ifLastChange */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_if_2_oid, 9, i + 1, BER_TYPE_COUNTER, (const void *)(intptr_t)0) == -1)
+				return -1;
+		}
+
+		if (mib_build_entries(&m_if_2_oid, 10, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
 		    mib_build_entries(&m_if_2_oid, 11, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
 		    mib_build_entries(&m_if_2_oid, 13, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
 		    mib_build_entries(&m_if_2_oid, 14, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
