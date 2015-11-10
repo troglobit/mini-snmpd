@@ -130,14 +130,12 @@ static int encode_string(data_t *data, const char *string)
 
 static int encode_oid(data_t *data, const oid_t *oid)
 {
-	size_t i, len;
-	unsigned char *buffer;
+	size_t i, len = 1;
+	unsigned char *buffer = data->buffer;
 
 	if (!oid)
 		return 2;
 
-	buffer = data->buffer;
-	len = 1;
 	for (i = 2; i < oid->subid_list_length; i++) {
 		if (oid->subid_list[i] >= (1 << 28))
 			len += 5;
@@ -431,7 +429,6 @@ static int mib_build_entries(const oid_t *prefix, int column, int row_from, int 
 
 static int mib_update_entry(const oid_t *prefix, int column, int row, size_t *pos, int type, const void *arg)
 {
-	int ret;
 	oid_t oid;
 	value_t *value;
 	const char *msg = "Failed updating OID";
