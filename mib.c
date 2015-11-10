@@ -252,23 +252,30 @@ static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int ty
 	return value;
 }
 
+static int mib_data_set(const oid_t *oid, data_t *data, int column, int row, int type, const void *arg);
+
 static int mib_build_entry(const oid_t *prefix, int column, int row, int type, const void *arg)
 {
-	int ret;
 	value_t *value;
 
 	value = mib_alloc_entry(prefix, column, row, type);
 	if (!value)
 		return -1;
 
-	ret = data_set(&value->data, type, arg);
+	return mib_data_set(&value->oid, &value->data, column, row, type, arg);
+}
+
+static int mib_data_set(const oid_t *oid, data_t *data, int column, int row, int type, const void *arg)
+{
+	int ret;
+	const char *msg = "Failed assigning value to OID";
+
+	ret = data_set(data, type, arg);
 	if (ret) {
 		if (ret == 1)
-			lprintf(LOG_ERR, "could not assign value to MIB entry '%s.%d.%d': unsupported type %d\n",
-				oid_ntoa(&value->oid), column, row, type);
+			lprintf(LOG_ERR, "%s '%s.%d.%d': unsupported type %d\n", msg, oid_ntoa(oid), column, row, type);
 		else if (ret == 2)
-			lprintf(LOG_ERR, "could not assign value to MIB entry '%s.%d.%d': invalid default value\n",
-				oid_ntoa(&value->oid), column, row);
+			lprintf(LOG_ERR, "%s '%s.%d.%d': invalid default value\n", msg, oid_ntoa(oid), column, row);
 
 		return -1;
 	}
@@ -445,19 +452,7 @@ static int mib_update_entry(const oid_t *prefix, int column, int row, size_t *po
 		return -1;
 	}
 
-	ret = data_set(&value->data, type, arg);
-	if (ret) {
-		if (ret == 1)
-			lprintf(LOG_ERR, "could not assign value to MIB entry '%s.%d.%d': unsupported type %d\n",
-				oid_ntoa(prefix), column, row, type);
-		else if (ret == 2)
-			lprintf(LOG_ERR, "could not assign value to MIB entry '%s.%d.%d': invalid default value\n",
-				oid_ntoa(prefix), column, row);
-
-		return -1;
-	}
-
-	return 0;
+	return mib_data_set(prefix, &value->data, column, row, type, arg);
 }
 
 
