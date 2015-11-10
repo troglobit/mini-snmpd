@@ -64,6 +64,8 @@ static void handle_signal(int UNUSED(signo))
 
 static void handle_udp_client(void)
 {
+	const char *req_msg = "Failed UDP request from";
+	const char *snd_msg = "Failed UDP response to";
 	ssize_t rv;
 	char straddr[my_inet_addrstrlen] = "";
 	my_socklen_t socklen;
@@ -74,7 +76,7 @@ static void handle_udp_client(void)
 	rv = recvfrom(g_udp_sockfd, g_udp_client.packet, sizeof(g_udp_client.packet),
 		      0, (struct sockaddr *)&sockaddr, &socklen);
 	if (rv == -1) {
-		lprintf(LOG_WARNING, "could not receive packet on UDP port %d: %m\n", g_udp_port);
+		lprintf(LOG_WARNING, "Failed receiving UDP request on port %d: %m\n", g_udp_port);
 		return;
 	}
 
@@ -91,13 +93,11 @@ static void handle_udp_client(void)
 	/* Call the protocol handler which will prepare the response packet */
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (snmp(&g_udp_client) == -1) {
-		lprintf(LOG_WARNING, "could not handle packet from UDP client %s:%d: %m\n",
-			straddr, sockaddr.my_sin_port);
+		lprintf(LOG_WARNING, "%s %s:%d: %m\n", req_msg, straddr, sockaddr.my_sin_port);
 		return;
 	}
 	if (g_udp_client.size == 0) {
-		lprintf(LOG_WARNING, "could not handle packet from UDP client %s:%d: ignored\n",
-			straddr, sockaddr.my_sin_port);
+		lprintf(LOG_WARNING, "%s %s:%d: ignored\n", req_msg, straddr, sockaddr.my_sin_port);
 		return;
 	}
 	g_udp_client.outgoing = 1;
@@ -106,14 +106,10 @@ static void handle_udp_client(void)
 	rv = sendto(g_udp_sockfd, g_udp_client.packet, g_udp_client.size,
 		MSG_DONTWAIT, (struct sockaddr *)&sockaddr, socklen);
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
-	if (rv == -1) {
-		lprintf(LOG_WARNING, "could not send packet to UDP client %s:%d: %m\n",
-			straddr, sockaddr.my_sin_port);
-	} else if ((size_t)rv != g_udp_client.size) {
-		lprintf(LOG_WARNING, "could not send packet to UDP client %s:%d: "
-			"only %zd of %zu bytes written\n", straddr,
-			sockaddr.my_sin_port, rv, g_udp_client.size);
-	}
+	if (rv == -1)
+		lprintf(LOG_WARNING, "%s %s:%d: %m\n", snd_msg, straddr, sockaddr.my_sin_port);
+	else if ((size_t)rv != g_udp_client.size)
+		lprintf(LOG_WARNING, "%s %s:%d: only %zd of %zu bytes sent\n", snd_msg, straddr, sockaddr.my_sin_port, rv, g_udp_client.size);
 
 #ifdef DEBUG
 	dump_packet(&g_udp_client);
@@ -123,6 +119,7 @@ static void handle_udp_client(void)
 static void handle_tcp_connect(void)
 {
 	int rv;
+	const char *msg = "Could not accept TCP connection";
 	char straddr[my_inet_addrstrlen] = "";
 	client_t *client;
 	my_socklen_t socklen;
@@ -133,11 +130,11 @@ static void handle_tcp_connect(void)
 	socklen = sizeof(sockaddr);
 	rv = accept(g_tcp_sockfd, (struct sockaddr *)&sockaddr, &socklen);
 	if (rv == -1) {
-		lprintf(LOG_ERR, "could not accept TCP connection: %m\n");
+		lprintf(LOG_ERR, "%s: %m\n", msg);
 		return;
 	}
 	if (rv >= FD_SETSIZE) {
-		lprintf(LOG_ERR, "could not accept TCP connection: FD set overflow\n");
+		lprintf(LOG_ERR, "%s: FD set overflow\n", msg);
 		close(rv);
 		return;
 	}
@@ -146,20 +143,20 @@ static void handle_tcp_connect(void)
 	if (g_tcp_client_list_length >= MAX_NR_CLIENTS) {
 		client = find_oldest_client();
 		if (!client) {
-			lprintf(LOG_ERR, "could not accept TCP connection: internal error");
+			lprintf(LOG_ERR, "%s: internal error", msg);
 			exit(EXIT_SYSCALL);
 		}
 
 		tmp_sockaddr.my_sin_addr = client->addr;
 		tmp_sockaddr.my_sin_port = client->port;
 		inet_ntop(my_af_inet, &tmp_sockaddr.my_sin_addr, straddr, sizeof(straddr));
-		lprintf(LOG_WARNING, "maximum number of %d clients reached, kicking out %s:%d\n",
+		lprintf(LOG_WARNING, "Maximum number of %d clients reached, kicking out %s:%d\n",
 			MAX_NR_CLIENTS, straddr, tmp_sockaddr.my_sin_port);
 		close(client->sockfd);
 	} else {
-		client = malloc(sizeof(client_t));
+		client = allocate(sizeof(client_t));
 		if (!client) {
-			lprintf(LOG_ERR, "could not accept TCP connection: %m");
+			lprintf(LOG_ERR, "%s: %m", msg);
 			exit(EXIT_SYSCALL);
 		}
 		g_tcp_client_list[g_tcp_client_list_length++] = client;
@@ -167,7 +164,7 @@ static void handle_tcp_connect(void)
 
 	/* Now fill out the client control structure values */
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
-	lprintf(LOG_DEBUG, "connected TCP client %s:%d\n",
+	lprintf(LOG_DEBUG, "Connected TCP client %s:%d\n",
 		straddr, sockaddr.my_sin_port);
 	client->timestamp = time(NULL);
 	client->sockfd = rv;
@@ -179,6 +176,7 @@ static void handle_tcp_connect(void)
 
 static void handle_tcp_client_write(client_t *client)
 {
+	const char *msg = "Failed TCP response to";
 	ssize_t rv;
 	char straddr[my_inet_addrstrlen] = "";
 	struct my_sockaddr_t sockaddr;
@@ -189,16 +187,14 @@ static void handle_tcp_client_write(client_t *client)
 	rv = send(client->sockfd, client->packet, client->size, 0);
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (rv == -1) {
-		lprintf(LOG_WARNING, "could not send packet to TCP client %s:%d: %m\n",
-			straddr, sockaddr.my_sin_port);
+		lprintf(LOG_WARNING, "%s %s:%d: %m\n", msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	}
 	if ((size_t)rv != client->size) {
-		lprintf(LOG_WARNING, "could not send packet to TCP client %s:%d: "
-			"only %zd of %zu bytes written\n", straddr,
-			sockaddr.my_sin_port, rv, client->size);
+		lprintf(LOG_WARNING, "%s %s:%d: only %zd of %zu bytes written\n",
+			msg, straddr, sockaddr.my_sin_port, rv, client->size);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -215,6 +211,7 @@ static void handle_tcp_client_write(client_t *client)
 
 static void handle_tcp_client_read(client_t *client)
 {
+	const char *req_msg = "Failed TCP request from";
 	int rv;
 	char straddr[my_inet_addrstrlen] = "";
 	struct my_sockaddr_t sockaddr;
@@ -225,14 +222,13 @@ static void handle_tcp_client_read(client_t *client)
 	rv = read(client->sockfd, client->packet + client->size, sizeof(client->packet) - client->size);
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (rv == -1) {
-		lprintf(LOG_WARNING, "could not read packet from TCP client %s:%d: %m\n",
-			straddr, sockaddr.my_sin_port);
+		lprintf(LOG_WARNING, "%s %s:%d: %m\n", req_msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	}
 	if (rv == 0) {
-		lprintf(LOG_DEBUG, "disconnected TCP client %s:%d\n",
+		lprintf(LOG_DEBUG, "TCP client %s:%d disconnected\n",
 			straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
@@ -244,8 +240,7 @@ static void handle_tcp_client_read(client_t *client)
 	/* Check whether the packet was fully received and handle packet if yes */
 	rv = snmp_packet_complete(client);
 	if (rv == -1) {
-		lprintf(LOG_WARNING, "could not handle packet from TCP client %s:%d: %m\n",
-			straddr, sockaddr.my_sin_port);
+		lprintf(LOG_WARNING, "%s %s:%d: %m\n", req_msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -261,15 +256,13 @@ static void handle_tcp_client_read(client_t *client)
 
 	/* Call the protocol handler which will prepare the response packet */
 	if (snmp(client) == -1) {
-		lprintf(LOG_WARNING, "could not handle packet from TCP client %s:%d: %m\n",
-			straddr, sockaddr.my_sin_port);
+		lprintf(LOG_WARNING, "%s %s:%d: %m\n", req_msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	}
 	if (client->size == 0) {
-		lprintf(LOG_WARNING, "could not handle packet from TCP client %s:%d: ignored\n",
-			straddr, sockaddr.my_sin_port);
+		lprintf(LOG_WARNING, "%s %s:%d: ignored\n", req_msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
