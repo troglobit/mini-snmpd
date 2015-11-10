@@ -122,6 +122,7 @@ int ticks_since(const struct timeval *tv_last, struct timeval *tv_now)
 	return ticks;
 }
 
+#ifdef DEBUG
 void dump_packet(const client_t *client)
 {
 	size_t i, len = 0;
@@ -171,6 +172,7 @@ void dump_response(const response_t *response)
 		lprintf(LOG_DEBUG, "response: entry[%zu]='%s','%s'\n", i, oid_ntoa(&response->value_list[i].oid), buf);
 	}
 }
+#endif /* DEBUG */
 
 char *oid_ntoa(const oid_t *oid)
 {
