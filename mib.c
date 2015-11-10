@@ -55,7 +55,7 @@ static const oid_t m_demo_oid           = { { 1, 3, 6, 1, 4, 1, 99999           
 static const int m_load_avg_times[3] = { 1, 5, 15 };
 
 static int oid_build  (oid_t *oid, const oid_t *prefix, int column, int row);
-static int oid_encode (oid_t *oid);
+static int encode_oid_len (oid_t *oid);
 
 static int data_alloc (data_t *data, int type);
 static int data_set   (data_t *data, int type, const void *arg);
@@ -221,6 +221,7 @@ static int encode_unsigned(data_t *data, int type, unsigned int ticks_value)
 
 static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int type)
 {
+	int ret;
 	value_t *value;
 	const char *msg = "Failed creating MIB entry";
 
@@ -239,11 +240,10 @@ static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int ty
 		return NULL;
 	}
 
-	if (oid_encode(&value->oid))
-		lprintf(LOG_ERR, "could not encode '%s': oid overflow\n", oid_ntoa(&value->oid));
-
-	if (data_alloc(&value->data, type)) {
-		lprintf(LOG_ERR, "could not create MIB entry '%s.%d.%d': unsupported type %d\n",
+	ret  = encode_oid_len(&value->oid);
+	ret += data_alloc(&value->data, type);
+	if (ret) {
+		lprintf(LOG_ERR, "%s '%s.%d.%d': unsupported type %d\n", msg,
 			oid_ntoa(&value->oid), column, row, type);
 		return NULL;
 	}
@@ -304,7 +304,7 @@ static int oid_build(oid_t *oid, const oid_t *prefix, int column, int row)
  * Calculate the encoded length of the created OID (note: first the length
  * of the subid list, then the length of the length/type header!)
  */
-static int oid_encode(oid_t *oid)
+static int encode_oid_len(oid_t *oid)
 {
 	uint32_t len = 1;
 	size_t i;
