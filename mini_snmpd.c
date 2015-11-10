@@ -36,45 +36,24 @@
 
 static void print_help(void)
 {
-	printf("Usage: mini_snmpd [options]\n"
-	       "\n"
-	       "-p, --udp-port PORT    UDP port to bind to, default: 161\n"
-	       "-P, --tcp-port PORT    TCP port to bind to, default: 161\n"
-	       "-c, --community STR    Community string, default: public\n"
-	       "-D, --description STR  System description, default: none\n"
-	       "-V, --vendor OID       System vendor, default: none\n"
-	       "-L, --location STR     System location, default: none\n"
-	       "-C, --contact STR      System contact, default: none\n"
-	       "-d, --disks PATH       Disks to monitor, default: /\n"
-	       "-i, --interfaces IFACE Network interfaces to monitor, default: lo\n"
-	       "-I, --listen IFACE     Network interface to listen, default: all\n"
-	       "-t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
-	       "-a, --auth             Require authentication, i.e. SNMP version 2c)\n"
-	       "-v, --verbose          Verbose syslog messages\n"
-	       "-l, --licensing        Show licensing info and exit\n"
-	       "-h, --help             Show this help and exit\n"
-	       "\n");
-}
-
-static void print_version(void)
-{
 	printf("Mini snmpd v" VERSION " -- Minimal SNMP daemon for embedded UNIX systems\n"
 	       "\n"
-	       "Copyright (C) 2008-2010  Robert Ernst <robert.ernst@aon.at>\n"
+	       "Usage: mini_snmpd [options]\n"
 	       "\n"
-	       "This program is free software; you can redistribute it and/or modify\n"
-	       "it under the terms of the GNU General Public License as published by\n"
-	       "the Free Software Foundation; either version 2 of the License, or\n"
-	       "(at your option) any later version.\n"
-	       "\n"
-	       "This program is distributed in the hope that it will be useful,\n"
-	       "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-	       "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-	       "GNU General Public License for more details.\n"
-	       "\n"
-	       "You should have received a copy of the GNU General Public License along\n"
-	       "with this program; if not, write to the Free Software Foundation, Inc.,\n"
-	       "51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.\n"
+	       "  -p, --udp-port PORT    UDP port to bind to, default: 161\n"
+	       "  -P, --tcp-port PORT    TCP port to bind to, default: 161\n"
+	       "  -c, --community STR    Community string, default: public\n"
+	       "  -D, --description STR  System description, default: none\n"
+	       "  -V, --vendor OID       System vendor, default: none\n"
+	       "  -L, --location STR     System location, default: none\n"
+	       "  -C, --contact STR      System contact, default: none\n"
+	       "  -d, --disks PATH       Disks to monitor, default: /\n"
+	       "  -i, --interfaces IFACE Network interfaces to monitor, default: lo\n"
+	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
+	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
+	       "  -a, --auth             Enable authentication, i.e. SNMP version 2c\n"
+	       "  -v, --verbose          Verbose messages\n"
+	       "  -h, --help             This help text\n"
 	       "\n");
 }
 
@@ -302,7 +281,7 @@ static void handle_tcp_client_read(client_t *client)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "p:P:c:D:V:L:C:d:i:I:t:T:avlh";
+	static const char short_options[] = "p:P:c:D:V:L:C:d:i:I:t:T:avh";
 	static const struct option long_options[] = {
 		{ "udp-port", 1, 0, 'p' },
 		{ "tcp-port", 1, 0, 'P' },
@@ -318,7 +297,6 @@ int main(int argc, char *argv[])
 		{ "traps", 1, 0, 'T' },
 		{ "auth", 0, 0, 'a' },
 		{ "verbose", 0, 0, 'v' },
-		{ "licensing", 0, 0, 'l' },
 		{ "help", 0, 0, 'h' },
 		{ NULL, 0, 0, 0 }
 	};
@@ -400,11 +378,6 @@ int main(int argc, char *argv[])
 
 			case 'v':
 				g_verbose = 1;
-				break;
-
-			case 'l':
-				print_version();
-				exit(EXIT_ARGS);
 				break;
 
 			default:
