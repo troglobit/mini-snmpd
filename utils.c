@@ -249,13 +249,17 @@ int split(const char *str, char *delim, char **list, int max_list_length)
 {
 	int len = 0;
 	char *ptr;
-	char buf[BUFSIZ];
+	char *buf = strdup(str);
 
-	snprintf(buf, sizeof(buf), "%s", str);
+	if (!buf)
+		return 0;
+
 	for (ptr = strtok(buf, delim); ptr; ptr = strtok(NULL, delim)) {
 		if (len < max_list_length)
 			list[len++] = strdup(ptr);
 	}
+
+	free(buf);
 
 	return len;
 }
