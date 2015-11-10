@@ -810,9 +810,9 @@ int mib_update(int full)
 	return 0;
 }
 
+/* Find the OID in the MIB that is exactly the given one or a subid */
 value_t *mib_find(const oid_t *oid, size_t *pos)
 {
-	/* Find the OID in the MIB that is exactly the given one or a subid */
 	while (*pos < g_mib_length) {
 		value_t *curr = &g_mib[*pos];
 		size_t len = oid->subid_list_length * sizeof(oid->subid_list[0]);
@@ -826,11 +826,11 @@ value_t *mib_find(const oid_t *oid, size_t *pos)
 	return NULL;
 }
 
+/* Find the OID in the MIB that is the one after the given one */
 value_t *mib_findnext(const oid_t *oid)
 {
 	size_t pos;
 
-	/* Find the OID in the MIB that is the one after the given one */
 	for (pos = 0; pos < g_mib_length; pos++) {
 		if (oid_cmp(&g_mib[pos].oid, oid) > 0)
 			return &g_mib[pos];
