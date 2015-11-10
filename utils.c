@@ -27,6 +27,17 @@
 
 #include "mini_snmpd.h"
 
+void *allocate(size_t len)
+{
+	char *buf = malloc(len);
+
+	if (!buf) {
+		lprintf(LOG_DEBUG, "Failed allocating memory: %m\n");
+		return NULL;
+	}
+
+	return buf;
+}
 
 int read_file(const char *filename, char *buf, size_t size)
 {
