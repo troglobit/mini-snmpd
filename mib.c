@@ -349,19 +349,19 @@ static int data_alloc(data_t *data, int type)
 		case BER_TYPE_INTEGER:
 			data->max_length = sizeof(int) + 2;
 			data->encoded_length = 0;
-			data->buffer = malloc(data->max_length);
+			data->buffer = allocate(data->max_length);
 			break;
 
 		case BER_TYPE_OCTET_STRING:
 			data->max_length = 4;
 			data->encoded_length = 0;
-			data->buffer = malloc(data->max_length);
+			data->buffer = allocate(data->max_length);
 			break;
 
 		case BER_TYPE_OID:
 			data->max_length = MAX_NR_SUBIDS * 5 + 4;
 			data->encoded_length = 0;
-			data->buffer = malloc(data->max_length);
+			data->buffer = allocate(data->max_length);
 			break;
 
 		case BER_TYPE_COUNTER:
@@ -369,7 +369,7 @@ static int data_alloc(data_t *data, int type)
 		case BER_TYPE_TIME_TICKS:
 			data->max_length = sizeof(unsigned int) + 2;
 			data->encoded_length = 0;
-			data->buffer = malloc(data->max_length);
+			data->buffer = allocate(data->max_length);
 			break;
 
 		default:
