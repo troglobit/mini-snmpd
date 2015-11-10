@@ -102,12 +102,12 @@ static int encode_string(data_t *data, const char *string)
 			return 2;
 	}
 
-	buffer = data->buffer;
-	if (len > 65535) {
-		lprintf(LOG_ERR, "could not encode '%s': string overflow\n", string);
+	if (len > 0xFFFF) {
+		lprintf(LOG_ERR, "Failed encoding '%s': string overflow\n", string);
 		return -1;
 	}
 
+	buffer    = data->buffer;
 	*buffer++ = BER_TYPE_OCTET_STRING;
 	if (len > 255) {
 		*buffer++ = 0x82;
@@ -151,12 +151,12 @@ static int encode_oid(data_t *data, const oid_t *oid)
 			len += 1;
 	}
 
-	*buffer++ = BER_TYPE_OID;
 	if (len > 0xFFFF) {
-		lprintf(LOG_ERR, "could not encode '%s': oid overflow\n", oid_ntoa(oid));
+		lprintf(LOG_ERR, "Failed encoding '%s': OID overflow\n", oid_ntoa(oid));
 		return -1;
 	}
 
+	*buffer++ = BER_TYPE_OID;
 	if (len > 0xFF) {
 		*buffer++ = 0x82;
 		*buffer++ = (len >> 8) & 0xFF;
@@ -222,11 +222,11 @@ static int encode_unsigned(data_t *data, int type, unsigned int ticks_value)
 static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int type)
 {
 	value_t *value;
+	const char *msg = "Failed creating MIB entry";
 
 	/* Create a new entry in the MIB table */
 	if (g_mib_length >= MAX_NR_VALUES) {
-		lprintf(LOG_ERR, "could not create MIB entry '%s.%d.%d': table overflow\n",
-			oid_ntoa(prefix), column, row);
+		lprintf(LOG_ERR, "%s '%s.%d.%d': table overflow\n", msg, oid_ntoa(prefix), column, row);
 		return NULL;
 	}
 
@@ -235,8 +235,7 @@ static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int ty
 
 	/* Create the OID from the prefix, the column and the row */
 	if (oid_build(&value->oid, prefix, column, row)) {
-		lprintf(LOG_ERR, "could not create MIB entry '%s.%d.%d': oid overflow\n",
-			oid_ntoa(prefix), column, row);
+		lprintf(LOG_ERR, "%s '%s.%d.%d': oid overflow\n", msg, oid_ntoa(prefix), column, row);
 		return NULL;
 	}
 
@@ -324,6 +323,7 @@ static int oid_encode(oid_t *oid)
 	}
 
 	if (len > 0xFFFF) {
+		lprintf(LOG_ERR, "Failed encoding '%s': OID overflow\n", oid_ntoa(oid));
 		oid->encoded_length = -1;
 		return -1;
 	}
@@ -434,21 +434,20 @@ static int mib_update_entry(const oid_t *prefix, int column, int row, size_t *po
 	int ret;
 	oid_t oid;
 	value_t *value;
+	const char *msg = "Failed updating OID";
 
 	memcpy(&oid, prefix, sizeof(oid));
 
 	/* Create the OID from the prefix, the column and the row */
 	if (oid_build(&oid, prefix, column, row)) {
-		lprintf(LOG_ERR, "could not update MIB entry '%s.%d.%d': oid overflow\n",
-			oid_ntoa(prefix), column, row);
+		lprintf(LOG_ERR, "%s '%s.%d.%d': OID overflow\n", msg, oid_ntoa(prefix), column, row);
 		return -1;
 	}
 
 	/* Search the MIB for the given OID beginning at the given position */
 	value = mib_find(&oid, pos);
 	if (!value) {
-		lprintf(LOG_ERR, "could not update MIB entry '%s.%d.%d': oid not found\n",
-			oid_ntoa(prefix), column, row);
+		lprintf(LOG_ERR, "%s '%s.%d.%d': OID not found\n", msg, oid_ntoa(prefix), column, row);
 		return -1;
 	}
 
