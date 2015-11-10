@@ -41,25 +41,24 @@ void *allocate(size_t len)
 
 int read_file(const char *filename, char *buf, size_t size)
 {
+	int ret;
 	FILE *fp;
 	size_t len;
 
 	fp = fopen(filename, "r");
 	if (!fp) {
-		lprintf(LOG_WARNING, "could not open %s: %m\n", filename);
+		lprintf(LOG_WARNING, "Failed opening %s: %m\n", filename);
 		return -1;
 	}
 
 	len = fread(buf, 1, size - 1, fp);
-	if (len == 0) {
-		lprintf(LOG_WARNING, "could not read %s: %m\n", filename);
-		fclose(fp);
+	ret = fclose(fp);
+	if (len == 0 || ret == -1) {
+		lprintf(LOG_WARNING, "Failed reading %s: %m\n", filename);
 		return -1;
 	}
 
 	buf[len] = '\0';
-	if (fclose(fp) == -1)
-		lprintf(LOG_WARNING, "could not close %s: %m\n", filename);
 
 	return 0;
 }
