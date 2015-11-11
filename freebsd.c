@@ -84,9 +84,14 @@ void get_loadinfo(loadinfo_t *loadinfo)
 
 void get_meminfo(meminfo_t *meminfo)
 {
-	char buf[BUFSIZ];
+	char *buf = allocate(BUFSIZ);
 
-	if (read_file("/proc/meminfo", buf, sizeof(buf)) == -1) {
+	if (!buf)
+		goto error;
+
+	if (read_file("/proc/meminfo", buf, BUFSIZ) == -1) {
+		free(buf);
+	error:
 		memset(meminfo, 0, sizeof(meminfo_t));
 		return;
 	}
@@ -96,30 +101,39 @@ void get_meminfo(meminfo_t *meminfo)
 	meminfo->shared  = read_value(buf, "MemShared");
 	meminfo->buffers = read_value(buf, "Buffers");
 	meminfo->cached  = read_value(buf, "Cached");
+
+	free(buf);
 }
 
 void get_cpuinfo(cpuinfo_t *cpuinfo)
 {
-	char buf[BUFSIZ];
+	char *buf = allocate(BUFSIZ);
 	unsigned int values[4];
 
-	if (read_file("/proc/stat", buf, sizeof(buf)) == -1) {
+	if (!buf)
+		goto error;
+
+	if (read_file("/proc/stat", buf, BUFSIZ) == -1) {
+		free(buf);
+	error:
 		memset(cpuinfo, 0, sizeof(cpuinfo_t));
 		return;
 	}
 
 	read_values(buf, "cpu", values, 4);
-	cpuinfo->user = values[0];
-	cpuinfo->nice = values[1];
+	cpuinfo->user   = values[0];
+	cpuinfo->nice   = values[1];
 	cpuinfo->system = values[2];
-	cpuinfo->idle = values[3];
-	cpuinfo->irqs = read_value(buf, "intr");
+	cpuinfo->idle   = values[3];
+	cpuinfo->irqs   = read_value(buf, "intr");
 	cpuinfo->cntxts = read_value(buf, "ctxt");
+
+	free(buf);
 }
 
 void get_diskinfo(diskinfo_t *diskinfo)
 {
-	int i;
+	size_t i;
 	struct statfs fs;
 
 	for (i = 0; i < g_disk_list_length; i++) {
@@ -147,13 +161,21 @@ void get_diskinfo(diskinfo_t *diskinfo)
 
 void get_netinfo(netinfo_t *netinfo)
 {
-	int i, fd;
-	char buf[BUFSIZ];
+	int fd;
+	size_t i;
+	char *buf = allocate(BUFSIZ);
 	unsigned int values[16];
 	struct ifreq ifreq;
 
-	if (read_file("/proc/net/dev", buf, sizeof(buf)) == -1)
-		buf[0] = 0;
+	if (!buf)
+		goto error;
+
+	if (read_file("/proc/net/dev", buf, BUFSIZ) == -1) {
+		free(buf);
+	error:
+		memset(netinfo, 0, sizeof(*netinfo));
+		return;
+	}
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	for (i = 0; i < g_interface_list_length; i++) {
@@ -180,6 +202,8 @@ void get_netinfo(netinfo_t *netinfo)
 
 	if (fd != -1)
 		close(fd);
+
+	free(buf);
 }
 
 #endif /* __FREEBSD__ */
