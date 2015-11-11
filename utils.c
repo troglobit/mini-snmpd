@@ -39,6 +39,59 @@ void *allocate(size_t len)
 	return buf;
 }
 
+
+static inline int parse_lineint(char *buf, field_t *f)
+{
+	char *ptr;
+	size_t i;
+
+	ptr = strstr(buf, f->prefix);
+	if (!ptr)
+		return 0;
+
+	ptr += strlen(f->prefix);
+	if (*ptr == ':')	/* Prefix may have a ':', skip it too! */
+		ptr++;
+
+	for (i = 0; i < f->len; i++) {
+		while (isspace(*ptr))
+			ptr++;
+
+		if (f->value[i]) {
+			*(f->value[i]) = strtoul(ptr, NULL, 0);
+		}
+
+		while (!isspace(*ptr))
+			ptr++;
+	}
+
+	return 1;
+}
+
+int parse_file(char *file, field_t fields[])
+{
+	char buf[128];
+	FILE *fp;
+
+	if (!file || !fields)
+		return -1;
+
+	fp = fopen(file, "r");
+	if (!fp)
+		return -1;
+
+	while (fgets(buf, sizeof(buf), fp)) {
+		int i;
+
+		for (i = 0; fields[i].prefix; i++) {
+			if (parse_lineint(buf, &fields[i]))
+				break;
+		}
+	}
+
+	return fclose(fp);
+}
+
 int read_file(const char *filename, char *buf, size_t size)
 {
 	int ret;

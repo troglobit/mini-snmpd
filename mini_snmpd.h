@@ -173,6 +173,13 @@ typedef struct value_s {
 	data_t data;
 } value_t;
 
+typedef struct field_s {
+	char         *prefix;
+
+	size_t        len;
+	unsigned int *value[12];
+} field_t;
+
 typedef struct request_s {
 	char      community[MAX_STRING_SIZE];
 	int       type;
@@ -298,6 +305,7 @@ client_t    *find_oldest_client(void);
 
 void        *allocate    (size_t len);
 
+int          parse_file  (char *file, field_t fields[]);
 int          read_file   (const char *filename, char *buffer, size_t size);
 
 unsigned int read_value  (const char *buffer, const char *prefix);
