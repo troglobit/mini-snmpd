@@ -1,3 +1,25 @@
+[v1.3][] -- UNRELEASED
+----------------------
+
+### Changes
+
+- New maintainer, [Joachim Nilsson](https://github.com/troglobit)
+- Hosting is now on [GitHub](https://github.com/troglobit/mini-snmpd)
+- Changed to GNU Configure and Build System, use `./autogen.sh` first if
+  you checkout the sources from GIT.
+
+### Fixes
+- Cleanup and code simplification fixes from
+  [Javier Palacios](https://github.com/javiplx)
+- Some bug fixes from the http://www.simtreas.ru/~dzo/busybox-vodz.html
+  fork of mini-snmpd by Vladimir N. Oleynik <dzo@simtreas.ru>
+  - Do not allow ':' as interface separator
+  - Simplify `read_values()` and its callee's, skip optional ':'
+  - Inspirations for lots of reduced stack usage
+  - Fix typo in `setsockopt()`
+- Massive code cleanup and simplification by Joachim Nilsson
+  
+
 [v1.2b][] -- 2010-03-28
 -----------------------
 
@@ -77,8 +99,9 @@ This is the first feature-complete version.  SNMP get, getnext, and
 getbulk are supported on UDP and TCP connections.
 
 
+[v1.3]:  https://github.com/troglobit/mini-snmpd/compare/v1.2b...HEAD
 [v1.2b]: https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
-[v1.1]: https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
+[v1.1]:  https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
 
 <!--
   -- Local Variables:
