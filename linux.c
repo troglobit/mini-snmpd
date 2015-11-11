@@ -36,9 +36,9 @@
 #include "mini_snmpd.h"
 
 
+/* We need the uptime in 1/100 seconds, so we can't use sysinfo() */
 unsigned int get_process_uptime(void)
 {
-	/* We need the uptime in 1/100 seconds, so we can't use sysinfo() */
 	static unsigned int uptime_start = 0;
 	unsigned int uptime_now = get_system_uptime();
 
@@ -48,9 +48,9 @@ unsigned int get_process_uptime(void)
 	return uptime_now - uptime_start;
 }
 
+/* We need the uptime in 1/100 seconds, so we can't use sysinfo() */
 unsigned int get_system_uptime(void)
 {
-	/* We need the uptime in 1/100 seconds, so we can't use sysinfo() */
 	char buf[128];
 
 	if (read_file("/proc/uptime", buf, sizeof(buf)) == -1)
@@ -61,9 +61,9 @@ unsigned int get_system_uptime(void)
 
 void get_loadinfo(loadinfo_t *loadinfo)
 {
+	int i;
 	char buf[128];
 	char *ptr;
-	int i;
 
 	if (read_file("/proc/loadavg", buf, sizeof(buf)) == -1) {
 		memset(loadinfo, 0, sizeof(loadinfo_t));
