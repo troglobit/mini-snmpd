@@ -136,14 +136,17 @@ int ticks_since(const struct timeval *tv_last, struct timeval *tv_now)
 void dump_packet(const client_t *client)
 {
 	size_t i, len = 0;
-	char buf[BUFSIZ];
+	char *buf = allocate(BUFSIZ);
 	char straddr[my_inet_addrstrlen];
 	struct my_in_addr_t client_addr;
 
+	if (!buf)
+		return;
+
 	client_addr = client->addr;
 	for (i = 0; i < client->size; i++) {
-		len += snprintf(buf + len, sizeof(buf) - len, i ? " %02X" : "%02X", client->packet[i]);
-		if (len >= sizeof(buf))
+		len += snprintf(buf + len, BUFSIZ - len, i ? " %02X" : "%02X", client->packet[i]);
+		if (len >= BUFSIZ)
 			break;
 	}
 
@@ -152,35 +155,47 @@ void dump_packet(const client_t *client)
 		client->outgoing ? "transmitted" : "received", (int) client->size,
 		client->outgoing ? "to" : "from", straddr,
 		ntohs(client->port), buf);
+
+	free(buf);
 }
 
 void dump_mib(const value_t *value, int size)
 {
 	int i;
-	char buf[BUFSIZ];
+	char *buf = allocate(BUFSIZ);
+
+	if (!buf)
+		return;
 
 	for (i = 0; i < size; i++) {
-		if (snmp_element_as_string(&value[i].data, buf, sizeof(buf)) == -1)
-			strncpy(buf, "?", sizeof(buf));
+		if (snmp_element_as_string(&value[i].data, buf, BUFSIZ) == -1)
+			strncpy(buf, "?", BUFSIZ);
 
 		lprintf(LOG_DEBUG, "mib entry[%d]: oid='%s', max_length=%zu, data='%s'\n",
 			i, oid_ntoa(&value[i].oid), value[i].data.max_length, buf);
 	}
+
+	free(buf);
 }
 
 void dump_response(const response_t *response)
 {
 	size_t i;
-	char buf[MAX_PACKET_SIZE];
+	char *buf = allocate(MAX_PACKET_SIZE);
+
+	if (!buf)
+		return;
 
 	lprintf(LOG_DEBUG, "response: status=%d, index=%d, nr_entries=%zu\n",
 		response->error_status, response->error_index, response->value_list_length);
 	for (i = 0; i < response->value_list_length; i++) {
-		if (snmp_element_as_string(&response->value_list[i].data, buf, sizeof(buf)) == -1)
-			strncpy(buf, "?", sizeof(buf));
+		if (snmp_element_as_string(&response->value_list[i].data, buf, MAX_PACKET_SIZE) == -1)
+			strncpy(buf, "?", MAX_PACKET_SIZE);
 
 		lprintf(LOG_DEBUG, "response: entry[%zu]='%s','%s'\n", i, oid_ntoa(&response->value_list[i].oid), buf);
 	}
+
+	free(buf);
 }
 #endif /* DEBUG */
 
