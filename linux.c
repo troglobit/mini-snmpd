@@ -82,37 +82,30 @@ void get_loadinfo(loadinfo_t *loadinfo)
 
 void get_meminfo(meminfo_t *meminfo)
 {
-	char buf[BUFSIZ];
+	field_t fields[] = {
+		{ "MemTotal",  1, { &meminfo->total   }},
+		{ "MemFree",   1, { &meminfo->free    }},
+		{ "MemShared", 1, { &meminfo->shared  }},
+		{ "Buffers",   1, { &meminfo->buffers }},
+		{ "Cached",    1, { &meminfo->cached  }},
+		{ NULL }
+	};
 
-	if (read_file("/proc/meminfo", buf, sizeof(buf)) == -1) {
+	if (parse_file("/proc/meminfo", fields))
 		memset(meminfo, 0, sizeof(meminfo_t));
-		return;
-	}
-
-	meminfo->total   = read_value(buf, "MemTotal");
-	meminfo->free    = read_value(buf, "MemFree");
-	meminfo->shared  = read_value(buf, "MemShared");
-	meminfo->buffers = read_value(buf, "Buffers");
-	meminfo->cached  = read_value(buf, "Cached");
 }
 
 void get_cpuinfo(cpuinfo_t *cpuinfo)
 {
-	char buf[BUFSIZ];
-	unsigned int values[4];
+	field_t fields[] = {
+		{ "cpu ",  4, { &cpuinfo->user, &cpuinfo->nice, &cpuinfo->system, &cpuinfo->idle }},
+		{ "intr ", 1, { &cpuinfo->irqs   }},
+		{ "ctxt ", 1, { &cpuinfo->cntxts }},
+		{ NULL }
+	};
 
-	if (read_file("/proc/stat", buf, sizeof(buf)) == -1) {
+	if (parse_file("/proc/stat", fields))
 		memset(cpuinfo, 0, sizeof(cpuinfo_t));
-		return;
-	}
-
-	read_values(buf, "cpu", values, 4);
-	cpuinfo->user   = values[0];
-	cpuinfo->nice   = values[1];
-	cpuinfo->system = values[2];
-	cpuinfo->idle   = values[3];
-	cpuinfo->irqs   = read_value(buf, "intr");
-	cpuinfo->cntxts = read_value(buf, "ctxt");
 }
 
 void get_diskinfo(diskinfo_t *diskinfo)
@@ -127,58 +120,58 @@ void get_diskinfo(diskinfo_t *diskinfo)
 			diskinfo->used[i]                = 0;
 			diskinfo->blocks_used_percent[i] = 0;
 			diskinfo->inodes_used_percent[i] = 0;
-		} else {
-			diskinfo->total[i] = ((float)fs.f_blocks * fs.f_bsize) / 1024;
-			diskinfo->free[i]  = ((float)fs.f_bfree  * fs.f_bsize) / 1024;
-			diskinfo->used[i]  = ((float)(fs.f_blocks - fs.f_bfree) * fs.f_bsize) / 1024;
-			diskinfo->blocks_used_percent[i] =
-				((float)(fs.f_blocks - fs.f_bfree) * 100 + fs.f_blocks - 1) / fs.f_blocks;
-			if (fs.f_files <= 0)
-				diskinfo->inodes_used_percent[i] = 0;
-			else
-				diskinfo->inodes_used_percent[i] =
-					((float)(fs.f_files - fs.f_ffree) * 100 + fs.f_files - 1) / fs.f_files;
+			continue;
 		}
+
+		diskinfo->total[i] = ((float)fs.f_blocks * fs.f_bsize) / 1024;
+		diskinfo->free[i]  = ((float)fs.f_bfree  * fs.f_bsize) / 1024;
+		diskinfo->used[i]  = ((float)(fs.f_blocks - fs.f_bfree) * fs.f_bsize) / 1024;
+		diskinfo->blocks_used_percent[i] =
+			((float)(fs.f_blocks - fs.f_bfree) * 100 + fs.f_blocks - 1) / fs.f_blocks;
+		if (fs.f_files <= 0)
+			diskinfo->inodes_used_percent[i] = 0;
+		else
+			diskinfo->inodes_used_percent[i] =
+				((float)(fs.f_files - fs.f_ffree) * 100 + fs.f_files - 1) / fs.f_files;
 	}
 }
 
 void get_netinfo(netinfo_t *netinfo)
 {
-	int fd;
+	int fd = socket(AF_INET, SOCK_DGRAM, 0);
 	size_t i;
-	char buf[BUFSIZ];
-	unsigned int values[16];
 	struct ifreq ifreq;
+	field_t fields[MAX_NR_INTERFACES + 1];
 
-
-	if (read_file("/proc/net/dev", buf, sizeof(buf)) == -1)
-		buf[0] = 0;
-
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	memset(fields, 0, (MAX_NR_INTERFACES + 1) * sizeof(field_t));
 	for (i = 0; i < g_interface_list_length; i++) {
+		fields[i].prefix    = g_interface_list[i];
+		fields[i].len       = 12;
+		fields[i].value[0]  = &netinfo->rx_bytes[i];
+		fields[i].value[1]  = &netinfo->rx_packets[i];
+		fields[i].value[2]  = &netinfo->rx_errors[i];
+		fields[i].value[3]  = &netinfo->rx_drops[i];
+		fields[i].value[8]  = &netinfo->tx_bytes[i];
+		fields[i].value[9]  = &netinfo->tx_packets[i];
+		fields[i].value[10] = &netinfo->tx_errors[i];
+		fields[i].value[11] = &netinfo->tx_drops[i];
+
 		snprintf(ifreq.ifr_name, sizeof(ifreq.ifr_name), "%s", g_interface_list[i]);
 		if (fd == -1 || ioctl(fd, SIOCGIFFLAGS, &ifreq) == -1) {
 			netinfo->status[i] = 4;
-		} else {
-			if (ifreq.ifr_flags & IFF_UP)
-				netinfo->status[i] = (ifreq.ifr_flags & IFF_RUNNING) ? 1 : 7;
-			else
-				netinfo->status[i] = 2;
+			continue;
 		}
 
-		read_values(buf, g_interface_list[i], values, 16);
-		netinfo->rx_bytes[i]   = values[0];
-		netinfo->rx_packets[i] = values[1];
-		netinfo->rx_errors[i]  = values[2];
-		netinfo->rx_drops[i]   = values[3];
-		netinfo->tx_bytes[i]   = values[8];
-		netinfo->tx_packets[i] = values[9];
-		netinfo->tx_errors[i]  = values[10];
-		netinfo->tx_drops[i]   = values[11];
+		if (ifreq.ifr_flags & IFF_UP)
+			netinfo->status[i] = (ifreq.ifr_flags & IFF_RUNNING) ? 1 : 7;
+		else
+			netinfo->status[i] = 2;
 	}
-
 	if (fd != -1)
 		close(fd);
+
+	if (parse_file("/proc/net/dev", fields))
+		memset(netinfo, 0, sizeof(*netinfo));
 }
 
 #endif /* __linux__ */
