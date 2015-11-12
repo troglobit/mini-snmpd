@@ -389,14 +389,6 @@ int main(int argc, char *argv[])
 		openlog(__progname, LOG_CONS | LOG_PID, LOG_DAEMON);
 	}
 
-	/* Print a starting message (so the user knows the args were ok) */
-	if (g_bind_to_device) {
-		lprintf(LOG_INFO, "started, listening on port %d/udp and %d/tcp on interface %s\n",
-			g_udp_port, g_tcp_port, g_bind_to_device);
-	} else {
-		lprintf(LOG_INFO, "started, listening on port %d/udp and %d/tcp\n", g_udp_port, g_tcp_port);
-	}
-
 	/* Store the starting time since we need it for MIB updates */
 	if (gettimeofday(&tv_last, NULL) == -1) {
 		memset(&tv_last, 0, sizeof(tv_last));
@@ -473,6 +465,14 @@ int main(int argc, char *argv[])
 	if (listen(g_tcp_sockfd, 128) == -1) {
 		lprintf(LOG_ERR, "could not prepare TCP socket for listening: %m\n");
 		exit(EXIT_SYSCALL);
+	}
+
+	/* Print a starting message (so the user knows the args were ok) */
+	if (g_bind_to_device) {
+		lprintf(LOG_INFO, "Listening on port %d/udp and %d/tcp on interface %s\n",
+			g_udp_port, g_tcp_port, g_bind_to_device);
+	} else {
+		lprintf(LOG_INFO, "Listening on port %d/udp and %d/tcp\n", g_udp_port, g_tcp_port);
 	}
 
 	/* Handle incoming connect requests and incoming data */
