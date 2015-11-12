@@ -27,6 +27,7 @@ const struct in_addr inaddr_any = { INADDR_ANY };
 
 int       g_timeout = 100;
 int       g_auth    = 0;
+int       g_daemon  = 1;
 int       g_verbose = 0;
 int       g_quit    = 0;
 

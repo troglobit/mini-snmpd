@@ -52,6 +52,7 @@ static void print_help(void)
 	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
 	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
 	       "  -a, --auth             Enable authentication, i.e. SNMP version 2c\n"
+	       "  -n                     Run in foreground, do not detach from controlling terminal\n"
 	       "  -v, --verbose          Verbose messages\n"
 	       "  -h, --help             This help text\n"
 	       "\n");
@@ -274,7 +275,7 @@ static void handle_tcp_client_read(client_t *client)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "p:P:c:D:V:L:C:d:i:I:t:T:avh";
+	static const char short_options[] = "p:P:c:D:V:L:C:d:i:I:t:T:anvh";
 	static const struct option long_options[] = {
 		{ "udp-port", 1, 0, 'p' },
 		{ "tcp-port", 1, 0, 'P' },
@@ -289,6 +290,7 @@ int main(int argc, char *argv[])
 		{ "timeout", 1, 0, 't' },
 		{ "traps", 1, 0, 'T' },
 		{ "auth", 0, 0, 'a' },
+		{ "foreground", 0, 0, 'n' },
 		{ "verbose", 0, 0, 'v' },
 		{ "help", 0, 0, 'h' },
 		{ NULL, 0, 0, 0 }
@@ -308,11 +310,6 @@ int main(int argc, char *argv[])
 	signal(SIGHUP, handle_signal);
 	siginterrupt(SIGTERM, 0);
 	siginterrupt(SIGHUP, 0);
-
-	/* Open the syslog connection if needed */
-#ifdef SYSLOG
-	openlog("mini_snmpd", LOG_CONS | LOG_PID, LOG_DAEMON);
-#endif
 
 	/* Parse commandline options */
 	while (1) {
@@ -369,6 +366,10 @@ int main(int argc, char *argv[])
 				g_auth = 1;
 				break;
 
+			case 'n':
+				g_daemon = 0;
+				break;
+
 			case 'v':
 				g_verbose = 1;
 				break;
@@ -377,6 +378,15 @@ int main(int argc, char *argv[])
 				print_help();
 				exit(EXIT_ARGS);
 		}
+	}
+
+	if (g_daemon) {
+		lprintf(LOG_DEBUG, "Daemonizing ...");
+		if (-1 == daemon(0, 0)) {
+			lprintf(LOG_ERR, "Failed daemonizing: %m");
+			return 1;
+		}
+		openlog(__progname, LOG_CONS | LOG_PID, LOG_DAEMON);
 	}
 
 	/* Print a starting message (so the user knows the args were ok) */

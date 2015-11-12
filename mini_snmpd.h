@@ -97,21 +97,15 @@
 #define UNUSED(x) x __attribute__((unused))
 #endif
 
-#ifdef SYSLOG
 #define lprintf(level, format...)				\
 	do {							\
 		if (g_verbose || (level != LOG_DEBUG)) {	\
-			syslog(level, format);			\
+			if (g_daemon)				\
+				syslog(level, format);		\
+			else					\
+				fprintf(stderr, format);	\
 		}						\
 	} while (0)
-#else
-#define lprintf(level, format...)				\
-	do {							\
-		if (g_verbose || (level != LOG_DEBUG)) {	\
-			fprintf(stderr, format);		\
-		}						\
-	} while (0)
-#endif
 
 #ifndef CONFIG_ENABLE_IPV6
 #define my_sockaddr_t           sockaddr_in
@@ -255,8 +249,11 @@ typedef struct demoinfo_s {
 extern const struct in_addr inaddr_any;
 #endif
 
+extern char   *__progname;
+
 extern int       g_timeout;
 extern int       g_auth;
+extern int       g_daemon;
 extern int       g_verbose;
 extern int       g_quit;
 
