@@ -100,7 +100,7 @@
 #define lprintf(level, format...)				\
 	do {							\
 		if (g_verbose || (level != LOG_DEBUG)) {	\
-			if (g_daemon)				\
+			if (g_daemon || g_syslog)		\
 				syslog(level, format);		\
 			else					\
 				fprintf(stderr, format);	\
@@ -254,6 +254,7 @@ extern char   *__progname;
 extern int       g_timeout;
 extern int       g_auth;
 extern int       g_daemon;
+extern int       g_syslog;
 extern int       g_verbose;
 extern int       g_quit;
 

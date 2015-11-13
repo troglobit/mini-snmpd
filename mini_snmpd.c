@@ -52,7 +52,8 @@ static void print_help(void)
 	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
 	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
 	       "  -a, --auth             Enable authentication, i.e. SNMP version 2c\n"
-	       "  -n                     Run in foreground, do not detach from controlling terminal\n"
+	       "  -n, --foreground       Run in foreground, do not detach from controlling terminal\n"
+	       "  -s, --syslog           Use syslog for logging, even if running in the foreground\n"
 	       "  -v, --verbose          Verbose messages\n"
 	       "  -h, --help             This help text\n"
 	       "\n");
@@ -275,7 +276,7 @@ static void handle_tcp_client_read(client_t *client)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "p:P:c:D:V:L:C:d:i:I:t:T:anvh";
+	static const char short_options[] = "p:P:c:D:V:L:C:d:i:I:t:T:ansvh";
 	static const struct option long_options[] = {
 		{ "udp-port", 1, 0, 'p' },
 		{ "tcp-port", 1, 0, 'P' },
@@ -292,6 +293,7 @@ int main(int argc, char *argv[])
 		{ "auth", 0, 0, 'a' },
 		{ "foreground", 0, 0, 'n' },
 		{ "verbose", 0, 0, 'v' },
+		{ "syslog", 0, 0, 's' },
 		{ "help", 0, 0, 'h' },
 		{ NULL, 0, 0, 0 }
 	};
@@ -368,6 +370,10 @@ int main(int argc, char *argv[])
 
 			case 'n':
 				g_daemon = 0;
+				break;
+
+			case 's':
+				g_syslog = 1;
 				break;
 
 			case 'v':
