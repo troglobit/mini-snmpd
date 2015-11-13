@@ -7,6 +7,8 @@
 - Hosting is now on [GitHub](https://github.com/troglobit/mini-snmpd)
 - Changed to GNU Configure and Build System, use `./autogen.sh` first if
   you checkout the sources from GIT.
+- Add support for daemonizing automatically, `-n` for previous behavior.
+- Add support for logging to syslog even when running in the foreground.
 
 ### Fixes
 - Cleanup and code simplification fixes from
@@ -18,7 +20,7 @@
   - Inspirations for lots of reduced stack usage
   - Fix typo in `setsockopt()`
 - Massive code cleanup and simplification by Joachim Nilsson
-  
+
 
 [v1.2b][] -- 2010-03-28
 -----------------------
