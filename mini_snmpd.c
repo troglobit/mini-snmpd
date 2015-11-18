@@ -276,7 +276,11 @@ static void handle_tcp_client_read(client_t *client)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "p:P:c:D:V:L:C:d:i:I:t:T:ansvh";
+	static const char short_options[] = "p:P:c:D:V:L:C:d:i:t:T:ansvh"
+#ifndef __FreeBSD__
+		"I:"
+#endif
+		;
 	static const struct option long_options[] = {
 		{ "udp-port", 1, 0, 'p' },
 		{ "tcp-port", 1, 0, 'P' },
@@ -287,7 +291,9 @@ int main(int argc, char *argv[])
 		{ "contact", 1, 0, 'C' },
 		{ "disks", 1, 0, 'd' },
 		{ "interfaces", 1, 0, 'i' },
+#ifndef __FreeBSD__
 		{ "listen", 1, 0, 'I' },
+#endif
 		{ "timeout", 1, 0, 't' },
 		{ "traps", 1, 0, 'T' },
 		{ "auth", 0, 0, 'a' },
@@ -347,11 +353,11 @@ int main(int argc, char *argv[])
 			case 'C':
 				g_contact = strdup(optarg);
 				break;
-
+#ifndef __FreeBSD__
 			case 'I':
 				g_bind_to_device = strdup(optarg);
 				break;
-
+#endif
 			case 'd':
 				g_disk_list_length = split(optarg, ",:;", g_disk_list, MAX_NR_DISKS);
 				break;
@@ -430,6 +436,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_SYSCALL);
 	}
 
+#ifndef __FreeBSD__
 	if (g_bind_to_device) {
 		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof(ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
 		if (setsockopt(g_udp_sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifreq, sizeof(ifreq)) == -1) {
@@ -437,6 +444,7 @@ int main(int argc, char *argv[])
 			exit(EXIT_SYSCALL);
 		}
 	}
+#endif
 
 	/* Open the server's TCP port and prepare it for listening */
 	g_tcp_sockfd = socket(my_pf_inet, SOCK_STREAM, 0);
@@ -445,6 +453,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_SYSCALL);
 	}
 
+#ifndef __FreeBSD__
 	if (g_bind_to_device) {
 		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof(ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
 		if (setsockopt(g_tcp_sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifreq, sizeof(ifreq)) == -1) {
@@ -452,6 +461,7 @@ int main(int argc, char *argv[])
 			exit(EXIT_SYSCALL);
 		}
 	}
+#endif
 
 	c = 1;
 	if (setsockopt(g_tcp_sockfd, SOL_SOCKET, SO_REUSEADDR, &c, sizeof(c)) == -1) {
