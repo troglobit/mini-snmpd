@@ -1,15 +1,22 @@
-To do for version 1.1:
+* Merge length calculation and encoding in mib.c and protocol.c
 
-   *) some length calculation and encoding code exists in both mib.c and
-      protocol.c with only slight differences; try to merge that
+Some length calculation and encoding code exists in both mib.c and
+protocol.c with only slight differences; try to merge that
 
-   *) the encode functions in mib.c do not check the size; this can be a
-      problem when forgetting to initialize octet string MIB variables with
-      their maximum length (only for strings, not for integers)
+* Audit encoding functions in mib.c
 
-   *) check the relevant RFCs for the SNMP V1 and V2 MIBs and which parts of
-      the system MIB are must be included
+The encode functions in mib.c do not check the size; this can be a
+problem when forgetting to initialize octet string MIB variables with
+their maximum length (only for strings, not for integers)
 
-   *) add native support for FreeBSD system specific function (so that the
-      user does not need to mount the linux compatible /proc filesystem)
+* Check system MIB against RFC for missing required OIDs
+
+Check the relevant RFCs for the SNMP V1 and V2 MIBs and which parts of
+the system MIB are must be included
+
+* Audit FreeBSD backend, missing functionality still
+
+The FreeBSD backend has received native support in v1.3 so it does not
+need to use Linux /proc compat anymore.  However, some parts are not
+fully implemented yet.
 
