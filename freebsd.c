@@ -1,6 +1,7 @@
 /* FreeBSD backend
  *
  * Copyright (C) 2008-2010  Robert Ernst <robert.ernst@linux-solutions.at>
+ * Copyright (C) 2015       Joachim Nilsson <troglobit@gmail.com>
  *
  * This file may be distributed and/or modified under the terms of the
  * GNU General Public License version 2 as published by the Free Software
@@ -12,13 +13,19 @@
  *
  * See COPYING for GPL licensing information.
  */
-#ifdef __FREEBSD__
+#ifdef __FreeBSD__
 
 #include <sys/limits.h>
 #include <sys/param.h>
 #include <sys/mount.h>
-#include <sys/ioctl.h>
+
+#include <sys/resource.h>
 #include <sys/types.h>
+#include <sys/sysctl.h>
+#include <sys/vmmeter.h>
+#include <vm/vm_param.h>
+#include <ifaddrs.h>
+
 #include <sys/time.h>
 #include <sys/statvfs.h>
 #include <sys/socket.h>
@@ -30,15 +37,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
-#include <time.h>
-#include <math.h>
 
 #include "mini_snmpd.h"
 
-
-/* We need the uptime in 1/100 seconds, so we can't use sysinfo() */
 unsigned int get_process_uptime(void)
 {
 	static unsigned int uptime_start = 0;
@@ -50,85 +51,100 @@ unsigned int get_process_uptime(void)
 	return uptime_now - uptime_start;
 }
 
-/* We need the uptime in 1/100 seconds, so we can't use sysinfo() */
 unsigned int get_system_uptime(void)
 {
-	char buf[128];
+#if 1
+	struct timespec tv;
 
-	if (read_file("/proc/uptime", buf, sizeof(buf)) == -1)
+	if (clock_gettime(CLOCK_UPTIME_PRECISE, &tv))
 		return -1;
 
-	return (unsigned int)(atof(buf) * 100);
+	return tv.tv_sec;
+#else
+        int             mib[2] = { CTL_KERN, KERN_BOOTTIME };
+        size_t          len;
+        struct timeval  uptime;
+
+        len = sizeof(uptime);
+        if (0 != sysctl(mib, 2, &uptime, &len, NULL, 0))
+                return -1;
+
+        return time(NULL) - uptime.tv_sec;
+#endif
 }
 
 void get_loadinfo(loadinfo_t *loadinfo)
 {
-	int i;
-	char buf[128];
-	char *ptr;
+	int i, mib[2] = { CTL_VM, VM_LOADAVG };
+	struct loadavg avgs;
+	size_t len = sizeof(avgs);
 
-	if (read_file("/proc/loadavg", buf, sizeof(buf)) == -1) {
+	if (sysctl(mib, 2, &avgs, &len, NULL, 0)) {
 		memset(loadinfo, 0, sizeof(loadinfo_t));
 		return;
 	}
 
-	ptr = buf;
-	for (i = 0; i < 3; i++) {
-		while (isspace(*ptr))
-			ptr++;
-
-		if (*ptr != 0)
-			loadinfo->avg[i] = strtod(ptr, &ptr) * 100;
-	}
+	for (i = 0; i < 3; i++)
+		loadinfo->avg[i] = (float)avgs.ldavg[i] / (float)avgs.fscale * 100;
 }
 
 void get_meminfo(meminfo_t *meminfo)
 {
-	char *buf = allocate(BUFSIZ);
+	int ret = 0, mib[2] = { CTL_HW, HW_PHYSMEM };
+	size_t len;
+	unsigned int pagesize;
+	unsigned long physmem, cache_cnt = 0;
+	struct vmtotal vmt;
 
-	if (!buf)
-		goto error;
-
-	if (read_file("/proc/meminfo", buf, BUFSIZ) == -1) {
-		free(buf);
-	error:
+	len = sizeof(physmem);
+	ret = sysctl(mib, 2, &physmem, &len, NULL, 0);
+	if (ret) {
 		memset(meminfo, 0, sizeof(meminfo_t));
+		perror("hw.physmem");
 		return;
 	}
 
-	meminfo->total   = read_value(buf, "MemTotal");
-	meminfo->free    = read_value(buf, "MemFree");
-	meminfo->shared  = read_value(buf, "MemShared");
-	meminfo->buffers = read_value(buf, "Buffers");
-	meminfo->cached  = read_value(buf, "Cached");
+	mib[1] = HW_PAGESIZE;
+	ret = sysctl(mib, 2, &pagesize, &len, NULL, 0);
+	if (ret) {
+		memset(meminfo, 0, sizeof(meminfo_t));
+		perror("hw.pagesize");
+		return;
+	}
 
-	free(buf);
+	mib[0] = CTL_VM; mib[1] = VM_TOTAL;
+	len = sizeof(vmt);
+	ret = sysctl(mib, 2, &vmt, &len, NULL, 0);
+	if (ret) {
+		memset(meminfo, 0, sizeof(meminfo_t));
+		perror("vm.total");
+		return;
+	}
+
+	meminfo->total   = (unsigned int)physmem / 1024;
+	meminfo->free    = vmt.t_free * pagesize / 1024;
+	meminfo->shared  = vmt.t_vmshr;  /* avmshr or vmrshr */
+	meminfo->buffers = 0;		 /* Not on FreeBSD? */
+	sysctlbyname("vm.stats.vm.v_cache_count", &cache_cnt, &len, NULL, 0);
+	meminfo->cached  = (unsigned int)cache_cnt * pagesize / 1024;
 }
 
 void get_cpuinfo(cpuinfo_t *cpuinfo)
 {
-	char *buf = allocate(BUFSIZ);
-	unsigned int values[4];
+	long cp_info[CPUSTATES];
+	size_t len = sizeof(cp_info);
 
-	if (!buf)
-		goto error;
-
-	if (read_file("/proc/stat", buf, BUFSIZ) == -1) {
-		free(buf);
-	error:
-		memset(cpuinfo, 0, sizeof(cpuinfo_t));
+	if (sysctlbyname("kern.cp_time", &cp_info, &len, NULL, 0) < 0) {
+		memset(cpuinfo, 0, sizeof(*cpuinfo));
 		return;
 	}
 
-	read_values(buf, "cpu", values, 4);
-	cpuinfo->user   = values[0];
-	cpuinfo->nice   = values[1];
-	cpuinfo->system = values[2];
-	cpuinfo->idle   = values[3];
-	cpuinfo->irqs   = read_value(buf, "intr");
-	cpuinfo->cntxts = read_value(buf, "ctxt");
-
-	free(buf);
+	cpuinfo->user   = cp_info[CP_USER];
+	cpuinfo->nice   = cp_info[CP_NICE];
+	cpuinfo->system = cp_info[CP_SYS];
+	cpuinfo->idle   = cp_info[CP_IDLE];
+	cpuinfo->irqs   = cp_info[CP_INTR];
+	cpuinfo->cntxts = 0;	/* TODO */
 }
 
 void get_diskinfo(diskinfo_t *diskinfo)
@@ -159,54 +175,53 @@ void get_diskinfo(diskinfo_t *diskinfo)
 	}
 }
 
+static int find_ifname(char *ifname)
+{
+	int i;
+
+	for (i = 0; i < g_interface_list_length; i++) {
+		if (!strcmp(g_interface_list[i], ifname))
+			return i;
+	}
+
+	return -1;
+}
+
 void get_netinfo(netinfo_t *netinfo)
 {
-	int fd;
-	size_t i;
-	char *buf = allocate(BUFSIZ);
-	unsigned int values[16];
-	struct ifreq ifreq;
+	struct ifaddrs *ifap, *ifa;
 
-	if (!buf)
-		goto error;
-
-	if (read_file("/proc/net/dev", buf, BUFSIZ) == -1) {
-		free(buf);
-	error:
+	if (getifaddrs(&ifap) < 0) {
 		memset(netinfo, 0, sizeof(*netinfo));
 		return;
 	}
 
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	for (i = 0; i < g_interface_list_length; i++) {
-		snprintf(ifreq.ifr_name, sizeof(ifreq.ifr_name), "%s", g_interface_list[i]);
-		if (fd == -1 || ioctl(fd, SIOCGIFFLAGS, &ifreq) == -1) {
-			netinfo->status[i] = 4;
-		} else {
-			if (ifreq.ifr_flags & IFF_UP)
-				netinfo->status[i] = (ifreq.ifr_flags & IFF_RUNNING) ? 1 : 7;
-			else
-				netinfo->status[i] = 2;
-		}
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		int i = find_ifname(ifa->ifa_name);
+		struct if_data *ifd = ifa->ifa_data;
 
-		read_values(buf, g_interface_list[i], values, 16);
-		netinfo->rx_bytes[i]   = values[0];
-		netinfo->rx_packets[i] = values[1];
-		netinfo->rx_errors[i]  = values[2];
-		netinfo->rx_drops[i]   = values[3];
-		netinfo->tx_bytes[i]   = values[8];
-		netinfo->tx_packets[i] = values[9];
-		netinfo->tx_errors[i]  = values[10];
-		netinfo->tx_drops[i]   = values[11];
+		if (i == -1 || ifa->ifa_addr->sa_family != AF_LINK)
+			continue;
+
+		if (ifd->ifi_link_state == LINK_STATE_UNKNOWN)
+			netinfo->status[i] = 4;
+		else
+			netinfo->status[i] = ifd->ifi_link_state == LINK_STATE_UP ? 1 : 2;
+
+		netinfo->rx_bytes[i]   = ifd->ifi_ibytes;
+		netinfo->rx_packets[i] = ifd->ifi_ipackets;
+		netinfo->rx_errors[i]  = ifd->ifi_ierrors;
+		netinfo->rx_drops[i]   = ifd->ifi_iqdrops;
+		netinfo->tx_bytes[i]   = ifd->ifi_obytes;
+		netinfo->tx_packets[i] = ifd->ifi_opackets;
+		netinfo->tx_errors[i]  = ifd->ifi_oerrors;
+		netinfo->tx_drops[i]   = ifd->ifi_collisions;
 	}
 
-	if (fd != -1)
-		close(fd);
-
-	free(buf);
+	freeifaddrs(ifap);
 }
 
-#endif /* __FREEBSD__ */
+#endif /* __FreeBSD__ */
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */
