@@ -317,6 +317,7 @@ int main(int argc, char *argv[])
 	int ticks, nfds, c, option_index = 1;
 	size_t i;
 	fd_set rfds, wfds;
+	struct sigaction sig;
 	struct ifreq ifreq;
 	struct timeval tv_last;
 	struct timeval tv_now;
@@ -330,10 +331,11 @@ int main(int argc, char *argv[])
 	} sockaddr;
 
 	/* Prevent TERM and HUP signals from interrupting system calls */
-	signal(SIGTERM, handle_signal);
-	signal(SIGHUP, handle_signal);
-	siginterrupt(SIGTERM, 0);
-	siginterrupt(SIGHUP, 0);
+	sig.sa_handler = handle_signal;
+	sigemptyset (&sig.sa_mask);
+	sig.sa_flags = SA_RESTART;
+	sigaction(SIGTERM, &sig, NULL);
+	sigaction(SIGHUP, &sig, NULL);
 
 	/* Parse commandline options */
 	while (1) {
