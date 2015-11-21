@@ -117,7 +117,6 @@
 #define my_pf_inet              PF_INET
 #define my_in_addr_t            in_addr
 #define my_in_port_t            in_port_t
-#define my_inaddr_any           inaddr_any
 #define my_inet_addrstrlen      INET_ADDRSTRLEN
 
 #else /* IPv6 */
@@ -131,7 +130,6 @@
 #define my_pf_inet              PF_INET6
 #define my_in_addr_t            in6_addr
 #define my_in_port_t            in_port_t
-#define my_inaddr_any           in6addr_any
 #define my_inet_addrstrlen      INET6_ADDRSTRLEN
 #endif/* CONFIG_ENABLE_IPV6 */
 
@@ -245,12 +243,11 @@ typedef struct demoinfo_s {
  * Global variables
  */
 
-#ifndef CONFIG_ENABLE_IPV6
 extern const struct in_addr inaddr_any;
-#endif
 
 extern char   *__progname;
 
+extern int       g_family;
 extern int       g_timeout;
 extern int       g_auth;
 extern int       g_daemon;

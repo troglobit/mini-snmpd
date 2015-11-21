@@ -21,10 +21,9 @@
 
 #include "mini_snmpd.h"
 
-#ifndef CONFIG_ENABLE_IPV6
 const struct in_addr inaddr_any = { INADDR_ANY };
-#endif
 
+int       g_family  = AF_INET;
 int       g_timeout = 100;
 int       g_auth    = 0;
 int       g_daemon  = 1;

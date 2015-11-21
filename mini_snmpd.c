@@ -40,6 +40,10 @@ static void print_help(void)
 	       "\n"
 	       "Usage: mini_snmpd [options]\n"
 	       "\n"
+#ifdef CONFIG_ENABLE_IPV6
+	       "  -4, --use-ipv4         Use IPv4, default\n"
+	       "  -6, --use-ipv6         Use IPv6\n"
+#endif
 	       "  -p, --udp-port PORT    UDP port to bind to, default: 161\n"
 	       "  -P, --tcp-port PORT    TCP port to bind to, default: 161\n"
 	       "  -c, --community STR    Community string, default: public\n"
@@ -280,8 +284,15 @@ int main(int argc, char *argv[])
 #ifndef __FreeBSD__
 		"I:"
 #endif
+#ifdef CONFIG_ENABLE_IPV6
+		"46"
+#endif
 		;
 	static const struct option long_options[] = {
+#ifdef CONFIG_ENABLE_IPV6
+		{ "use-ipv4", 0, 0, '4' },
+		{ "use-ipv6", 0, 0, '6' },
+#endif
 		{ "udp-port", 1, 0, 'p' },
 		{ "tcp-port", 1, 0, 'P' },
 		{ "community", 1, 0, 'c' },
@@ -311,7 +322,12 @@ int main(int argc, char *argv[])
 	struct timeval tv_now;
 	struct timeval tv_sleep;
 	my_socklen_t socklen;
-	struct my_sockaddr_t sockaddr;
+	union {
+		struct sockaddr_in sa;
+#ifdef CONFIG_ENABLE_IPV6
+		struct sockaddr_in6 sa6;
+#endif
+	} sockaddr;
 
 	/* Prevent TERM and HUP signals from interrupting system calls */
 	signal(SIGTERM, handle_signal);
@@ -326,6 +342,15 @@ int main(int argc, char *argv[])
 			break;
 
 		switch (c) {
+#ifdef CONFIG_ENABLE_IPV6
+			case '4':
+				g_family = AF_INET;
+				break;
+
+			case '6':
+				g_family = AF_INET6;
+				break;
+#endif
 			case 'p':
 				g_udp_port = atoi(optarg);
 				break;
@@ -421,16 +446,25 @@ int main(int argc, char *argv[])
 #endif
 
 	/* Open the server's UDP port and prepare it for listening */
-	g_udp_sockfd = socket(my_pf_inet, SOCK_DGRAM, 0);
+	g_udp_sockfd = socket((g_family == AF_INET) ? PF_INET : PF_INET6, SOCK_DGRAM, 0);
 	if (g_udp_sockfd == -1) {
 		lprintf(LOG_ERR, "could not create UDP socket: %m\n");
 		exit(EXIT_SYSCALL);
 	}
 
-	sockaddr.my_sin_family = my_af_inet;
-	sockaddr.my_sin_port = htons(g_udp_port);
-	sockaddr.my_sin_addr = my_inaddr_any;
-	socklen = sizeof(sockaddr);
+	if (g_family == AF_INET) {
+		sockaddr.sa.sin_family = g_family;
+		sockaddr.sa.sin_port = htons(g_udp_port);
+		sockaddr.sa.sin_addr = inaddr_any;
+		socklen = sizeof(sockaddr.sa);
+#ifdef CONFIG_ENABLE_IPV6
+	} else {
+		sockaddr.sa6.sin6_family = g_family;
+		sockaddr.sa6.sin6_port = htons(g_udp_port);
+		sockaddr.sa6.sin6_addr = in6addr_any;
+		socklen = sizeof(sockaddr.sa6);
+#endif
+	}
 	if (bind(g_udp_sockfd, (struct sockaddr *)&sockaddr, socklen) == -1) {
 		lprintf(LOG_ERR, "could not bind UDP socket to port %d: %m\n", g_udp_port);
 		exit(EXIT_SYSCALL);
@@ -447,7 +481,7 @@ int main(int argc, char *argv[])
 #endif
 
 	/* Open the server's TCP port and prepare it for listening */
-	g_tcp_sockfd = socket(my_pf_inet, SOCK_STREAM, 0);
+	g_tcp_sockfd = socket((g_family == AF_INET) ? PF_INET : PF_INET6, SOCK_STREAM, 0);
 	if (g_tcp_sockfd == -1) {
 		lprintf(LOG_ERR, "could not create TCP socket: %m\n");
 		exit(EXIT_SYSCALL);
@@ -469,10 +503,19 @@ int main(int argc, char *argv[])
 		exit(EXIT_SYSCALL);
 	}
 
-	sockaddr.my_sin_family = my_af_inet;
-	sockaddr.my_sin_port = htons(g_tcp_port);
-	sockaddr.my_sin_addr = my_inaddr_any;
-	socklen = sizeof(sockaddr);
+	if (g_family == AF_INET) {
+		sockaddr.sa.sin_family = g_family;
+		sockaddr.sa.sin_port = htons(g_udp_port);
+		sockaddr.sa.sin_addr = inaddr_any;
+		socklen = sizeof(sockaddr.sa);
+#ifdef CONFIG_ENABLE_IPV6
+	} else {
+		sockaddr.sa6.sin6_family = g_family;
+		sockaddr.sa6.sin6_port = htons(g_udp_port);
+		sockaddr.sa6.sin6_addr = in6addr_any;
+		socklen = sizeof(sockaddr.sa6);
+#endif
+	}
 	if (bind(g_tcp_sockfd, (struct sockaddr *)&sockaddr, socklen) == -1) {
 		lprintf(LOG_ERR, "could not bind TCP socket to port %d: %m\n", g_tcp_port);
 		exit(EXIT_SYSCALL);
