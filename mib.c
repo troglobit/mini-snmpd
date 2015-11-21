@@ -387,12 +387,17 @@ static int data_alloc(data_t *data, int type)
 	return 0;
 }
 
-/* Sets the data buffer for the value depending on the type. Note that we
- * assume the buffer was allocated to hold the maximum possible value when
- * the MIB was built!
+/*
+ * Set data buffer to its new value, depending on the type.
+ *
+ * Note: we assume the buffer was allocated to hold the maximum possible
+ *       value when the MIB was built.
  */
 static int data_set(data_t *data, int type, const void *arg)
 {
+	/* Make sure to always initialize the buffer, in case of error below. */
+	memset(data->buffer, 0, data->max_length);
+
 	switch (type) {
 		case BER_TYPE_INTEGER:
 			return encode_integer(data, (intptr_t)arg);
