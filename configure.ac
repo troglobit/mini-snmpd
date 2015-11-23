@@ -1,6 +1,6 @@
 # Use v2.61 for backwards compat with Ubuntu 12.04 LTS
 AC_PREREQ([2.61])
-AC_INIT([mini-snmpd],[1.3-dev],[https://github.com/troglobit/mini-snmpd/issues])
+AC_INIT([mini-snmpd],[1.3],[https://github.com/troglobit/mini-snmpd/issues])
 AM_INIT_AUTOMAKE([1.11 foreign])
 AM_SILENT_RULES([yes])
 
