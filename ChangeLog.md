@@ -23,13 +23,13 @@
   Henrik Nordstrom
 
 ### Fixes
-- From [Vladimir N. Oleynik][dzo] [Busybox fork][vodz-fork]:
+- From [Vladimir N. Oleynik][dzo]'s [Busybox fork][vodz-fork]:
   - Do not allow ':' as interface separator
   - Simplify `read_values()` and its callee's, skip optional ':'
   - Inspirations for lots of reduced stack usage
   - Fix typo in `setsockopt()`
 - Massive code cleanup and simplification by [Joachim Nilsson][troglobit]
-- Build fixes for FreeBSD, e.g. SO_BINDDEVICE sockopt() does not exist
+- FreeBSD build fixes, e.g. `SO_BINDDEVICE` socket option does not exist
 - Display OK log message *after* successful socket & bind
 
 
@@ -116,7 +116,7 @@ getbulk are supported on UDP and TCP connections.
 [v1.3]:       https://github.com/troglobit/mini-snmpd/compare/v1.2b...v1.3
 [v1.2b]:      https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
 [v1.1]:       https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
-[dzo]:        <dzo@simtreas.ru>
+[dzo]:        <mailto:dzo@simtreas.ru>
 [home]:       https://github.com/troglobit/mini-snmpd
 [palacios]:   https://github.com/javiplx
 [troglobit]:  https://github.com/troglobit
