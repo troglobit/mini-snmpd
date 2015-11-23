@@ -1,25 +1,36 @@
-[v1.3][] -- UNRELEASED
+[v1.3][] -- 2015-11-23
 ----------------------
 
 ### Changes
 
-- New maintainer, [Joachim Nilsson](https://github.com/troglobit)
-- Hosting is now on [GitHub](https://github.com/troglobit/mini-snmpd)
-- Changed to GNU Configure and Build System, use `./autogen.sh` first if
-  you checkout the sources from GIT.
-- Add support for daemonizing automatically, `-n` for previous behavior.
-- Add support for logging to syslog even when running in the foreground.
+- Refactor and cleanup by [Javier Palacios][palacios]
+- New maintainer, [Joachim Nilsson][troglobit]
+- Hosting is now on [GitHub][home]
+- Changed to GNU Configure and Build System, use `./autogen.sh` for
+  first time checkout from GIT
+- Reduced stack usage in Linux `/proc` file parser backend
+- Add support for daemonizing automatically, `-n` for previous behavior
+- Add support for logging to syslog even when running in the foreground
+- Complete refactor of FreeBSD support.  Now with native syscalls instead
+  of requirment for Linux `/proc` file system
+- Add support for daemonizing by default, use `-n` to run in foreground
+- Add support for syslog even if running in the foreground
+- Dual stack support, IPv4 default, when building with `--enable-ipv6`,
+  which is also default
+- Use sigaction() instead of signal() and siginterrupt(), by
+  Henrik Nordstrom
+- Increase MAX number of interfaces to monitor from four to eight, by
+  Henrik Nordstrom
 
 ### Fixes
-- Cleanup and code simplification fixes from
-  [Javier Palacios](https://github.com/javiplx)
-- Some bug fixes from the http://www.simtreas.ru/~dzo/busybox-vodz.html
-  fork of mini-snmpd by Vladimir N. Oleynik <dzo@simtreas.ru>
+- From [Vladimir N. Oleynik][dzo] [Busybox fork][vodz-fork]:
   - Do not allow ':' as interface separator
   - Simplify `read_values()` and its callee's, skip optional ':'
   - Inspirations for lots of reduced stack usage
   - Fix typo in `setsockopt()`
-- Massive code cleanup and simplification by Joachim Nilsson
+- Massive code cleanup and simplification by [Joachim Nilsson][troglobit]
+- Build fixes for FreeBSD, e.g. SO_BINDDEVICE sockopt() does not exist
+- Display OK log message *after* successful socket & bind
 
 
 [v1.2b][] -- 2010-03-28
@@ -101,9 +112,15 @@ This is the first feature-complete version.  SNMP get, getnext, and
 getbulk are supported on UDP and TCP connections.
 
 
-[v1.3]:  https://github.com/troglobit/mini-snmpd/compare/v1.2b...HEAD
-[v1.2b]: https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
-[v1.1]:  https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
+[UNRELEASED]: https://github.com/troglobit/mini-snmpd/compare/v1.3...HEAD
+[v1.3]:       https://github.com/troglobit/mini-snmpd/compare/v1.2b...v1.3
+[v1.2b]:      https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
+[v1.1]:       https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
+[dzo]:        <dzo@simtreas.ru>
+[home]:       https://github.com/troglobit/mini-snmpd
+[palacios]:   https://github.com/javiplx
+[troglobit]:  https://github.com/troglobit
+[vodz-fork]:  http://www.simtreas.ru/~dzo/busybox-vodz.html
 
 <!--
   -- Local Variables:
