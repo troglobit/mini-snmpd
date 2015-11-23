@@ -17,10 +17,10 @@
 - Add support for syslog even if running in the foreground
 - Dual stack support, IPv4 default, when building with `--enable-ipv6`,
   which is also default
-- Use sigaction() instead of signal() and siginterrupt(), by
-  Henrik Nordstrom
+- Use `sigaction()` instead of `signal()` and `siginterrupt()`, by
+  [Henrik Nordstrom][hno]
 - Increase MAX number of interfaces to monitor from four to eight, by
-  Henrik Nordstrom
+  [Henrik Nordstrom][hno]
 
 ### Fixes
 - From [Vladimir N. Oleynik][dzo]'s [Busybox fork][vodz-fork]:
@@ -117,6 +117,7 @@ getbulk are supported on UDP and TCP connections.
 [v1.2b]:      https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
 [v1.1]:       https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
 [dzo]:        <mailto:dzo@simtreas.ru>
+[hno]:        https://github.com/hno
 [home]:       https://github.com/troglobit/mini-snmpd
 [palacios]:   https://github.com/javiplx
 [troglobit]:  https://github.com/troglobit
