@@ -1,5 +1,6 @@
 Mini SNMP Daemon
 ================
+[![Travis Status][]][Travis]
 
 The Mini SNMP daemon is a minimal implementation of an SNMP daemon.  It
 is targeted at embedded systems with limited disk and memory resources.
@@ -54,3 +55,5 @@ releases: 1.0, 1.1, and 1.2b.
 [build]: https://github.com/troglobit/mini-snmpd/blob/master/Makefile
 [author]: <mailto:robert.ernst@aon.at>
 [net-snmp]: http://www.net-snmp.org/
+[Travis]: https://travis-ci.org/troglobit/mini-snmpd
+[Travis Status]: https://travis-ci.org/troglobit/mini-snmpd.png?branch=master
