@@ -1,0 +1,18 @@
+# Travis CI integration
+# Defaults to GNU GCC and autotools: ./configure && make && make test
+language: c
+
+# Use docker for quicker builds, it now allows https://docs.travis-ci.com/user/apt/
+sudo: false
+
+# Build with both and clang
+compiler:
+  - gcc
+  - clang
+
+# Override default build command, we do not have `make test` yet
+script:
+  - ./autogen.sh
+  - ./configure
+  - make clean
+  - make -j5 all
