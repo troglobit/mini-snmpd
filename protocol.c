@@ -669,8 +669,8 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 	 * buffer, but at offset (bufsize-size..bufsize-1)!
 	 */
 	pos = MAX_PACKET_SIZE;
-	for (i = 0; i < response->value_list_length; i++) {
-		if (encode_snmp_varbind(client->packet, &pos, &response->value_list[i]) == -1)
+	for (i = response->value_list_length; i > 0; i--) {
+		if (encode_snmp_varbind(client->packet, &pos, &response->value_list[i-1]) == -1)
 			return -1;
 	}
 
