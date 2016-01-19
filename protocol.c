@@ -744,7 +744,7 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 
 static int handle_snmp_get(request_t *request, response_t *response, client_t *UNUSED(client))
 {
-	size_t i, pos = 0;
+	size_t i, pos;
 	value_t *value;
 	const char *msg = "Failed handling SNMP GET: value list overflow\n";
 
@@ -754,6 +754,7 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *U
 	 * subid of the requested one (table cell of table column)!
 	 */
 	for (i = 0; i < request->oid_list_length; i++) {
+		pos = 0;
 		value = mib_find(&request->oid_list[i], &pos);
 		if (!value)
 			SNMP_GET_ERROR(response, request, i, SNMP_STATUS_NO_SUCH_NAME, m_no_such_object, msg);
