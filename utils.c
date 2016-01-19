@@ -52,6 +52,8 @@ static inline int parse_lineint(char *buf, field_t *f)
 	ptr += strlen(f->prefix);
 	if (*ptr == ':')	/* Prefix may have a ':', skip it too! */
 		ptr++;
+	else if (!isspace(*ptr))/* If there is NO ':' after prefix there must be a space, otherwise strstr gave us a partial match */
+		return 0; 
 
 	for (i = 0; i < f->len; i++) {
 		while (isspace(*ptr))
