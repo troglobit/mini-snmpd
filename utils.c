@@ -58,7 +58,7 @@ static inline int parse_lineint(char *buf, field_t *f)
 			ptr++;
 
 		if (f->value[i]) {
-			*(f->value[i]) = strtoul(ptr, NULL, 0);
+			*(f->value[i]) = strtoull(ptr, NULL, 0);
 		}
 
 		while (!isspace(*ptr))
@@ -70,7 +70,7 @@ static inline int parse_lineint(char *buf, field_t *f)
 
 int parse_file(char *file, field_t fields[])
 {
-	char buf[128];
+	char buf[512];
 	FILE *fp;
 
 	if (!file || !fields)
