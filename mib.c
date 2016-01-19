@@ -540,7 +540,7 @@ int mib_build(void)
 
 		/* ifSpeed (in bps) */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 5, i + 1, BER_TYPE_COUNTER, (const void *)(intptr_t)1000000000) == -1)
+			if (mib_build_entry(&m_if_2_oid, 5, i + 1, BER_TYPE_GAUGE, (const void *)(intptr_t)1000000000) == -1)
 				return -1;
 		}
 
@@ -566,7 +566,7 @@ int mib_build(void)
 
 		/* ifLastChange */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 9, i + 1, BER_TYPE_COUNTER, (const void *)(intptr_t)0) == -1)
+			if (mib_build_entry(&m_if_2_oid, 9, i + 1, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)0) == -1)
 				return -1;
 		}
 
