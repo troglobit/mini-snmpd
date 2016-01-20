@@ -34,7 +34,7 @@
 #define MAX_NR_SUBIDS                                   16
 #define MAX_NR_DISKS                                    4
 #define MAX_NR_INTERFACES                               8
-#define MAX_NR_VALUES                                   128
+#define MAX_NR_VALUES                                   192
 
 #define MAX_PACKET_SIZE                                 2048
 #define MAX_STRING_SIZE                                 64
