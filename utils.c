@@ -42,17 +42,24 @@ void *allocate(size_t len)
 
 static inline int parse_lineint(char *buf, field_t *f)
 {
-	char *ptr;
+	char *ptr, *prefixptr;
 	size_t i;
 
-	ptr = strstr(buf, f->prefix);
-	if (!ptr)
+	ptr = buf;
+	while (isspace(*ptr))
+		ptr++;
+	if (!*ptr)
 		return 0;
 
-	ptr += strlen(f->prefix);
+	/* Check if buffer begins with prefix */
+	prefixptr = f->prefix;
+	while (*prefixptr) {
+		if (*prefixptr++ != *ptr++)
+			return 0;
+	}
 	if (*ptr == ':')	/* Prefix may have a ':', skip it too! */
 		ptr++;
-	else if (!isspace(*ptr))/* If there is NO ':' after prefix there must be a space, otherwise strstr gave us a partial match */
+	else if (!isspace(*ptr))/* If there is NO ':' after prefix there must be a space, otherwise we got a partial match */
 		return 0; 
 
 	for (i = 0; i < f->len; i++) {
