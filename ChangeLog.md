@@ -1,3 +1,31 @@
+Change Log
+==========
+
+All notable changes to the project are documented in this file.
+
+
+[v1.4][] -- UNRELEASED
+----------------------
+
+Bug fix release, courtesy of Andre Grosse Bley.
+
+### Changes
+- Increase MIB table size: 128 --> 192
+
+### Fixes
+- Incorrect OID types: `ifLastChange` should be `BER_TYPE_TIME_TICKS`
+  and `ifSpeed` should be `BER_TYPE_GAUGE`
+- Fix `parse_line()` to prevent partial matches: `wlan0` matched both
+  `wlan0-1` and `wlan0-2`
+- Fix `parse_lineint()` to prevent partial matches
+- Response OID order match with request order, reversed order breaks at
+  least the MRTG SNMP client
+- Traffic counters get stuck after 4GB traffic.  Use `strtoull()` rather
+  than `strtoul()` to parse numbers
+- OIDs in request can be in any order.  Reset OID table position after
+  each handled OID from request
+
+
 [v1.3][] -- 2015-11-23
 ----------------------
 
@@ -113,6 +141,7 @@ getbulk are supported on UDP and TCP connections.
 
 
 [UNRELEASED]: https://github.com/troglobit/mini-snmpd/compare/v1.3...HEAD
+[v1.3]:       https://github.com/troglobit/mini-snmpd/compare/v1.3...HEAD
 [v1.3]:       https://github.com/troglobit/mini-snmpd/compare/v1.2b...v1.3
 [v1.2b]:      https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
 [v1.1]:       https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
