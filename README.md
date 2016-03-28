@@ -7,8 +7,9 @@ is targeted at embedded systems with limited disk and memory resources.
 All configuration is done using command line arguments.  It supports
 basic CPU, memory, disk, and network interface statistics.
 
-It does not support the flexibility and features of de-facto standard
-[net-snmp][], but also does not have the memory requirements of net-snmp.
+`mini-snmpd` is not as flexibible as, and does not support the same
+features as, the de-facto standard [net-snmp][], but this also means
+it does not have the same footprint and overhead.
 
 Supported features:
 
@@ -22,8 +23,8 @@ Supported features:
 * Supports linux kernel versions 2.4 and 2.6
 * Supports FreeBSD (needs procfs mounted using "mount_linprocfs procfs /proc")
 
-The current version is a beta version; it is tested on IA32 and ARM platforms
-using net-snmp as client.
+`mini-snmpd` has only been tested on x86 and ARM platforms using
+net-snmp as client, so big endian may not work.
 
 - For info about licensing, see the file [COPYING][license]
 - For info about using the program, see the file [mini_snmpd.8][man]
@@ -34,9 +35,9 @@ using net-snmp as client.
 Bugs & Features
 ---------------
 
-The mini-snmpd project is [maintained at GitHub][github], use its issue
-tracker and pull request functions to report bugs or contribute new
-features.
+The `mini-snmpd` project is [maintained at GitHub][github], use its
+issue tracker and pull request functions to report bugs or contribute
+new features.
 
 
 Origin & References
