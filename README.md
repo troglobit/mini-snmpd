@@ -13,7 +13,7 @@ it does not have the same footprint and overhead.
 
 Supported features:
 
-* SNMP version 1 and 2c, v3 is on the TODO list
+* SNMP version 1 and 2c (v3 is on the TODO list)
 * Community string authentication when using 2c or explicitely configured
 * Read-only access (writing is not supported)
 * Includes basic system info like CPU load, memory, disk and network interfaces
