@@ -20,3 +20,7 @@ The FreeBSD backend has received native support in v1.3 so it does not
 need to use Linux /proc compat anymore.  However, some parts are not
 fully implemented yet.
 
+* Add SNMPv3 support, RFC2574/RFC3414
+
+At least user-based security.
+
