@@ -16,20 +16,34 @@ AC_CHECK_FUNCS(strstr strtod strtoul strtok getopt)
 
 ### Check for configured features #############################################################
 AC_ARG_WITH(vendor,
-   [AS_HELP_STRING([--with-vendor=OID], [Set a different vendor OID, default: .1.3.6.1.4.1])],
-   [AC_DEFINE_UNQUOTED(VENDOR, "$withval")],
-   [AC_DEFINE_UNQUOTED(VENDOR, ".1.3.6.1.4.1", [Vendor OID])])
+        AS_HELP_STRING([--with-vendor=OID], [Set a different vendor OID, default: .1.3.6.1.4.1]),
+	[vendor="$withval"], [vendor=".1.3.6.1.4.1"])
 
 AC_ARG_ENABLE(debug,
-   [AS_HELP_STRING([--enable-debug], [Enable debug mode, also set CFLAGS="-g -O0".])],
-   AC_DEFINE(DEBUG, 1, [Define to enable debug mode.]))
+   AS_HELP_STRING([--enable-debug], [Enable debug mode, also set CFLAGS="-g -O0", disabled by default.]))
 
 AC_ARG_ENABLE(demo,
-   [AS_HELP_STRING([--enable-demo], [Enable demo mode.])],
-   AC_DEFINE(CONFIG_ENABLE_DEMO, 1, [Define to enable demo mode.]))
+   AS_HELP_STRING([--enable-demo], [Enable demo mode, for budding devs only. Disabled by default.]))
 
 AC_ARG_ENABLE(ipv6,
-   [AS_HELP_STRING([--disable-ipv6], [Disable IPv6 support.])],
-   , AC_DEFINE(CONFIG_ENABLE_IPV6, 1, [Define to enable IPv6 support.]))
+   AS_HELP_STRING([--disable-ipv6], [Disable IPv6 support, enabled by default.]))
 
+### Enable features ###########################################################################
+AS_IF([test "x$with_vendor" != "xno"],[
+	AS_IF([test "x$vendor" = "xyes"],[
+		AC_MSG_ERROR([Must supply a valid vendor OID])])
+	],[
+	AC_MSG_ERROR([Vendor OID cannot currently be disabled, use default.])])
+AC_DEFINE_UNQUOTED(VENDOR, ["$vendor"], [Vendor OID])
+
+AS_IF([test "x$enable_debug" = "xyes"],[
+   AC_DEFINE(DEBUG, 1, [Define to enable debug mode.])])
+
+AS_IF([test "x$enable_demo" = "xyes"],[
+   AC_DEFINE(CONFIG_ENABLE_DEMO, 1, [Define to enable demo mode.])])
+
+AS_IF([test "x$enable_ipv6" != "xno"],[
+   AC_DEFINE(CONFIG_ENABLE_IPV6, 1, [Define to enable IPv6 support.])])
+
+### Generate all files ########################################################################
 AC_OUTPUT
