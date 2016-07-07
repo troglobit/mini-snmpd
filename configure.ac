@@ -1,6 +1,4 @@
-# Use v2.61 for backwards compat with Ubuntu 12.04 LTS
-AC_PREREQ([2.61])
-AC_INIT([mini-snmpd],[1.4-rc1],[https://github.com/troglobit/mini-snmpd/issues])
+AC_INIT([mini-snmpd], [1.4-rc1], [https://github.com/troglobit/mini-snmpd/issues])
 AM_INIT_AUTOMAKE([1.11 foreign])
 AM_SILENT_RULES([yes])
 
@@ -11,17 +9,12 @@ AC_CONFIG_FILES([Makefile])
 AC_PROG_CC
 AC_PROG_INSTALL
 
-dnl - Configuration.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h stdint.h stdlib.h syslog.h signal.h getopt.h arpa/inet.h sys/socket.h)
 AC_CHECK_HEADERS(sys/time.h time.h sys/types.h net/if.h netinet/in.h)
 AC_CHECK_FUNCS(strstr strtod strtoul strtok getopt)
 
-dnl Check for uint[8,16,32]_t
-dnl AC_TYPE_UINT8_T
-dnl AC_TYPE_UINT16_T
-dnl AC_TYPE_UINT32_T
-
+### Check for configured features #############################################################
 AC_ARG_WITH(vendor,
    [AS_HELP_STRING([--with-vendor=OID], [Set a different vendor OID, default: .1.3.6.1.4.1])],
    [AC_DEFINE_UNQUOTED(VENDOR, "$withval")],
