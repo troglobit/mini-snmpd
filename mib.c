@@ -42,6 +42,7 @@
 
 static const oid_t m_system_oid         = { { 1, 3, 6, 1, 2, 1, 1               }, 7, 8  };
 static const oid_t m_if_1_oid           = { { 1, 3, 6, 1, 2, 1, 2               }, 7, 8  };
+static const oid_t m_tcp_oid            = { { 1, 3, 6, 1, 2, 1, 6               }, 7, 8  };
 static const oid_t m_if_2_oid           = { { 1, 3, 6, 1, 2, 1, 2, 2, 1         }, 9, 10 };
 static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           }, 8, 9  };
 static const oid_t m_memory_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 4,        }, 8, 10 };
@@ -228,6 +229,39 @@ static int encode_unsigned(data_t *data, int type, unsigned int ticks_value)
 	return 0;
 }
 
+static int encode_unsigned64(data_t *data, int type, uint64_t ticks_value)
+{
+	unsigned char *buffer;
+	int length;
+
+	buffer = data->buffer;
+	if (ticks_value & 0xFF00000000000000ULL)
+		length = 8;
+	else if (ticks_value & 0x00FF000000000000ULL)
+		length = 7;
+	else if (ticks_value & 0x0000FF0000000000ULL)
+		length = 6;
+	else if (ticks_value & 0x000000FF00000000ULL)
+		length = 5;
+	else if (ticks_value & 0x00000000FF000000ULL)
+		length = 4;
+	else if (ticks_value & 0x0000000000FF0000ULL)
+		length = 3;
+	else if (ticks_value & 0x000000000000FF00ULL)
+		length = 2;
+	else
+		length = 1;
+
+	*buffer++ = type;
+	*buffer++ = length;
+	while (length--)
+		*buffer++ = (ticks_value >> (8 * length)) & 0xFF;
+
+	data->encoded_length = buffer - data->buffer;
+
+	return 0;
+}
+
 static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int type)
 {
 	int ret;
@@ -390,6 +424,12 @@ static int data_alloc(data_t *data, int type)
 			data->buffer = allocate(data->max_length);
 			break;
 
+		case BER_TYPE_COUNTER64:
+			data->max_length = sizeof(uint64_t) + 2;
+			data->encoded_length = 0;
+			data->buffer = allocate(data->max_length);
+			break;
+
 		case BER_TYPE_COUNTER:
 		case BER_TYPE_GAUGE:
 		case BER_TYPE_TIME_TICKS:
@@ -433,6 +473,9 @@ static int data_set(data_t *data, int type, const void *arg)
 
 		case BER_TYPE_OID:
 			return encode_oid(data, oid_aton((const char *)arg));
+
+		case BER_TYPE_COUNTER64:
+			return encode_unsigned64(data, type, *((uint64_t *)arg));
 
 		case BER_TYPE_COUNTER:
 		case BER_TYPE_GAUGE:
@@ -632,6 +675,25 @@ int mib_build(void)
 	}
 
 	/*
+	 * The TCP-MIB.
+	 */
+	if (!mib_alloc_entry(&m_tcp_oid,  1, 0, BER_TYPE_INTEGER) ||
+	    !mib_alloc_entry(&m_tcp_oid,  2, 0, BER_TYPE_INTEGER) ||
+	    !mib_alloc_entry(&m_tcp_oid,  3, 0, BER_TYPE_INTEGER) ||
+	    !mib_alloc_entry(&m_tcp_oid,  4, 0, BER_TYPE_INTEGER) ||
+	    !mib_alloc_entry(&m_tcp_oid,  5, 0, BER_TYPE_COUNTER) ||
+	    !mib_alloc_entry(&m_tcp_oid,  6, 0, BER_TYPE_COUNTER) ||
+	    !mib_alloc_entry(&m_tcp_oid,  7, 0, BER_TYPE_COUNTER) ||
+	    !mib_alloc_entry(&m_tcp_oid,  8, 0, BER_TYPE_COUNTER) ||
+	    !mib_alloc_entry(&m_tcp_oid,  9, 0, BER_TYPE_GAUGE)   ||
+	    !mib_alloc_entry(&m_tcp_oid, 10, 0, BER_TYPE_COUNTER) ||
+	    !mib_alloc_entry(&m_tcp_oid, 11, 0, BER_TYPE_COUNTER) ||
+	    !mib_alloc_entry(&m_tcp_oid, 12, 0, BER_TYPE_COUNTER) ||
+	    !mib_alloc_entry(&m_tcp_oid, 14, 0, BER_TYPE_COUNTER) ||
+	    !mib_alloc_entry(&m_tcp_oid, 15, 0, BER_TYPE_COUNTER))
+		return -1;
+
+	/*
 	 * The host MIB: additional host info (HOST-RESOURCES-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
@@ -730,6 +792,7 @@ int mib_update(int full)
 		diskinfo_t diskinfo;
 		loadinfo_t loadinfo;
 		meminfo_t meminfo;
+		tcpinfo_t tcpinfo;
 		cpuinfo_t cpuinfo;
 		netinfo_t netinfo;
 #ifdef CONFIG_ENABLE_DEMO
@@ -814,6 +877,30 @@ int mib_update(int full)
 					return -1;
 			}
 		}
+	}
+
+	/*
+	 * TCP-MIB
+	 */
+
+	if (full) {
+		get_tcpinfo(&u.tcpinfo);
+
+		if (mib_update_entry(&m_tcp_oid,  1, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.tcpinfo.tcpRtoAlgorithm)   == -1 ||
+		    mib_update_entry(&m_tcp_oid,  2, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.tcpinfo.tcpRtoMin)         == -1 ||
+		    mib_update_entry(&m_tcp_oid,  3, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.tcpinfo.tcpRtoMax)         == -1 ||
+		    mib_update_entry(&m_tcp_oid,  4, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.tcpinfo.tcpMaxConn)        == -1 ||
+		    mib_update_entry(&m_tcp_oid,  5, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpActiveOpens)   == -1 ||
+		    mib_update_entry(&m_tcp_oid,  6, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpPassiveOpens)  == -1 ||
+		    mib_update_entry(&m_tcp_oid,  7, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpAttemptFails)  == -1 ||
+		    mib_update_entry(&m_tcp_oid,  8, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpEstabResets)   == -1 ||
+		    mib_update_entry(&m_tcp_oid,  9, 0, &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)u.tcpinfo.tcpCurrEstab)        == -1 ||
+		    mib_update_entry(&m_tcp_oid, 10, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpInSegs)        == -1 ||
+		    mib_update_entry(&m_tcp_oid, 11, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpOutSegs)       == -1 ||
+		    mib_update_entry(&m_tcp_oid, 12, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpRetransSegs)   == -1 ||
+		    mib_update_entry(&m_tcp_oid, 14, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpInErrs)        == -1 ||
+		    mib_update_entry(&m_tcp_oid, 15, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpOutRsts)       == -1)
+			return -1;
 	}
 
 	/*

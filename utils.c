@@ -41,7 +41,7 @@ void *allocate(size_t len)
 }
 
 
-static inline int parse_lineint(char *buf, field_t *f)
+static inline int parse_lineint(char *buf, field_t *f, size_t *skip_prefix)
 {
 	char *ptr, *prefixptr;
 	size_t i;
@@ -63,12 +63,19 @@ static inline int parse_lineint(char *buf, field_t *f)
 	else if (!isspace(*ptr))/* If there is NO ':' after prefix there must be a space, otherwise we got a partial match */
 		return 0; 
 
+	if (skip_prefix != NULL) {
+		if (*skip_prefix > 0) {
+			(*skip_prefix)--;
+			return 0;
+		}
+	}
+
 	for (i = 0; i < f->len; i++) {
 		while (isspace(*ptr))
 			ptr++;
 
 		if (f->value[i]) {
-			*(f->value[i]) = strtoull(ptr, NULL, 0);
+			*(f->value[i]) = strtoll(ptr, NULL, 0);
 		}
 
 		while (!isspace(*ptr))
@@ -78,7 +85,7 @@ static inline int parse_lineint(char *buf, field_t *f)
 	return 1;
 }
 
-int parse_file(char *file, field_t fields[], size_t limit)
+int parse_file(char *file, field_t fields[], size_t limit, size_t skip_prefix)
 {
 	char buf[512];
 	FILE *fp;
@@ -94,7 +101,7 @@ int parse_file(char *file, field_t fields[], size_t limit)
 		size_t i;
 
 		for (i = 0; i < limit && fields[i].prefix; i++) {
-			if (parse_lineint(buf, &fields[i]))
+			if (parse_lineint(buf, &fields[i], &skip_prefix))
 				break;
 		}
 	}

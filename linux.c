@@ -93,7 +93,7 @@ void get_meminfo(meminfo_t *meminfo)
 	};
 
 	memset(meminfo, 0, sizeof(meminfo_t));
-	parse_file("/proc/meminfo", fields, 255);
+	parse_file("/proc/meminfo", fields, 255, 0);
 }
 
 void get_cpuinfo(cpuinfo_t *cpuinfo)
@@ -106,7 +106,32 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	};
 
 	memset(cpuinfo, 0, sizeof(cpuinfo_t));
-	parse_file("/proc/stat", fields, 255);
+	parse_file("/proc/stat", fields, 255, 0);
+}
+
+void get_tcpinfo(tcpinfo_t *tcpinfo)
+{
+	field_t fields[] = {
+		{ "Tcp", 14,
+		  { &tcpinfo->tcpRtoAlgorithm,
+		    &tcpinfo->tcpRtoMin,
+		    &tcpinfo->tcpRtoMax,
+		    &tcpinfo->tcpMaxConn,
+		    &tcpinfo->tcpActiveOpens,
+		    &tcpinfo->tcpPassiveOpens,
+		    &tcpinfo->tcpAttemptFails,
+		    &tcpinfo->tcpEstabResets,
+		    &tcpinfo->tcpCurrEstab,
+		    &tcpinfo->tcpInSegs,
+		    &tcpinfo->tcpOutSegs,
+		    &tcpinfo->tcpRetransSegs,
+		    &tcpinfo->tcpInErrs,
+		    &tcpinfo->tcpOutRsts } },
+		{ NULL,     0, {  NULL     } }
+	};
+
+	if (parse_file("/proc/net/snmp", fields, 255, 1))
+		memset(tcpinfo, 0, sizeof(tcpinfo_t));
 }
 
 void get_diskinfo(diskinfo_t *diskinfo)
@@ -185,7 +210,7 @@ void get_netinfo(netinfo_t *netinfo)
 		memcpy(&netinfo->mac_addr[i][0], &ifreq.ifr_hwaddr.sa_data[0], 6);
 	}
 
-	parse_file("/proc/net/dev", fields, 255);
+	parse_file("/proc/net/dev", fields, 255, 0);
 	close(sd);
 }
 
