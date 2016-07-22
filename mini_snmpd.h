@@ -258,6 +258,13 @@ typedef struct tcpinfo_s {
 	long long tcpOutRsts;
 } tcpinfo_t;
 
+typedef struct udpinfo_s {
+	long long udpInDatagrams;
+	long long udpNoPorts;
+	long long udpInErrors;
+	long long udpOutDatagrams;
+} udpinfo_t;
+
 #ifdef CONFIG_ENABLE_DEMO
 typedef struct demoinfo_s {
 	unsigned int random_value_1;
@@ -346,6 +353,7 @@ void         get_loadinfo       (loadinfo_t *loadinfo);
 void         get_meminfo        (meminfo_t *meminfo);
 void         get_cpuinfo        (cpuinfo_t *cpuinfo);
 void         get_tcpinfo        (tcpinfo_t *tcpinfo);
+void         get_udpinfo        (udpinfo_t *udpinfo);
 void         get_diskinfo       (diskinfo_t *diskinfo);
 void         get_netinfo        (netinfo_t *netinfo);
 #ifdef CONFIG_ENABLE_DEMO

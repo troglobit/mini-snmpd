@@ -127,12 +127,28 @@ void get_tcpinfo(tcpinfo_t *tcpinfo)
 		    &tcpinfo->tcpRetransSegs,
 		    &tcpinfo->tcpInErrs,
 		    &tcpinfo->tcpOutRsts } },
-		{ NULL,     0, {  NULL     } }
+		{ NULL,     0, { NULL    } }
 	};
 
 	if (parse_file("/proc/net/snmp", fields, 255, 1))
 		memset(tcpinfo, 0, sizeof(tcpinfo_t));
 }
+
+void get_udpinfo(udpinfo_t *udpinfo)
+{
+	field_t fields[] = {
+		{ "Udp", 4,
+		  { &udpinfo->udpInDatagrams,
+		    &udpinfo->udpNoPorts,
+		    &udpinfo->udpInErrors,
+		    &udpinfo->udpOutDatagrams } },
+		{ NULL,  0, { NULL            } }
+	};
+
+	if (parse_file("/proc/net/snmp", fields, 255, 1))
+		memset(udpinfo, 0, sizeof(udpinfo_t));
+}
+
 
 void get_diskinfo(diskinfo_t *diskinfo)
 {

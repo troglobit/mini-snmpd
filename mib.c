@@ -42,8 +42,9 @@
 
 static const oid_t m_system_oid         = { { 1, 3, 6, 1, 2, 1, 1               }, 7, 8  };
 static const oid_t m_if_1_oid           = { { 1, 3, 6, 1, 2, 1, 2               }, 7, 8  };
-static const oid_t m_tcp_oid            = { { 1, 3, 6, 1, 2, 1, 6               }, 7, 8  };
 static const oid_t m_if_2_oid           = { { 1, 3, 6, 1, 2, 1, 2, 2, 1         }, 9, 10 };
+static const oid_t m_tcp_oid            = { { 1, 3, 6, 1, 2, 1, 6               }, 7, 8  };
+static const oid_t m_udp_oid            = { { 1, 3, 6, 1, 2, 1, 7               }, 7, 8  };
 static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           }, 8, 9  };
 static const oid_t m_memory_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 4,        }, 8, 10 };
 static const oid_t m_disk_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 9, 1      }, 9, 11 };
@@ -694,6 +695,18 @@ int mib_build(void)
 		return -1;
 
 	/*
+	 * The UDP-MIB.
+	 */
+	if (!mib_alloc_entry(&m_udp_oid,  1, 0, BER_TYPE_COUNTER)   ||
+	    !mib_alloc_entry(&m_udp_oid,  2, 0, BER_TYPE_COUNTER)   ||
+	    !mib_alloc_entry(&m_udp_oid,  3, 0, BER_TYPE_COUNTER)   ||
+	    !mib_alloc_entry(&m_udp_oid,  4, 0, BER_TYPE_COUNTER)   ||
+	    !mib_alloc_entry(&m_udp_oid,  8, 0, BER_TYPE_COUNTER64) ||
+	    !mib_alloc_entry(&m_udp_oid,  9, 0, BER_TYPE_COUNTER64)) {
+		return -1;
+	}
+
+	/*
 	 * The host MIB: additional host info (HOST-RESOURCES-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
@@ -793,6 +806,7 @@ int mib_update(int full)
 		loadinfo_t loadinfo;
 		meminfo_t meminfo;
 		tcpinfo_t tcpinfo;
+		udpinfo_t udpinfo;
 		cpuinfo_t cpuinfo;
 		netinfo_t netinfo;
 #ifdef CONFIG_ENABLE_DEMO
@@ -900,6 +914,22 @@ int mib_update(int full)
 		    mib_update_entry(&m_tcp_oid, 12, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpRetransSegs)   == -1 ||
 		    mib_update_entry(&m_tcp_oid, 14, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpInErrs)        == -1 ||
 		    mib_update_entry(&m_tcp_oid, 15, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpOutRsts)       == -1)
+			return -1;
+	}
+
+	/*
+	 * UDP-MIB
+	 */
+
+	if (full) {
+		get_udpinfo(&u.udpinfo);
+
+		if (mib_update_entry(&m_udp_oid,  1, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(u.udpinfo.udpInDatagrams & 0xFFFFFFFF))   == -1 ||
+		    mib_update_entry(&m_udp_oid,  2, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.udpinfo.udpNoPorts)                      == -1 ||
+		    mib_update_entry(&m_udp_oid,  3, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.udpinfo.udpInErrors)                     == -1 ||
+		    mib_update_entry(&m_udp_oid,  4, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(u.udpinfo.udpOutDatagrams & 0xFFFFFFFF))  == -1 ||
+		    mib_update_entry(&m_udp_oid,  8, 0, &pos, BER_TYPE_COUNTER64, (const void *)(&u.udpinfo.udpInDatagrams))                        == -1 ||
+		    mib_update_entry(&m_udp_oid,  9, 0, &pos, BER_TYPE_COUNTER64, (const void *)(&u.udpinfo.udpOutDatagrams))                       == -1  )
 			return -1;
 	}
 
