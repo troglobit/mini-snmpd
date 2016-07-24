@@ -13,6 +13,7 @@
  * See COPYING for GPL licensing information.
  */
 
+#include <limits.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <syslog.h>
@@ -40,18 +41,19 @@
  * OID will need encoded in SNMP packets (including the BER type and length fields).
  */
 
-static const oid_t m_system_oid         = { { 1, 3, 6, 1, 2, 1, 1               }, 7, 8  };
-static const oid_t m_if_1_oid           = { { 1, 3, 6, 1, 2, 1, 2               }, 7, 8  };
-static const oid_t m_if_2_oid           = { { 1, 3, 6, 1, 2, 1, 2, 2, 1         }, 9, 10 };
-static const oid_t m_tcp_oid            = { { 1, 3, 6, 1, 2, 1, 6               }, 7, 8  };
-static const oid_t m_udp_oid            = { { 1, 3, 6, 1, 2, 1, 7               }, 7, 8  };
-static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           }, 8, 9  };
-static const oid_t m_memory_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 4,        }, 8, 10 };
-static const oid_t m_disk_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 9, 1      }, 9, 11 };
-static const oid_t m_load_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 10, 1     }, 9, 11 };
-static const oid_t m_cpu_oid            = { { 1, 3, 6, 1, 4, 1, 2021, 11        }, 8, 10 };
+static const oid_t m_system_oid         = { { 1, 3, 6, 1, 2, 1, 1               },  7, 8  };
+static const oid_t m_if_1_oid           = { { 1, 3, 6, 1, 2, 1, 2               },  7, 8  };
+static const oid_t m_if_2_oid           = { { 1, 3, 6, 1, 2, 1, 2, 2, 1         },  9, 10 };
+static const oid_t m_tcp_oid            = { { 1, 3, 6, 1, 2, 1, 6               },  7, 8  };
+static const oid_t m_udp_oid            = { { 1, 3, 6, 1, 2, 1, 7               },  7, 8  };
+static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           },  8, 9  };
+static const oid_t m_ifxtable_oid       = { { 1, 3, 6, 1, 2, 1, 31, 1, 1, 1     }, 10, 11 };
+static const oid_t m_memory_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 4,        },  8, 10 };
+static const oid_t m_disk_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 9, 1      },  9, 11 };
+static const oid_t m_load_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 10, 1     },  9, 11 };
+static const oid_t m_cpu_oid            = { { 1, 3, 6, 1, 4, 1, 2021, 11        },  8, 10 };
 #ifdef CONFIG_ENABLE_DEMO
-static const oid_t m_demo_oid           = { { 1, 3, 6, 1, 4, 1, 99999           }, 7, 10 };
+static const oid_t m_demo_oid           = { { 1, 3, 6, 1, 4, 1, 99999           },  7, 10 };
 #endif
 
 static const int m_load_avg_times[3] = { 1, 5, 15 };
@@ -714,6 +716,72 @@ int mib_build(void)
 		return -1;
 
 	/*
+	 * IF-MIB continuation
+	 * ifXTable
+	 */
+	if (g_interface_list_length > 0) {
+
+		/* ifName */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_ifxtable_oid, 1, i + 1, BER_TYPE_OCTET_STRING, g_interface_list[i]) == -1)
+				return -1;
+		}
+
+		/* Just a counters */
+
+		if (mib_build_entries(&m_ifxtable_oid, 2, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 3, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 4, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 5, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 6, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 7, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 8, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 9, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 10, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 11, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 12, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+			mib_build_entries(&m_ifxtable_oid, 13, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1)
+			return -1;
+
+		/* ifLinkUpDownTrapEnable */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_ifxtable_oid, 14, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)2 /* disabled */) == -1)
+				return -1;
+		}
+
+		/* ifHighSpeed */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_ifxtable_oid, 15, i + 1, BER_TYPE_GAUGE, (const void *)(intptr_t)0) == -1) {
+				return -1;
+			}
+		}
+
+		/* ifPromiscuousMode */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_ifxtable_oid, 16, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)2 /* false */) == -1)
+				return -1;
+		}
+
+		/* ifConnectorPresent */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_ifxtable_oid, 17, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)1 /* true */) == -1)
+				return -1;
+		}
+
+		/* ifAlias */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_ifxtable_oid, 18, i + 1, BER_TYPE_OCTET_STRING, g_interface_list[i]) == -1)
+				return -1;
+		}
+
+		/* ifCounterDiscontinuityTime */
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (mib_build_entry(&m_ifxtable_oid, 19, i + 1, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)0) == -1)
+				return -1;
+		}
+	}
+
+	/*
 	 * The memory MIB: total/free memory (UCD-SNMP-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
@@ -808,11 +876,11 @@ int mib_update(int full)
 		tcpinfo_t tcpinfo;
 		udpinfo_t udpinfo;
 		cpuinfo_t cpuinfo;
-		netinfo_t netinfo;
 #ifdef CONFIG_ENABLE_DEMO
 		demoinfo_t demoinfo;
 #endif
 	} u;
+	netinfo_t netinfo;
 
 	/* Begin searching at the first MIB entry */
 	pos = 0;
@@ -830,29 +898,29 @@ int mib_update(int full)
 	 */
 	if (full) {
 		if (g_interface_list_length > 0) {
-			get_netinfo(&u.netinfo);
+			get_netinfo(&netinfo);
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 3, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.netinfo.if_type[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 3, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.if_type[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 4, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.netinfo.if_mtu[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 4, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.if_mtu[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 5, i + 1, &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)u.netinfo.if_speed[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 5, i + 1, &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)netinfo.if_speed[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++)
-				if (mib_update_byte_array(&m_if_2_oid, 6, i + 1, &pos, &u.netinfo.mac_addr[i][0], sizeof(u.netinfo.mac_addr[i])))
+				if (mib_update_byte_array(&m_if_2_oid, 6, i + 1, &pos, &netinfo.mac_addr[i][0], sizeof(netinfo.mac_addr[i])))
 					return -1;
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				unsigned int status = u.netinfo.status[i];
+				unsigned int status = netinfo.status[i];
 				unsigned int updown = status != 2 ? 1 : 2;
 
 				if (mib_update_entry(&m_if_2_oid, 7, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)updown) == -1)
@@ -860,54 +928,54 @@ int mib_update(int full)
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				unsigned int status = u.netinfo.status[i];
+				unsigned int status = netinfo.status[i];
 
 				if (mib_update_entry(&m_if_2_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)status) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 9, i + 1, &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)u.netinfo.lastchange[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 9, i + 1, &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)netinfo.lastchange[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 10, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_bytes[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 10, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_bytes[i] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 11, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_packets[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 11, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_packets[i] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 13, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_drops[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 13, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_drops[i] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 14, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_errors[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 14, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_errors[i] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 16, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.tx_bytes[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 16, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_bytes[i] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 17, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.tx_packets[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 17, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_packets[i] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 19, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.tx_drops[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 19, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_drops[i] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 20, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.tx_errors[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 20, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_errors[i] % UINT_MAX)) == -1)
 					return -1;
 			}
 		}
@@ -959,6 +1027,108 @@ int mib_update(int full)
 	 */
 	if (mib_update_entry(&m_host_oid, 1, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)(uintptr_t)get_system_uptime()) == -1)
 		return -1;
+
+	/*
+	 * IF-MIB
+	 * ifXTable
+	 */
+
+	if (full) {
+		if (g_interface_list_length > 0) {
+			uint64_t val = 0;
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				unsigned int packets = netinfo.rx_mc_packets[i] % UINT_MAX;
+				if (mib_update_entry(&m_ifxtable_oid, 2, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				unsigned int packets = netinfo.rx_bc_packets[i] % UINT_MAX;
+				if (mib_update_entry(&m_ifxtable_oid, 3, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				unsigned int packets = netinfo.tx_mc_packets[i] % UINT_MAX;
+				if (mib_update_entry(&m_ifxtable_oid, 4, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				unsigned int packets = netinfo.tx_bc_packets[i] % UINT_MAX;
+				if (mib_update_entry(&m_ifxtable_oid, 5, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				val = (netinfo.rx_bytes[i] & 0xBFFFFFFFFFFFFFFFULL);
+				if (mib_update_entry(&m_ifxtable_oid, 6, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				val = (netinfo.rx_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				if (mib_update_entry(&m_ifxtable_oid, 7, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				val = (netinfo.rx_mc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				if (mib_update_entry(&m_ifxtable_oid, 8, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				val = (netinfo.rx_bc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				if (mib_update_entry(&m_ifxtable_oid, 9, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				val = (netinfo.tx_bytes[i] & 0xBFFFFFFFFFFFFFFFULL);
+				if (mib_update_entry(&m_ifxtable_oid, 10, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				val = (netinfo.tx_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				if (mib_update_entry(&m_ifxtable_oid, 11, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				val = (netinfo.tx_mc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				if (mib_update_entry(&m_ifxtable_oid, 12, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				val = (netinfo.tx_bc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				if (mib_update_entry(&m_ifxtable_oid, 13, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				if (mib_update_entry(&m_ifxtable_oid, 15, i + 1, &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)(netinfo.if_speed[i] / 1000000)) == -1)
+					return -1;
+			}
+
+#if 0 // Not yet supported
+			for (i = 0; i < g_interface_list_length; i++) {
+				int ifConnectorPresent = netinfo.is_port[i] ? 1 : 2; /* XXX: Add support for ethtool on Linux */
+
+				if (mib_update_entry(&m_ifxtable_oid, 17, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)ifConnectorPresent) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				if (mib_update_entry(&m_ifxtable_oid, 19, i + 1, &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)netinfo.discont_time[i]) == -1)
+					return -1;
+			}
+#endif
+		}
+	}
 
 	/*
 	 * The memory MIB: total/free memory (UCD-SNMP-MIB.txt)

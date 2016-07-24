@@ -31,11 +31,11 @@
 #define EXIT_SYSCALL                                    2
 
 #define MAX_NR_CLIENTS                                  16
-#define MAX_NR_OIDS                                     16
-#define MAX_NR_SUBIDS                                   16
+#define MAX_NR_OIDS                                     20
+#define MAX_NR_SUBIDS                                   20
 #define MAX_NR_DISKS                                    4
 #define MAX_NR_INTERFACES                               8
-#define MAX_NR_VALUES                                   192
+#define MAX_NR_VALUES                                   2048
 
 #define MAX_PACKET_SIZE                                 2048
 #define MAX_STRING_SIZE                                 64
@@ -233,10 +233,14 @@ typedef struct netinfo_s {
 	unsigned int status[MAX_NR_INTERFACES];
 	unsigned int lastchange[MAX_NR_INTERFACES];
 	long long rx_bytes[MAX_NR_INTERFACES];
+	long long rx_mc_packets[MAX_NR_INTERFACES];
+	long long rx_bc_packets[MAX_NR_INTERFACES];
 	long long rx_packets[MAX_NR_INTERFACES];
 	long long rx_errors[MAX_NR_INTERFACES];
 	long long rx_drops[MAX_NR_INTERFACES];
 	long long tx_bytes[MAX_NR_INTERFACES];
+	long long tx_mc_packets[MAX_NR_INTERFACES];
+	long long tx_bc_packets[MAX_NR_INTERFACES];
 	long long tx_packets[MAX_NR_INTERFACES];
 	long long tx_errors[MAX_NR_INTERFACES];
 	long long tx_drops[MAX_NR_INTERFACES];

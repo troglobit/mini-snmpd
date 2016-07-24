@@ -295,17 +295,21 @@ void get_netinfo(netinfo_t *netinfo)
 			break;
 		}
 
-		netinfo->if_mtu[i]     = ifd->ifi_mtu;
-		netinfo->if_speed[i]   = ifd->ifi_baudrate;
-		netinfo->lastchange[1] = ifd->ifi_lastchange.tv_sec;
-		netinfo->rx_bytes[i]   = ifd->ifi_ibytes;
-		netinfo->rx_packets[i] = ifd->ifi_ipackets;
-		netinfo->rx_errors[i]  = ifd->ifi_ierrors;
-		netinfo->rx_drops[i]   = ifd->ifi_iqdrops;
-		netinfo->tx_bytes[i]   = ifd->ifi_obytes;
-		netinfo->tx_packets[i] = ifd->ifi_opackets;
-		netinfo->tx_errors[i]  = ifd->ifi_oerrors;
-		netinfo->tx_drops[i]   = ifd->ifi_collisions;
+		netinfo->if_mtu[i]        = ifd->ifi_mtu;
+		netinfo->if_speed[i]      = ifd->ifi_baudrate;
+		netinfo->lastchange[1]    = ifd->ifi_lastchange.tv_sec;
+		netinfo->rx_bytes[i]      = ifd->ifi_ibytes;
+		netinfo->rx_packets[i]    = ifd->ifi_ipackets;
+		netinfo->rx_mc_packets[i] = ifd->ifi_imcasts;
+		netinfo->rx_bc_packets[i] = 0;			/* XXX: Couldn't find at first glance */
+		netinfo->rx_errors[i]     = ifd->ifi_ierrors;
+		netinfo->rx_drops[i]      = ifd->ifi_iqdrops;
+		netinfo->tx_bytes[i]      = ifd->ifi_obytes;
+		netinfo->tx_packets[i]    = ifd->ifi_opackets;
+		netinfo->tx_mc_packets[i] = ifd->ifi_omcasts;
+		netinfo->tx_bc_packets[i] = 0;			/* XXX: Couldn't find at first glance */
+		netinfo->tx_errors[i]     = ifd->ifi_oerrors;
+		netinfo->tx_drops[i]      = ifd->ifi_collisions;
 
 		memcpy(&netinfo->mac_addr[i][0], LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 6);
 	}
