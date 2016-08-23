@@ -29,7 +29,7 @@ int       g_auth    = 0;
 int       g_daemon  = 1;
 int       g_syslog  = 0;
 int       g_verbose = 0;
-int       g_quit    = 0;
+volatile sig_atomic_t g_quit = 0;
 
 char     *g_community      = NULL;
 char     *g_vendor         = NULL;

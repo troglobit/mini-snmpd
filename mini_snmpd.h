@@ -18,6 +18,7 @@
 #include "config.h"
 #include <stdint.h>
 #include <syslog.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -303,7 +304,7 @@ extern int       g_auth;
 extern int       g_daemon;
 extern int       g_syslog;
 extern int       g_verbose;
-extern int       g_quit;
+extern volatile sig_atomic_t g_quit;
 
 extern char     *g_community;
 extern char     *g_description;
