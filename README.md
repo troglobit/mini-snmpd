@@ -32,29 +32,24 @@ net-snmp as client, so big endian may not work.
 - For info about how to extend the MIB, see the file [README.develop][contrib]
 
 
-Bugs & Features
----------------
-
-The `mini-snmpd` project is [maintained at GitHub][github], use its
-issue tracker and pull request functions to report bugs or contribute
-new features.
-
-
 Origin & References
 -------------------
 
-This is an attempt to recreate the original [mini_snmpd project][1], by
-[Robert Ernst][author], since the original site now has gone dark.  The
-new maintainer did however not recover more than the latest three
-releases: 1.0, 1.1, and 1.2b.
+[mini-snmpd][github] on is an effort by [Joachim Nilsson][] to create a
+focal point for patches and development of the original [mini_snmpd][1]
+project by [Robert Ernst][], since the original site now has gone dark.
 
-[1]: http://members.aon.at/linuxfreak/linux/mini_snmpd.html
-[man]: http://ftp.troglobit.com/mini-snmpd/mini-snmpd.html
-[github]: https://github.com/troglobit/mini-snmpd
-[license]: https://github.com/troglobit/mini-snmpd/blob/master/COPYING
-[contrib]: https://github.com/troglobit/mini-snmpd/blob/master/README.develop
-[build]: https://github.com/troglobit/mini-snmpd/blob/master/Makefile
-[author]: <mailto:robert.ernst@aon.at>
-[net-snmp]: http://www.net-snmp.org/
-[Travis]: https://travis-ci.org/troglobit/mini-snmpd
-[Travis Status]: https://travis-ci.org/troglobit/mini-snmpd.png?branch=master
+The new project is [maintained at GitHub][github]. Use its issue tracker
+and pull request functions to report bugs or contribute new features.
+
+[1]:               http://members.aon.at/linuxfreak/linux/mini_snmpd.html
+[man]:             http://ftp.troglobit.com/mini-snmpd/mini-snmpd.html
+[github]:          https://github.com/troglobit/mini-snmpd
+[license]:         https://github.com/troglobit/mini-snmpd/blob/master/COPYING
+[contrib]:         https://github.com/troglobit/mini-snmpd/blob/master/README.develop
+[build]:           https://github.com/troglobit/mini-snmpd/blob/master/Makefile
+[Joachim Nilsson]: http://troglobit.com
+[Robert Ernst]:    <mailto:robert.ernst@aon.at>
+[net-snmp]:        http://www.net-snmp.org/
+[Travis]:          https://travis-ci.org/troglobit/mini-snmpd
+[Travis Status]:   https://travis-ci.org/troglobit/mini-snmpd.png?branch=master
