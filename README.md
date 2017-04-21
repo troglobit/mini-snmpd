@@ -1,6 +1,6 @@
 Mini SNMP Daemon
 ================
-[![Travis Status][]][Travis]
+[![License Badge][]][License] [![Travis Status][]][Travis]
 
 The Mini SNMP daemon is a minimal implementation of an SNMP daemon.  It
 is targeted at embedded systems with limited disk and memory resources.
@@ -51,5 +51,7 @@ and pull request functions to report bugs or contribute new features.
 [Joachim Nilsson]: http://troglobit.com
 [Robert Ernst]:    <mailto:robert.ernst@aon.at>
 [net-snmp]:        http://www.net-snmp.org/
+[License]:         https://en.wikipedia.org/wiki/GPL_license
+[License Badge]:   https://img.shields.io/badge/License-GPL%20v2-blue.svg
 [Travis]:          https://travis-ci.org/troglobit/mini-snmpd
 [Travis Status]:   https://travis-ci.org/troglobit/mini-snmpd.png?branch=master
