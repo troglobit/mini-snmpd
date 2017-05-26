@@ -15,6 +15,7 @@
 
 #define _GNU_SOURCE
 
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -29,6 +30,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "mini_snmpd.h"
 
@@ -60,6 +63,7 @@ static void print_help(void)
 	       "  -a, --auth             Enable authentication, i.e. SNMP version 2c\n"
 	       "  -n, --foreground       Run in foreground, do not detach from controlling terminal\n"
 	       "  -s, --syslog           Use syslog for logging, even if running in the foreground\n"
+	       "  -u, --drop-privs USER  Drop priviliges after opening sockets to USER, default: no\n"
 	       "  -v, --verbose          Verbose messages\n"
 	       "  -h, --help             This help text\n"
 	       "\n"
@@ -286,7 +290,7 @@ static void handle_tcp_client_read(client_t *client)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "p:P:c:D:V:L:C:d:i:t:ansvh"
+	static const char short_options[] = "p:P:c:D:V:L:C:d:i:t:ansuvh"
 #ifndef __FreeBSD__
 		"I:"
 #endif
@@ -320,6 +324,7 @@ int main(int argc, char *argv[])
 		{ "timeout", 1, 0, 't' },
 		{ "auth", 0, 0, 'a' },
 		{ "foreground", 0, 0, 'n' },
+		{ "drop-privs", 0, 0, 'u' },
 		{ "verbose", 0, 0, 'v' },
 		{ "syslog", 0, 0, 's' },
 		{ "help", 0, 0, 'h' },
@@ -428,6 +433,10 @@ int main(int argc, char *argv[])
 
 			case 's':
 				g_syslog = 1;
+				break;
+
+			case 'u':
+				g_user = optarg;
 				break;
 
 			case 'v':
@@ -581,6 +590,44 @@ int main(int argc, char *argv[])
 			g_udp_port, g_tcp_port, g_bind_to_device);
 	} else {
 		lprintf(LOG_INFO, "Listening on port %d/udp and %d/tcp\n", g_udp_port, g_tcp_port);
+	}
+
+	if (g_user && geteuid() == 0) {
+		struct passwd *pwd;
+		struct group *grp;
+
+		errno = 0;
+
+		pwd = getpwnam(g_user);
+		if (pwd == NULL) {
+			lprintf(LOG_ERR, "Unable to get UID for user \"%s\": %s",
+				g_user, strerror(errno));
+			exit(EXIT_SYSCALL);
+		}
+
+		errno = 0;
+
+		grp = getgrnam(g_user);
+		if (grp == NULL) {
+			lprintf(LOG_ERR, "Unable to get GID for group \"%s\": %s",
+				g_user, strerror(errno));
+			exit(EXIT_SYSCALL);
+		}
+
+		if (setgid(grp->gr_gid) == -1) {
+			lprintf(LOG_ERR, "Unable to set new group \"%s\": %s",
+				g_user, strerror(errno));
+			exit(EXIT_SYSCALL);
+		}
+
+		if (setuid(pwd->pw_uid) == -1) {
+			lprintf(LOG_ERR, "Unable to set new user \"%s\": %s",
+				g_user, strerror(errno));
+			exit(EXIT_SYSCALL);
+		}
+
+		lprintf(LOG_INFO, "Successfully dropped privileges to %s:%s",
+			g_user, g_user);
 	}
 
 	/* Handle incoming connect requests and incoming data */

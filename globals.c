@@ -37,6 +37,7 @@ char     *g_description    = NULL;
 char     *g_location       = NULL;
 char     *g_contact        = NULL;
 char     *g_bind_to_device = NULL;
+char     *g_user           = NULL;
 
 char     *g_disk_list[MAX_NR_DISKS] = { "/" };
 size_t    g_disk_list_length        = 1;
