@@ -8,7 +8,7 @@ mini_snmpd_SOURCES    = mini_snmpd.c mini_snmpd.h linux.c freebsd.c mib.c	\
 			globals.c protocol.c utils.c
 
 ## Target to run when building a release
-release: dist
+release: distcheck
 	@for file in $(DIST_ARCHIVES); do	\
 		md5sum $$file > ../$$file.md5;	\
 	done
