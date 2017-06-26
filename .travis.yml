@@ -13,6 +13,10 @@ compiler:
 # Override default build command, we do not have `make test` yet
 script:
   - ./autogen.sh
-  - ./configure
+  - ./configure --prefix=/
   - make clean
   - make -j5 all
+  - DESTDIR=/tmp/ make install
+  - ls -lR /tmp
+  - make distcheck
+
