@@ -4,26 +4,28 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
-[v1.4][] -- UNRELEASED
+[v1.4][] -- 2017-06-26
 ----------------------
 
-Bug fix release, courtesy of Andre Grosse Bley.
+Bug fix release, courtesy of Andre Grosse Bley, @Haeretiker.
 
 ### Changes
 - Increase MIB table size: 128 --> 192
 
 ### Fixes
+- Fix default install directory: `$prefix/bin` --> `$prefix/sbin`
+- Fix inverted enable/disable options to `configure` script, issue #4
 - Incorrect OID types: `ifLastChange` should be `BER_TYPE_TIME_TICKS`
-  and `ifSpeed` should be `BER_TYPE_GAUGE`
+  and `ifSpeed` should be `BER_TYPE_GAUGE`, issue #1
 - Fix `parse_line()` to prevent partial matches: `wlan0` matched both
-  `wlan0-1` and `wlan0-2`
-- Fix `parse_lineint()` to prevent partial matches
+  `wlan0-1` and `wlan0-2`, issue #1
+- Fix `parse_lineint()` to prevent partial matches, issue #1
 - Response OID order match with request order, reversed order breaks at
-  least the MRTG SNMP client
+  least the MRTG SNMP client, issue #1
 - Traffic counters get stuck after 4GB traffic.  Use `strtoull()` rather
-  than `strtoul()` to parse numbers
+  than `strtoul()` to parse numbers, issue #1
 - OIDs in request can be in any order.  Reset OID table position after
-  each handled OID from request
+  each handled OID from request, issue #1
 
 
 [v1.3][] -- 2015-11-23
@@ -140,8 +142,8 @@ This is the first feature-complete version.  SNMP get, getnext, and
 getbulk are supported on UDP and TCP connections.
 
 
-[UNRELEASED]: https://github.com/troglobit/mini-snmpd/compare/v1.3...HEAD
-[v1.3]:       https://github.com/troglobit/mini-snmpd/compare/v1.3...HEAD
+[UNRELEASED]: https://github.com/troglobit/mini-snmpd/compare/v1.4...HEAD
+[v1.4]:       https://github.com/troglobit/mini-snmpd/compare/v1.3...v1.4
 [v1.3]:       https://github.com/troglobit/mini-snmpd/compare/v1.2b...v1.3
 [v1.2b]:      https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
 [v1.1]:       https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
