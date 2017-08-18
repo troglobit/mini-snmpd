@@ -372,7 +372,7 @@ static int data_alloc(data_t *data, int type)
 		case BER_TYPE_COUNTER:
 		case BER_TYPE_GAUGE:
 		case BER_TYPE_TIME_TICKS:
-			data->max_length = sizeof(unsigned int) + 2;
+			data->max_length = sizeof(unsigned int) + 3;
 			data->encoded_length = 0;
 			data->buffer = allocate(data->max_length);
 			break;
