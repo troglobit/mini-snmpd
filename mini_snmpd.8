@@ -1,85 +1,104 @@
-.TH mini_snmpd 8 
-.\" NAME should be all caps, SECTION should be 1-8, maybe w/ subsection
-.\" other parms are allowed: see man(7), man(1)
-.SH NAME
-mini_snmpd \- a minimal implementation of an SNMP daemon.
-.SH SYNOPSIS
-.B mini_snmpd
-.I "[options]"
-.SH "DESCRIPTION"
-.B mini_snmpd
-is a program that serves basic system parameters to clients using SNMP (simple
-network management protocol) version 1 or 2c. Its behaviour can be controlled
-using the following options:
-.TP
-.I -p nnn, --udp-port=nnn
+.Dd Sep 29, 2017
+.Dt MINI_SNMPD 8 SMM
+.Os
+.Sh NAME
+.Nm mini_snmpd
+.Nd a minimal implementation of an SNMP daemon
+.Sh SYNOPSIS
+.Nm mini_snmpd
+.Op Fl p, -udp-port=NNN
+.Op Fl P, -tcp-port=NNN
+.Op Fl c, -community=NNN
+.Op Fl D, -description=NNN
+.Op Fl V, -vendor=NNN
+.Op Fl L, -location=NNN
+.Op Fl C, -contact=NNN
+.Op Fl d, -disks=NNN
+.Op Fl i, -interfaces=NNN
+.Op Fl I, -listen=NNN
+.Op Fl t, -timeout=NNN
+.Op Fl a, -auth
+.Op Fl v, -verbose
+.Op Fl l, -licensing
+.Op Fl h, -help
+.Sh DESCRIPTION
+.Nm
+is a program that serves basic system parameters to clients using the
+Simple Network Management Protocol (SNMP) version 1 or 2c.
+.Pp
+By default
+.Nm
+starts in the background, detaching from the controlling terminla, like
+a traditional UNIX daemon.  Modern init systems may require services to
+run in the foreground, to that end the
+.Fl n
+option in combination with the
+.Fl s
+option to enable logging using syslog.
+.Pp
+The default vendor OID is only a placeholder where you need to insert
+the PEN (private enterprise number) of your organization.  If you do not
+have one you can get one assigned by the Internet Assigned Numbers
+Authority (IANA), free of charge.  See their PEN application webpage at
+.Xr http://pen.iana.org/ .
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl p nnn, -udp-port=nnn
 The UDP port where the program listens (default is 161)
-.TP
-.I -P nnn, --tcp-port=nnn
+.It Fl P nnn, -tcp-port=nnn
 The TCP port where the program listens (default is 161)
-.TP
-.I -c nnn, --community=nnn
+.It Fl c nnn, -community=nnn
 The value of the SNMP community string (default is "public")
-.TP
-.I -D nnn, --description=nnn
+.It Fl D nnn, -description=nnn
 The description of the device (default is empty)
-.TP
-.I -V nnn, --vendor=nnn
-The OID of the device vendor, this MUST be changed to your own organization's OID (default is .1.3.6.1.4.1)
-.TP
-.I -L nnn, --location=nnn
+.It Fl V nnn, -vendor=nnn
+The OID of the device vendor, this MUST be changed to your own
+organization's OID (default is .1.3.6.1.4.1)
+.It Fl L nnn, -location=nnn
 The location of the device (default is empty)
-.TP
-.I -C nnn, --contact=nnn
+.It Fl C nnn, -contact=nnn
 The contact address of the device administrator (default is empty)
-.TP
-.I -d nnn, --disks=nnn
+.It Fl d nnn, -disks=nnn
 The list of disk mountpoints (default is empty)
-.TP
-.I -i nnn, --interfaces=nnn
+.It Fl i nnn, -interfaces=nnn
 The list of network interfaces (default is empty)
-.TP
-.I -I nnn, --listen=nnn
+.It Fl I nnn, -listen=nnn
 The network interface to listen on (default is listen on all interfaces)
-.TP
-.I -t nnn, --timeout=nnn
+.It Fl t nnn, -timeout=nnn
 Timeout for updating the MIB variables (default is 1 second)
-.TP
-.I -a, --auth
+.It Fl a, -auth
 Require client authentication, thus SNMP version 2c (default is off)
-.TP
-.I -v, --verbose
+.It Fl v, -verbose
 Verbose log messages to syslog/stderr (default is off)
-.TP
-.I -l, --licensing
+.It Fl l, -licensing
 Print licensing information and exit
-.TP
-.I -h, --help
-Print program usage help and exit
-.PP
-.B mini_snmpd
-can be told to exit by sending it a
-.I HUP
-or
-.I TERM
-signal.
-.SH "NOTES"
-.B Running mini_snmpd
-.PP
-The program does not put itself into the background or detach itself from the
-controlling terminal. This is not included on purpose since normally the
-program is started from the init process, where running in background is not
-desired.
-.PP
-.B How to get the vendor OID
-.PP
-The default vendor OID is only a placeholder where you need to insert the PEN
-(private enterprise number) of your organization. If you do not have one, you
-can get one assigned by the IANA (internet assigned numbers authority) free of
-charge. See their PEN application webpage at http://pen.iana.org/.
-.SH "EXAMPLES"
+.It Fl h, -help
+.El
+.Sh SIGNALS
+.Nm
+responds to the following signals:
+.Pp
+.Bl -tag -width TERM -compact
+.It HUP
+Reload the
+.Nm .conf 
+file, standard UNIX behavior
+.It TERM
+Tell
+.Nm
+to exit gracefully
+.El
+.Sh EXAMPLE
 mini_snmpd -c secret -D "My embedded device" -d /cf -i lo,eth0
-.PP
-This command starts the program at the default port, using the community string "secret", the system descripton "My embedded device" and provides disk statistics for the "/cf" mountpoint and network interface statistics for the interfaces "lo" and "eth0".
-.SH "AUTHOR"
-This manual page was written by Robert Ernst <robert.ernst@aon.at>.
+.Pp
+This command starts the program at the default port, using the community
+string "secret", the system descripton "My embedded device" and provides
+disk statistics for the "/cf" mountpoint and network interface
+statistics for the interfaces "lo" and "eth0".
+.Sh AUTHORS
+.Nm
+was originally written by Robert Ernst
+.Aq mailto:robert.ernst@aon.at .
+It is currently maintained by Joachim Nilsson
+.Aq mailto:troglobit@gmail.com
+at GitHub.
