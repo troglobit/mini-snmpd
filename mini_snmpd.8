@@ -6,6 +6,8 @@
 .Nd a minimal implementation of an SNMP daemon
 .Sh SYNOPSIS
 .Nm mini_snmpd
+.Op Fl 4, -use-ipv4
+.Op Fl 6, -use-ipv6
 .Op Fl p, -udp-port=NNN
 .Op Fl P, -tcp-port=NNN
 .Op Fl c, -community=NNN
@@ -18,8 +20,9 @@
 .Op Fl I, -listen=NNN
 .Op Fl t, -timeout=NNN
 .Op Fl a, -auth
+.Op Fl n, -foreground
 .Op Fl v, -verbose
-.Op Fl l, -licensing
+.Op Fl s, -syslog
 .Op Fl h, -help
 .Sh DESCRIPTION
 .Nm
@@ -43,6 +46,10 @@ Authority (IANA), free of charge.  See their PEN application webpage at
 .Xr http://pen.iana.org/ .
 .Sh OPTIONS
 .Bl -tag -width Ds
+.It Fl 4, -use-ipv4
+Use IPv4, default
+.It Fl 6, -use-ipv6
+Use IPv6
 .It Fl p nnn, -udp-port=nnn
 The UDP port where the program listens (default is 161)
 .It Fl P nnn, -tcp-port=nnn
@@ -68,10 +75,12 @@ The network interface to listen on (default is listen on all interfaces)
 Timeout for updating the MIB variables (default is 1 second)
 .It Fl a, -auth
 Require client authentication, thus SNMP version 2c (default is off)
+.It Fl n, -foreground
+Run in foreground, do not detach from controlling terminal
 .It Fl v, -verbose
 Verbose log messages to syslog/stderr (default is off)
-.It Fl l, -licensing
-Print licensing information and exit
+.It Fl s, -syslog
+Use syslog for logging, even if running in the foreground
 .It Fl h, -help
 .El
 .Sh SIGNALS
