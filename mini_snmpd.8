@@ -8,17 +8,17 @@
 .Nm mini_snmpd
 .Op Fl 4, -use-ipv4
 .Op Fl 6, -use-ipv6
-.Op Fl p, -udp-port=NNN
-.Op Fl P, -tcp-port=NNN
-.Op Fl c, -community=NNN
-.Op Fl D, -description=NNN
-.Op Fl V, -vendor=NNN
-.Op Fl L, -location=NNN
-.Op Fl C, -contact=NNN
-.Op Fl d, -disks=NNN
-.Op Fl i, -interfaces=NNN
-.Op Fl I, -listen=NNN
-.Op Fl t, -timeout=NNN
+.Op Fl p, -udp-port=PORT
+.Op Fl P, -tcp-port=PORT
+.Op Fl c, -community=STR
+.Op Fl D, -description=STR
+.Op Fl V, -vendor=OID
+.Op Fl L, -location=LOC
+.Op Fl C, -contact=NAME
+.Op Fl d, -disks=DIR
+.Op Fl i, -interfaces=IFNAME
+.Op Fl I, -listen=IFNAME
+.Op Fl t, -timeout=SEC
 .Op Fl a, -auth
 .Op Fl n, -foreground
 .Op Fl v, -verbose
@@ -50,37 +50,40 @@ Authority (IANA), free of charge.  See their PEN application web page at
 Use IPv4, default
 .It Fl 6, -use-ipv6
 Use IPv6
-.It Fl p nnn, -udp-port=nnn
-The UDP port where the program listens (default is 161)
-.It Fl P nnn, -tcp-port=nnn
-The TCP port where the program listens (default is 161)
-.It Fl c nnn, -community=nnn
+.It Fl p PORT, -udp-port=PORT
+UDP port to listen to for incoming connections, default is 161.
+.It Fl P PORT, -tcp-port=PORT
+TCP port to listen to for incoming connections, default is 161.
+.It Fl c STR, -community=STR
 The value of the SNMP community string (default is "public")
-.It Fl D nnn, -description=nnn
-The description of the device (default is empty)
-.It Fl V nnn, -vendor=nnn
+.It Fl D STR, -description=STR
+The description of the device, default is empty.
+.It Fl V OID, -vendor=OID
 The OID of the device vendor, this MUST be changed to your own
-organization's OID (default is .1.3.6.1.4.1)
-.It Fl L nnn, -location=nnn
-The location of the device (default is empty)
-.It Fl C nnn, -contact=nnn
-The contact address of the device administrator (default is empty)
-.It Fl d nnn, -disks=nnn
-The list of disk mount points (default is empty)
-.It Fl i nnn, -interfaces=nnn
-The list of network interfaces (default is empty)
-.It Fl I nnn, -listen=nnn
-The network interface to listen on (default is listen on all interfaces)
-.It Fl t nnn, -timeout=nnn
-Timeout for updating the MIB variables (default is 1 second)
+organization's OID.  Default is .1.3.6.1.4.1
+.It Fl L LOC, -location=LOC
+The location of the device, default is empty.
+.It Fl C NAME, -contact=NAME
+Contact address to device administrator, default is none.
+.It Fl d DIR, -disks=DIR[,DIR,DIR]
+The list of disk mount points, default is empty.  Separate multiple
+directories with a comma, colon, or a semicolon.
+.It Fl i IFNAME, -interfaces=IFNAME[,IFNAME]
+List of network interfaces to monitor for IFMIB, default is none.  Separate multiple interface names with comma or semicolon,
+.Em not
+colon)!
+.It Fl I nnn, -listen=IFNAME
+Network interface to bind to, default is listen on all interfaces.
+.It Fl t nnn, -timeout=SEC
+Timeout for updating the MIB variables, default is 1 second.
 .It Fl a, -auth
-Require client authentication, thus SNMP version 2c (default is off)
+Require client authentication, thus SNMP version 2c, default is off.
 .It Fl n, -foreground
-Run in foreground, do not detach from controlling terminal
+Run in foreground, do not detach from controlling terminal.
 .It Fl v, -verbose
-Verbose log messages to syslog/stderr (default is off)
+Verbose log messages to syslog/stderr, default is off.
 .It Fl s, -syslog
-Use syslog for logging, even if running in the foreground
+Use syslog for logging, even if running in the foreground.
 .It Fl h, -help
 .El
 .Sh SIGNALS
