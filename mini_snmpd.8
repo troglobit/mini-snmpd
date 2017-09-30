@@ -31,7 +31,7 @@ Simple Network Management Protocol (SNMP) version 1 or 2c.
 .Pp
 By default
 .Nm
-starts in the background, detaching from the controlling terminla, like
+starts in the background, detaching from the controlling terminal, like
 a traditional UNIX daemon.  Modern init systems may require services to
 run in the foreground, to that end the
 .Fl n
@@ -42,7 +42,7 @@ option to enable logging using syslog.
 The default vendor OID is only a placeholder where you need to insert
 the PEN (private enterprise number) of your organization.  If you do not
 have one you can get one assigned by the Internet Assigned Numbers
-Authority (IANA), free of charge.  See their PEN application webpage at
+Authority (IANA), free of charge.  See their PEN application web page at
 .Xr http://pen.iana.org/ .
 .Sh OPTIONS
 .Bl -tag -width Ds
@@ -66,7 +66,7 @@ The location of the device (default is empty)
 .It Fl C nnn, -contact=nnn
 The contact address of the device administrator (default is empty)
 .It Fl d nnn, -disks=nnn
-The list of disk mountpoints (default is empty)
+The list of disk mount points (default is empty)
 .It Fl i nnn, -interfaces=nnn
 The list of network interfaces (default is empty)
 .It Fl I nnn, -listen=nnn
@@ -101,8 +101,8 @@ to exit gracefully
 mini_snmpd -c secret -D "My embedded device" -d /cf -i lo,eth0
 .Pp
 This command starts the program at the default port, using the community
-string "secret", the system descripton "My embedded device" and provides
-disk statistics for the "/cf" mountpoint and network interface
+string "secret", the system description "My embedded device" and provides
+disk statistics for the "/cf" mount point and network interface
 statistics for the interfaces "lo" and "eth0".
 .Sh AUTHORS
 .Nm
