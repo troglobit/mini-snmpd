@@ -86,15 +86,13 @@ static int encode_integer(data_t *data, int integer_value)
 	return 0;
 }
 
-static int encode_string(data_t *data, const char *string)
+static int encode_byte_array(data_t *data, const char *string, size_t len)
 {
-	size_t len;
 	unsigned char *buffer;
 
 	if (!string)
 		return 2;
 
-	len = strlen(string);
 	if ((len + 4) > data->max_length) {
 		data->max_length = len + 4;
 		data->buffer = realloc(data->buffer, data->max_length);
@@ -103,7 +101,7 @@ static int encode_string(data_t *data, const char *string)
 	}
 
 	if (len > 0xFFFF) {
-		lprintf(LOG_ERR, "Failed encoding '%s': string overflow\n", string);
+		lprintf(LOG_ERR, "Failed encoding: OCTET STRING overflow\n");
 		return -1;
 	}
 
@@ -120,12 +118,20 @@ static int encode_string(data_t *data, const char *string)
 		*buffer++ = len & 0x7F;
 	}
 
-	while (*string)
-		*buffer++ = (unsigned char)(*string++);
+	while (len--)
+		*buffer++ = *string++;
 
 	data->encoded_length = buffer - data->buffer;
 
 	return 0;
+}
+
+static int encode_string(data_t *data, const char *string)
+{
+	if (!string)
+		return 2;
+
+	return encode_byte_array(data, string, strlen(string));
 }
 
 static int encode_oid(data_t *data, const oid_t *oid)
@@ -285,6 +291,21 @@ static int mib_data_set(const oid_t *oid, data_t *data, int column, int row, int
 	return 0;
 }
 
+static int mib_byte_array_set(const oid_t *oid, data_t *data, int column, int row, const void *arg, size_t len)
+{
+	int ret;
+	const char *msg = "Failed assigning value to OID";
+
+	ret = encode_byte_array(data, arg, len);
+	if (ret) {
+		if (ret == 2)
+			lprintf(LOG_ERR, "%s '%s.%d.%d': invalid default value\n", msg, oid_ntoa(oid), column, row);
+		return -1;
+	}
+
+	return 0;
+}
+
 /* Create OID from the given prefix, column, and row */
 static int oid_build(oid_t *oid, const oid_t *prefix, int column, int row)
 {
@@ -437,7 +458,7 @@ static int mib_build_entries(const oid_t *prefix, int column, int row_from, int 
 	return 0;
 }
 
-static int mib_update_entry(const oid_t *prefix, int column, int row, size_t *pos, int type, const void *arg)
+static value_t *mib_value_find(const oid_t *prefix, int column, int row, size_t *pos)
 {
 	oid_t oid;
 	value_t *value;
@@ -448,19 +469,38 @@ static int mib_update_entry(const oid_t *prefix, int column, int row, size_t *po
 	/* Create the OID from the prefix, the column and the row */
 	if (oid_build(&oid, prefix, column, row)) {
 		lprintf(LOG_ERR, "%s '%s.%d.%d': OID overflow\n", msg, oid_ntoa(prefix), column, row);
-		return -1;
+		return NULL;
 	}
 
 	/* Search the MIB for the given OID beginning at the given position */
 	value = mib_find(&oid, pos);
-	if (!value) {
+	if (!value)
 		lprintf(LOG_ERR, "%s '%s.%d.%d': OID not found\n", msg, oid_ntoa(prefix), column, row);
+
+	return value;
+}
+
+static int mib_update_entry(const oid_t *prefix, int column, int row, size_t *pos, int type, const void *arg)
+{
+	value_t *value;
+
+	value = mib_value_find(prefix, column, row, pos);
+	if (!value)
 		return -1;
-	}
 
 	return mib_data_set(prefix, &value->data, column, row, type, arg);
 }
 
+static int mib_update_byte_array(const oid_t *prefix, int column, int row, size_t *pos, const void *arg, size_t len)
+{
+	value_t *value;
+
+	value = mib_value_find(prefix, column, row, pos);
+	if (!value)
+		return -1;
+
+	return mib_byte_array_set(prefix, &value->data, column, row, arg, len);
+}
 
 /* -----------------------------------------------------------------------------
  * Interface functions
@@ -550,12 +590,9 @@ int mib_build(void)
 		}
 
 		/* ifPhysAddress */
-		for (i = 0; i < g_interface_list_length; i++) {
-			unsigned char mac[] = { 0xc0, 0xff, 0xee, 0xde, 0xad, i + 1, 0x00 };
-
-			if (mib_build_entry(&m_if_2_oid, 6, i + 1, BER_TYPE_OCTET_STRING, mac) == -1)
+		for (i = 1; i <= g_interface_list_length; i++)
+			if (mib_build_entry(&m_if_2_oid, 6, i, BER_TYPE_OCTET_STRING, "") == -1)
 				return -1;
-		}
 
 		/* ifAdminStatus: up(1), down(2), testing(3) */
 		for (i = 0; i < g_interface_list_length; i++) {
@@ -709,6 +746,11 @@ int mib_update(int full)
 	if (full) {
 		if (g_interface_list_length > 0) {
 			get_netinfo(&u.netinfo);
+
+			for (i = 0; i < g_interface_list_length; i++)
+				if (mib_update_byte_array(&m_if_2_oid, 6, i + 1, &pos, &u.netinfo.mac_addr[i][0], sizeof(u.netinfo.mac_addr[i])))
+					return -1;
+
 			for (i = 0; i < g_interface_list_length; i++) {
 				if (mib_update_entry(&m_if_2_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.netinfo.status[i]) == -1)
 					return -1;

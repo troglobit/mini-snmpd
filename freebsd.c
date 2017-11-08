@@ -30,6 +30,7 @@
 #include <sys/statvfs.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <syslog.h>
@@ -216,6 +217,8 @@ void get_netinfo(netinfo_t *netinfo)
 		netinfo->tx_packets[i] = ifd->ifi_opackets;
 		netinfo->tx_errors[i]  = ifd->ifi_oerrors;
 		netinfo->tx_drops[i]   = ifd->ifi_collisions;
+
+		memcpy(&netinfo->mac_addr[i][0], LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 6);
 	}
 
 	freeifaddrs(ifap);

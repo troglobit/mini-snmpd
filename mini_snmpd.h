@@ -229,6 +229,7 @@ typedef struct netinfo_s {
 	unsigned int tx_packets[MAX_NR_INTERFACES];
 	unsigned int tx_errors[MAX_NR_INTERFACES];
 	unsigned int tx_drops[MAX_NR_INTERFACES];
+	char mac_addr[MAX_NR_INTERFACES][6];
 } netinfo_t;
 
 #ifdef CONFIG_ENABLE_DEMO
