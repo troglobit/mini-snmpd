@@ -166,6 +166,10 @@ void get_netinfo(netinfo_t *netinfo)
 			netinfo->status[i] = (ifreq.ifr_flags & IFF_RUNNING) ? 1 : 7;
 		else
 			netinfo->status[i] = 2;
+
+		if (ioctl(fd, SIOCGIFHWADDR, &ifreq) == -1)
+			continue;
+		memcpy(&netinfo->mac_addr[i][0], &ifreq.ifr_hwaddr.sa_data[0], 6);
 	}
 	if (fd != -1)
 		close(fd);
