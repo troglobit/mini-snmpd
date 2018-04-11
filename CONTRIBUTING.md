@@ -28,17 +28,16 @@ Pull Requests
 If you have pull request or patch for a feature or bug fix.  Here are a
 few things we want you to consider:
 
+> **Tip:** Always submit code that follows the style of surrounding code!
+
 * Coding Style
 
   The coding style itself is strictly Linux [KNF][], like GIT it is
-  becoming a de facto standard for C programming
-
+  becoming a de facto standard for C programming:
   https://www.kernel.org/doc/Documentation/CodingStyle
 
   Lines are however allowed to be longer than 72 characters these days,
   there is no enforced max. length.
-
-> **Tip:** Always submit code that follows the style of surrounding code!
 
 * Logical Change Sets (**important**)
 
