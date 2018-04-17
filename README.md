@@ -17,7 +17,6 @@ Supported features:
 * Community string authentication when using 2c or explicitely configured
 * Read-only access (writing is not supported)
 * Includes basic system info like CPU load, memory, disk and network interfaces
-* Ability to send traps on free disk space, CPU load, network interface status
 * Does not need a configuation file
 * Supports UDP and TCP (thus supports SSH tunneling of SNMP connections)
 * Supports linux kernel versions 2.4 and 2.6

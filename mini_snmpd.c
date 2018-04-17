@@ -280,7 +280,7 @@ static void handle_tcp_client_read(client_t *client)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "p:P:c:D:V:L:C:d:i:t:T:ansvh"
+	static const char short_options[] = "p:P:c:D:V:L:C:d:i:t:ansvh"
 #ifndef __FreeBSD__
 		"I:"
 #endif
@@ -306,7 +306,6 @@ int main(int argc, char *argv[])
 		{ "listen", 1, 0, 'I' },
 #endif
 		{ "timeout", 1, 0, 't' },
-		{ "traps", 1, 0, 'T' },
 		{ "auth", 0, 0, 'a' },
 		{ "foreground", 0, 0, 'n' },
 		{ "verbose", 0, 0, 'v' },
