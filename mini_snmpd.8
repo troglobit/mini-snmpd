@@ -50,31 +50,34 @@ Authority (IANA), free of charge.  See their PEN application web page at
 Use IPv4, default
 .It Fl 6, -use-ipv6
 Use IPv6
-.It Fl p PORT, -udp-port=PORT
+.It Fl p Ar PORT , Fl -udp-port=PORT
 UDP port to listen to for incoming connections, default is 161.
-.It Fl P PORT, -tcp-port=PORT
+.It Fl P Ar PORT , Fl -tcp-port=PORT
 TCP port to listen to for incoming connections, default is 161.
-.It Fl c STR, -community=STR
-The value of the SNMP community string (default is "public")
-.It Fl D STR, -description=STR
+.It Fl c Ar STR , Fl -community=STR
+SNMP version 2c authentication, or community, string, default is
+"public".  Remeber to also enable
+.Fl -auth
+to activate authentication.
+.It Fl D Ar STR , Fl -description=STR
 The description of the device, default is empty.
-.It Fl V OID, -vendor=OID
+.It Fl V Ar OID , Fl -vendor=OID
 The OID of the device vendor, this MUST be changed to your own
 organization's OID.  Default is .1.3.6.1.4.1
-.It Fl L LOC, -location=LOC
+.It Fl L Ar LOC , Fl -location=LOC
 The location of the device, default is empty.
-.It Fl C NAME, -contact=NAME
+.It Fl C Ar NAME , Fl -contact=NAME
 Contact address to device administrator, default is none.
-.It Fl d DIR, -disks=DIR[,DIR,DIR]
+.It Fl d Ar DIR , Fl -disks=DIR[,DIR,DIR]
 The list of disk mount points, default is empty.  Separate multiple
 directories with a comma, colon, or a semicolon.
-.It Fl i IFNAME, -interfaces=IFNAME[,IFNAME]
+.It Fl i Ar IFNAME , Fl -interfaces=IFNAME[,IFNAME]
 List of network interfaces to monitor for IFMIB, default is none.  Separate multiple interface names with comma or semicolon,
 .Em not
 colon)!
-.It Fl I nnn, -listen=IFNAME
+.It Fl I Ar IFNAME , Fl -listen=IFNAME
 Network interface to bind to, default is listen on all interfaces.
-.It Fl t nnn, -timeout=SEC
+.It Fl t Ar SEC , Fl -timeout=SEC
 Timeout for updating the MIB variables, default is 1 second.
 .It Fl a, -auth
 Require client authentication, thus SNMP version 2c, default is off.
@@ -91,22 +94,20 @@ Use syslog for logging, even if running in the foreground.
 responds to the following signals:
 .Pp
 .Bl -tag -width TERM -compact
-.It HUP
-Reload the
-.Nm .conf 
-file, standard UNIX behavior
 .It TERM
 Tell
 .Nm
 to exit gracefully
+.It HUP
+Same as TERM
 .El
 .Sh EXAMPLE
-mini_snmpd -c secret -D "My embedded device" -d /cf -i lo,eth0
+mini_snmpd -a -c secret -D "My embedded device" -d /cf -i lo,eth0
 .Pp
 This command starts the program at the default port, using the community
-string "secret", the system description "My embedded device" and provides
-disk statistics for the "/cf" mount point and network interface
-statistics for the interfaces "lo" and "eth0".
+string "secret", the system description "My embedded device" and
+provides disk statistics for the "/cf" (compact flash) mount point, with
+network interface statistics for the interfaces "lo" and "eth0".
 .Sh AUTHORS
 .Nm
 was originally written by Robert Ernst
