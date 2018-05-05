@@ -3,9 +3,9 @@ Mini SNMP Daemon
 [![License Badge][]][License] [![Travis Status][]][Travis]
 
 The Mini SNMP daemon is a minimal implementation of an SNMP daemon.  It
-is targeted at embedded systems with limited disk and memory resources.
-All configuration is done using command line arguments.  It supports
-basic CPU, memory, disk, and network interface statistics.
+is primarily targeted at embedded systems with limited disk and memory
+resources.  All configuration is done using command line arguments.  It
+supports basic CPU, memory, disk, and network interface statistics.
 
 `mini-snmpd` is not as flexibible as, and does not support the same
 features as, the de-facto standard [net-snmp][], but this also means

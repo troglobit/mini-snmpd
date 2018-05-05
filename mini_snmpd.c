@@ -36,7 +36,7 @@
 
 static void print_help(void)
 {
-	printf("Mini snmpd v" VERSION " -- Minimal SNMP daemon for embedded UNIX systems\n"
+	printf("Mini snmpd v" VERSION " -- Minimal SNMP daemon for UNIX systems\n"
 	       "\n"
 	       "Usage: mini_snmpd [options]\n"
 	       "\n"

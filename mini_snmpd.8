@@ -102,12 +102,12 @@ to exit gracefully
 Same as TERM
 .El
 .Sh EXAMPLE
-mini_snmpd -a -c secret -D "My embedded device" -d /cf -i lo,eth0
+mini_snmpd -a -c secret -D "My device" -d /cf -i lo,eth0
 .Pp
 This command starts the program at the default port, using the community
-string "secret", the system description "My embedded device" and
-provides disk statistics for the "/cf" (compact flash) mount point, with
-network interface statistics for the interfaces "lo" and "eth0".
+string "secret", the system description "My device" and provides disk
+statistics for the "/cf" (compact flash) mount point, with network
+interface statistics for the interfaces "lo" and "eth0".
 .Sh AUTHORS
 .Nm
 was originally written by Robert Ernst
