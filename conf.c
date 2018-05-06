@@ -57,6 +57,7 @@ int read_config(char *file)
 		CFG_STR ("community", NULL, CFGF_NONE),
 		CFG_INT ("timeout", g_timeout, CFGF_NONE),
 		CFG_STR ("vendor", VENDOR, CFGF_NONE),
+		CFG_STR_LIST("disk-table", "/", CFGF_NONE),
 		CFG_END()
 	};
 
@@ -89,6 +90,8 @@ int read_config(char *file)
 	g_location    = get_string(cfg, "location");
 	g_contact     = get_string(cfg, "contact");
 	g_description = get_string(cfg, "description");
+
+	g_disk_list_length = get_list(cfg, "disk-table", g_disk_list, NELEMS(g_disk_list));
 
 	g_auth        = cfg_getbool(cfg, "authentication");
 	g_community   = get_string(cfg, "community");
