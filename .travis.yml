@@ -10,13 +10,19 @@ compiler:
   - gcc
   - clang
 
+addons:
+  apt:
+    packages:
+      - tree
+      - libconfuse-dev
+
 # Override default build command, we do not have `make test` yet
 script:
   - ./autogen.sh
   - ./configure --prefix=/
   - make clean
   - make -j5 all
-  - DESTDIR=/tmp/ make install
-  - ls -lR /tmp
+  - DESTDIR=/tmp/ make install-strip
+  - tree /tmp
   - make distcheck
 
