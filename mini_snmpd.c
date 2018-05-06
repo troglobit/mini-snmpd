@@ -54,7 +54,7 @@ static void print_help(void)
 	       "  -L, --location STR     System location, default: none\n"
 	       "  -C, --contact STR      System contact, default: none\n"
 	       "  -d, --disks PATH       Disks to monitor, default: /\n"
-	       "  -i, --interfaces IFACE Network interfaces to monitor, default: lo\n"
+	       "  -i, --interfaces IFACE Network interfaces to monitor, default: none\n"
 	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
 	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
 	       "  -a, --auth             Enable authentication, i.e. SNMP version 2c\n"
