@@ -31,8 +31,8 @@ int       g_syslog  = 0;
 int       g_verbose = 0;
 int       g_quit    = 0;
 
-char     *g_community      = "public";
-char     *g_vendor         = VENDOR;
+char     *g_community      = NULL;
+char     *g_vendor         = NULL;
 char     *g_description    = NULL;
 char     *g_location       = NULL;
 char     *g_contact        = NULL;

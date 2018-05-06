@@ -427,6 +427,17 @@ int main(int argc, char *argv[])
 		openlog(__progname, LOG_CONS | LOG_PID, LOG_DAEMON);
 	}
 
+	if (!g_community)
+		g_community = strdup("public");
+	if (!g_vendor)
+		g_vendor = strdup(VENDOR);
+	if (!g_description)
+		g_description = strdup("");
+	if (!g_location)
+		g_location = strdup("");
+	if (!g_contact)
+		g_contact = strdup("");
+
 	/* Store the starting time since we need it for MIB updates */
 	if (gettimeofday(&tv_last, NULL) == -1) {
 		memset(&tv_last, 0, sizeof(tv_last));

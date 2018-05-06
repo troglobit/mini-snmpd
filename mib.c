@@ -543,12 +543,12 @@ int mib_build(void)
 	 * The system MIB: basic info about the host (SNMPv2-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
-	if (mib_build_entry(&m_system_oid, 1, 0, BER_TYPE_OCTET_STRING, g_description ?: "") == -1 ||
-	    mib_build_entry(&m_system_oid, 2, 0, BER_TYPE_OID,          g_vendor)            == -1 ||
-	   !mib_alloc_entry(&m_system_oid, 3, 0, BER_TYPE_TIME_TICKS)                              ||
-	    mib_build_entry(&m_system_oid, 4, 0, BER_TYPE_OCTET_STRING, g_contact ?: "")     == -1 ||
-	    mib_build_entry(&m_system_oid, 5, 0, BER_TYPE_OCTET_STRING, hostname)            == -1 ||
-	    mib_build_entry(&m_system_oid, 6, 0, BER_TYPE_OCTET_STRING, g_location ?: "")    == -1)
+	if (mib_build_entry(&m_system_oid, 1, 0, BER_TYPE_OCTET_STRING, g_description) == -1 ||
+	    mib_build_entry(&m_system_oid, 2, 0, BER_TYPE_OID,          g_vendor)      == -1 ||
+	   !mib_alloc_entry(&m_system_oid, 3, 0, BER_TYPE_TIME_TICKS)                        ||
+	    mib_build_entry(&m_system_oid, 4, 0, BER_TYPE_OCTET_STRING, g_contact)     == -1 ||
+	    mib_build_entry(&m_system_oid, 5, 0, BER_TYPE_OCTET_STRING, hostname)      == -1 ||
+	    mib_build_entry(&m_system_oid, 6, 0, BER_TYPE_OCTET_STRING, g_location)    == -1)
 		return -1;
 
 	/*
