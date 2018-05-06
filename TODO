@@ -1,4 +1,8 @@
-* Rename binary mini_snmpd --> mini-snmpd before v1.5 release
+* Before next release
+
+- Rename binary mini_snmpd --> mini-snmpd before v1.5 release
+- Replace all GNU-isms: %m, __progname, etc.
+- Merge ifXTable support from NDM Systems, issue #3
 
 * Merge length calculation and encoding in mib.c and protocol.c
 
