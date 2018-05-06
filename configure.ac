@@ -1,4 +1,4 @@
-AC_INIT([mini-snmpd], [1.4], [https://github.com/troglobit/mini-snmpd/issues])
+AC_INIT([mini-snmpd], [1.5-pre], [https://github.com/troglobit/mini-snmpd/issues])
 AM_INIT_AUTOMAKE([1.11 foreign])
 AM_SILENT_RULES([yes])
 
