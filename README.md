@@ -80,6 +80,17 @@ Check load average:
     UCD-SNMP-MIB::laLoad.2 = STRING: 0.46
     UCD-SNMP-MIB::laLoad.3 = STRING: 0.36
 
+Check monitored disks:
+
+    snmpwalk -v2c -c public 127.0.0.1:16161 UCD-SNMP-MIB::dskTable
+    UCD-SNMP-MIB::dskIndex.1 = INTEGER: 1
+    UCD-SNMP-MIB::dskPath.1 = STRING: /
+    UCD-SNMP-MIB::dskTotal.1 = INTEGER: 245084448
+    UCD-SNMP-MIB::dskAvail.1 = INTEGER: 38953552
+    UCD-SNMP-MIB::dskUsed.1 = INTEGER: 206130896
+    UCD-SNMP-MIB::dskPercent.1 = INTEGER: 85
+    UCD-SNMP-MIB::dskPercentNode.1 = INTEGER: 10
+
 
 Build & Install
 ---------------
