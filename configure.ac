@@ -19,6 +19,10 @@ AC_ARG_WITH(vendor,
         AS_HELP_STRING([--with-vendor=OID], [Set a different vendor OID, default: .1.3.6.1.4.1]),
 	[vendor="$withval"], [vendor=".1.3.6.1.4.1"])
 
+AC_ARG_WITH([config],
+        AS_HELP_STRING([--without-config], [Disable /etc/mini-snmpd.conf support using libConfuse]),,
+	[with_config=yes])
+
 AC_ARG_ENABLE(debug,
    AS_HELP_STRING([--enable-debug], [Enable debug mode, also set CFLAGS="-g -O0", disabled by default.]))
 
@@ -35,6 +39,11 @@ AS_IF([test "x$with_vendor" != "xno"],[
 	],[
 	AC_MSG_ERROR([Vendor OID cannot currently be disabled, use default.])])
 AC_DEFINE_UNQUOTED(VENDOR, ["$vendor"], [Vendor OID])
+
+AS_IF([test "x$with_config" != "xno"], [
+	AC_DEFINE([HAVE_LIBCONFUSE], [1], [Build with support for /etc/mini-snmpd.conf])
+	PKG_CHECK_MODULES([confuse], [libconfuse >= 2.7])])
+AM_CONDITIONAL([HAVE_CONFUSE], [test "x$with_config" != "xno"])
 
 AS_IF([test "x$enable_debug" = "xyes"],[
    AC_DEFINE(DEBUG, 1, [Define to enable debug mode.])])

@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include <stdint.h>
+#include <syslog.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 
@@ -300,6 +301,8 @@ int          split(const char *str, char *delim, char **list, int max_list_lengt
 client_t    *find_oldest_client(void);
 
 void        *allocate    (size_t len);
+
+int          read_config (char *file);
 
 int          parse_file  (char *file, field_t fields[]);
 int          read_file   (const char *filename, char *buffer, size_t size);

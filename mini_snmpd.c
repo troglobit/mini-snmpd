@@ -23,7 +23,6 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <signal.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -44,6 +43,9 @@ static void print_help(void)
 	       "  -4, --use-ipv4         Use IPv4, default\n"
 	       "  -6, --use-ipv6         Use IPv6\n"
 #endif
+#ifdef HAVE_LIBCONFUSE
+	       "  -f, --file=FILE        Configuration file. Default: " CONFDIR "/%s.conf\n"
+#endif
 	       "  -p, --udp-port PORT    UDP port to bind to, default: 161\n"
 	       "  -P, --tcp-port PORT    TCP port to bind to, default: 161\n"
 	       "  -c, --community STR    Community string, default: public\n"
@@ -60,7 +62,11 @@ static void print_help(void)
 	       "  -s, --syslog           Use syslog for logging, even if running in the foreground\n"
 	       "  -v, --verbose          Verbose messages\n"
 	       "  -h, --help             This help text\n"
-	       "\n");
+	       "\n"
+#ifdef HAVE_LIBCONFUSE
+	       , PACKAGE_NAME
+#endif
+		);
 }
 
 static void handle_signal(int UNUSED(signo))
@@ -287,11 +293,17 @@ int main(int argc, char *argv[])
 #ifdef CONFIG_ENABLE_IPV6
 		"46"
 #endif
+#ifdef HAVE_LIBCONFUSE
+		"f:"
+#endif
 		;
 	static const struct option long_options[] = {
 #ifdef CONFIG_ENABLE_IPV6
 		{ "use-ipv4", 0, 0, '4' },
 		{ "use-ipv6", 0, 0, '6' },
+#endif
+#ifdef HAVE_LIBCONFUSE
+		{ "file",     1, 0, 'f' },
 #endif
 		{ "udp-port", 1, 0, 'p' },
 		{ "tcp-port", 1, 0, 'P' },
@@ -328,6 +340,10 @@ int main(int argc, char *argv[])
 		struct sockaddr_in6 sa6;
 #endif
 	} sockaddr;
+#ifdef HAVE_LIBCONFUSE
+	char path[256] = "";
+	char *config = NULL;
+#endif
 
 	/* Prevent TERM and HUP signals from interrupting system calls */
 	sig.sa_handler = handle_signal;
@@ -352,6 +368,12 @@ int main(int argc, char *argv[])
 				g_family = AF_INET6;
 				break;
 #endif
+#ifdef HAVE_LIBCONFUSE
+			case 'f':
+				config = optarg;
+				break;
+#endif
+
 			case 'p':
 				g_udp_port = atoi(optarg);
 				break;
@@ -426,6 +448,19 @@ int main(int argc, char *argv[])
 		}
 		openlog(__progname, LOG_CONS | LOG_PID, LOG_DAEMON);
 	}
+
+#ifdef HAVE_LIBCONFUSE
+	if (!config) {
+		snprintf(path, sizeof(path), "%s/%s.conf", CONFDIR, PACKAGE_NAME);
+		config = path;
+	} else if (access(config, F_OK)) {
+		lprintf(LOG_ERR, "Failed reading config file '%s'\n", config);
+		return 1;
+	}
+
+	if (read_config(config))
+		return 1;
+#endif
 
 	if (!g_community)
 		g_community = strdup("public");
