@@ -98,6 +98,11 @@
 #define UNUSED(x) x __attribute__((unused))
 #endif
 
+/* From The Practice of Programming, by Kernighan and Pike */
+#ifndef NELEMS
+#define NELEMS(array) (sizeof(array) / sizeof(array[0]))
+#endif
+
 #define lprintf(level, format...)				\
 	do {							\
 		if (g_verbose || (level != LOG_DEBUG)) {	\
