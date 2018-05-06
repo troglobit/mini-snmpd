@@ -10,6 +10,7 @@ if HAVE_CONFUSE
 mini_snmpd_SOURCES   += conf.c
 endif
 mini_snmpd_CPPFLAGS   = -DCONFDIR='"$(sysconfdir)"'
+mini_snmpd_CFLAGS     = -W -Wall -Wextra -std=gnu99
 mini_snmpd_CFLAGS    += $(confuse_CFLAGS)
 mini_snmpd_LDADD      = $(confuse_LIBS)
 
