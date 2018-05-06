@@ -31,6 +31,21 @@ static char *get_string(cfg_t *cfg, const char *key)
 	return NULL;
 }
 
+static size_t get_list(cfg_t *cfg, const char *key, char **list, size_t len)
+{
+	size_t i = 0;
+
+	while (i < cfg_size(cfg, key)) {
+		char *str;
+
+		str = cfg_getnstr(cfg, key, i);
+		if (str && i < len)
+			list[i++] = strdup(str);
+	}
+
+	return i;
+}
+
 int read_config(char *file)
 {
 	int rc = 0;
