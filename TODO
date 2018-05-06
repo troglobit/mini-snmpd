@@ -1,3 +1,5 @@
+* Rename binary mini_snmpd --> mini-snmpd before v1.5 release
+
 * Merge length calculation and encoding in mib.c and protocol.c
 
 Some length calculation and encoding code exists in both mib.c and
