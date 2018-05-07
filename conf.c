@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <confuse.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include "mini_snmpd.h"
@@ -9,6 +10,7 @@ static cfg_t *cfg = NULL;
 static void conf_errfunc(cfg_t *cfg, const char *format, va_list args)
 {
 	char fmt[80];
+	char buf[256];
 
 	if (cfg && cfg->filename && cfg->line)
 		snprintf(fmt, sizeof(fmt), "%s:%d: %s\n", cfg->filename, cfg->line, format);
@@ -16,8 +18,9 @@ static void conf_errfunc(cfg_t *cfg, const char *format, va_list args)
 		snprintf(fmt, sizeof(fmt), "%s: %s\n", cfg->filename, format);
 	else
 		snprintf(fmt, sizeof(fmt), "%s\n", format);
+	vsnprintf(buf, sizeof(buf), fmt, args);
 
-	lprintf(LOG_ERR, fmt, args);
+	lprintf(LOG_ERR, "%s", buf);
 }
 
 static char *get_string(cfg_t *cfg, const char *key)
