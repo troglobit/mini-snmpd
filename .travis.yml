@@ -29,7 +29,7 @@ addons:
       name: "troglobit/mini-snmpd"
       description: "A minimal SNMP agent implementation"
     notification_email: troglobit@gmail.com
-    build_command_prepend: "./autogen.sh && ./configure"
+    build_command_prepend: "./autogen.sh && ./configure --prefix=/"
     build_command: "make clean all"
     branch_pattern: dev
 
