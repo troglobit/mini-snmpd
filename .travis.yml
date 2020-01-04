@@ -10,10 +10,10 @@ sudo: false
 compiler:
   - gcc
 
+# The secure: declaration is the encrypted COVERITY_SCAN_TOKEN, created
+# using the "travis encrypt" command using the project repo's public key
 env:
   global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
    - secure: "H/4mO/azvVd+MMFWRC8h6RYFbqCdbLvM8EUNvNakjy8ozJqlk8Mi/wLOPT7pfhuiEJcNoo3s7vs/5jVy4TC5+MQRTtAJQQlXbddT5h+UBw5TRV6XNbKXXGPAZzfABKr2UUj/1sKdVw8r0sqWgnoAlu01h1Q66DsZBxX5n7XrS33riNZSgzRVJNED1OaXFQQ5PjdPvuqGahp6kZC4x5g/9GkgtAO0YXKyg6k9OQwS2Xzr01t/9btDO9A0br2a1nr1cmn3UL3n1EV8sC6ptXU2ZpEHOIuVw2wZo5PV4Es8YLFutjU7qIbcusxFvthcO6wRWchrzz1ss9eggcdgG5gq0S0xITxMbY5n1vAxRbe4qE0wAx3MgQLDlFcRlFY1Bzk1nQTjsM2iwEN8KSaRcn8calkBVlFLSnNivbfCzPBpDwB+MvUe6q0afSOK4EDR2JOzp7LfEc0SdqcbqIMiJCEGprBzubxNkmIwHF+fTrKK32SnzaN4rv7BplcbrJiRMcw7QbK8BJlS8Xi0MjOrH08CbnlVj4UCfvTT/wXPvm3vrgh5OLLNuGNSjxcfI40hUl/KIaTlvjTgIX6YPaev71Xml2yuo4fGtOOc84xWfDbe9dVnHwItvOLVVCVokMLvUV257PYKZBU23SOv+CrNdwckui6vKujCg60Bnz/lYHxXc7E="
 
 before_install:
