@@ -136,7 +136,7 @@ static int decode_int(const unsigned char *packet, size_t size, size_t *pos, siz
 {
 	unsigned int tmp;
 
-	if (*pos >= (size - len + 1)) {
+	if (len > size || *pos >= (size - len + 1)) {
 		lprintf(LOG_DEBUG, "underflow for integer\n");
 		errno = EINVAL;
 		return -1;
