@@ -155,7 +155,7 @@ static int decode_int(const unsigned char *packet, size_t size, size_t *pos, siz
 /* Fetch the value as unsigned integer (copy sign bit into all bytes first) */
 static int decode_cnt(const unsigned char *packet, size_t size, size_t *pos, size_t len, uint32_t *value)
 {
-	if (*pos >= (size - len + 1)) {
+	if (len > size || *pos >= (size - len + 1)) {
 		lprintf(LOG_DEBUG, "underflow for unsigned\n");
 		errno = EINVAL;
 		return -1;
