@@ -657,6 +657,12 @@ int main(int argc, char *argv[])
 
 					free(g_tcp_client_list[i]);
 					memmove(&g_tcp_client_list[i], &g_tcp_client_list[i + 1], len);
+
+					/*
+					 * list changed, there could be more than
+					 * one to remove, start from begining
+					 */
+					i = -1;
 				}
 			}
 		}
