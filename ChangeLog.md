@@ -75,16 +75,16 @@ Bug fix release, courtesy of Andre Grosse Bley, @Haeretiker.
 - Fixed bug in encoding of integers with 24 significant bits
 
 
-[v1.1][] - 2010-02-25
----------------------
+[v1.1][] -- 2010-02-25
+----------------------
 
 ### Changes
 
 - Added support for IPv6
 
 
-v1.0 - 2009-01-27
------------------
+v1.0 -- 2009-01-27
+------------------
 
 ### Fixes
 
@@ -93,8 +93,8 @@ v1.0 - 2009-01-27
   running backwards)
 
 
-v0.8 - 2008-10-08
------------------
+v0.8 -- 2008-10-08
+------------------
 
 ### Fixes
 
@@ -102,8 +102,8 @@ v0.8 - 2008-10-08
   not support getting the number of inodes (for example FAT)
 
 
-v0.7 - 2008-10-06
------------------
+v0.7 -- 2008-10-06
+------------------
 
 ### Fixes
 
@@ -111,8 +111,8 @@ v0.7 - 2008-10-06
   changes
 
 
-v0.6 - 2008-10-04
------------------
+v0.6 -- 2008-10-04
+------------------
 
 ### Changes
 
@@ -127,16 +127,16 @@ v0.6 - 2008-10-04
   buffer provided by the caller rather than their static buffers
 
 
-v0.5 - 2008-09-29
------------------
+v0.5 -- 2008-09-29
+------------------
 
 ### Changes
 
 - Added CHANGELOG and TODO file
 - Added a check for the file descriptors of TCP connections
 
-v0.4 - 2008-09-28
------------------
+v0.4 -- 2008-09-28
+------------------
 
 This is the first feature-complete version.  SNMP get, getnext, and
 getbulk are supported on UDP and TCP connections.
@@ -153,9 +153,3 @@ getbulk are supported on UDP and TCP connections.
 [palacios]:   https://github.com/javiplx
 [troglobit]:  https://github.com/troglobit
 [vodz-fork]:  http://www.simtreas.ru/~dzo/busybox-vodz.html
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->
