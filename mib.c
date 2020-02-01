@@ -532,11 +532,18 @@ int mib_build(void)
 	char hostname[MAX_STRING_SIZE];
 	char name[16];
 	size_t i;
+	int sysServices;
+
+	sysServices = ((1 << 0) +	/* Physical layer */
+		       (1 << 1) +	/* L2 Datalink layer */
+		       (1 << 2) +	/* L3 IP Layer */
+		       (1 << 3) +	/* L4 TCP/UDP Layer */
+		       (1 << 6));	/* Applications layer */
 
 	/* Determine some static values that are not known at compile-time */
 	if (gethostname(hostname, sizeof(hostname)) == -1)
 		hostname[0] = '\0';
-	else if (hostname[sizeof(hostname) - 1] != '\0')
+	else
 		hostname[sizeof(hostname) - 1] = '\0';
 
 	/*
@@ -548,7 +555,8 @@ int mib_build(void)
 	   !mib_alloc_entry(&m_system_oid, 3, 0, BER_TYPE_TIME_TICKS)                        ||
 	    mib_build_entry(&m_system_oid, 4, 0, BER_TYPE_OCTET_STRING, g_contact)     == -1 ||
 	    mib_build_entry(&m_system_oid, 5, 0, BER_TYPE_OCTET_STRING, hostname)      == -1 ||
-	    mib_build_entry(&m_system_oid, 6, 0, BER_TYPE_OCTET_STRING, g_location)    == -1)
+	    mib_build_entry(&m_system_oid, 6, 0, BER_TYPE_OCTET_STRING, g_location)    == -1 ||
+	    mib_build_entry(&m_system_oid, 7, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)sysServices) == -1)
 		return -1;
 
 	/*
