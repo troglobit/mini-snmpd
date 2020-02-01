@@ -61,22 +61,23 @@ unsigned int get_system_uptime(void)
 
 void get_loadinfo(loadinfo_t *loadinfo)
 {
-	int i;
 	char buf[128];
 	char *ptr;
+	int i;
 
-	if (read_file("/proc/loadavg", buf, sizeof(buf)) == -1) {
-		memset(loadinfo, 0, sizeof(loadinfo_t));
+	memset(loadinfo, 0, sizeof(loadinfo_t));
+	if (read_file("/proc/loadavg", buf, sizeof(buf)) == -1)
 		return;
-	}
 
 	ptr = buf;
 	for (i = 0; i < 3; i++) {
 		while (isspace(*ptr))
 			ptr++;
 
-		if (*ptr != 0)
-			loadinfo->avg[i] = strtod(ptr, &ptr) * 100;
+		if (*ptr == 0)
+			continue;
+
+		loadinfo->avg[i] = strtod(ptr, &ptr) * 100;
 	}
 }
 
@@ -91,8 +92,8 @@ void get_meminfo(meminfo_t *meminfo)
 		{ NULL }
 	};
 
-	if (parse_file("/proc/meminfo", fields))
-		memset(meminfo, 0, sizeof(meminfo_t));
+	memset(meminfo, 0, sizeof(meminfo_t));
+	parse_file("/proc/meminfo", fields);
 }
 
 void get_cpuinfo(cpuinfo_t *cpuinfo)
@@ -104,24 +105,19 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 		{ NULL }
 	};
 
-	if (parse_file("/proc/stat", fields))
-		memset(cpuinfo, 0, sizeof(cpuinfo_t));
+	memset(cpuinfo, 0, sizeof(cpuinfo_t));
+	parse_file("/proc/stat", fields);
 }
 
 void get_diskinfo(diskinfo_t *diskinfo)
 {
-	size_t i;
 	struct statfs fs;
+	size_t i;
 
+	memset(diskinfo, 0, sizeof(*diskinfo));
 	for (i = 0; i < g_disk_list_length; i++) {
-		if (statfs(g_disk_list[i], &fs) == -1) {
-			diskinfo->total[i]               = 0;
-			diskinfo->free[i]                = 0;
-			diskinfo->used[i]                = 0;
-			diskinfo->blocks_used_percent[i] = 0;
-			diskinfo->inodes_used_percent[i] = 0;
+		if (statfs(g_disk_list[i], &fs) == -1)
 			continue;
-		}
 
 		diskinfo->total[i] = ((float)fs.f_blocks * fs.f_bsize) / 1024;
 		diskinfo->free[i]  = ((float)fs.f_bfree  * fs.f_bsize) / 1024;
@@ -142,6 +138,8 @@ void get_netinfo(netinfo_t *netinfo)
 	field_t fields[MAX_NR_INTERFACES + 1];
 	size_t i;
 	int sd;
+
+	memset(netinfo, 0, sizeof(*netinfo));
 
 	sd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (-1 == sd)

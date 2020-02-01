@@ -76,14 +76,13 @@ unsigned int get_system_uptime(void)
 
 void get_loadinfo(loadinfo_t *loadinfo)
 {
-	int i, mib[2] = { CTL_VM, VM_LOADAVG };
 	struct loadavg avgs;
 	size_t len = sizeof(avgs);
+	int i, mib[2] = { CTL_VM, VM_LOADAVG };
 
-	if (sysctl(mib, 2, &avgs, &len, NULL, 0)) {
-		memset(loadinfo, 0, sizeof(loadinfo_t));
+	memset(loadinfo, 0, sizeof(loadinfo_t));
+	if (sysctl(mib, 2, &avgs, &len, NULL, 0))
 		return;
-	}
 
 	for (i = 0; i < 3; i++)
 		loadinfo->avg[i] = (float)avgs.ldavg[i] / (float)avgs.fscale * 100;
@@ -91,16 +90,17 @@ void get_loadinfo(loadinfo_t *loadinfo)
 
 void get_meminfo(meminfo_t *meminfo)
 {
-	int ret = 0, mib[2] = { CTL_HW, HW_PHYSMEM };
-	size_t len;
-	unsigned int pagesize;
-	unsigned long physmem, cache_cnt = 0;
 	struct vmtotal vmt;
+	unsigned long physmem, cache_cnt = 0;
+	unsigned int pagesize;
+	size_t len;
+	int ret = 0, mib[2] = { CTL_HW, HW_PHYSMEM };
+
+	memset(meminfo, 0, sizeof(meminfo_t));
 
 	len = sizeof(physmem);
 	ret = sysctl(mib, 2, &physmem, &len, NULL, 0);
 	if (ret) {
-		memset(meminfo, 0, sizeof(meminfo_t));
 		perror("hw.physmem");
 		return;
 	}
@@ -108,7 +108,6 @@ void get_meminfo(meminfo_t *meminfo)
 	mib[1] = HW_PAGESIZE;
 	ret = sysctl(mib, 2, &pagesize, &len, NULL, 0);
 	if (ret) {
-		memset(meminfo, 0, sizeof(meminfo_t));
 		perror("hw.pagesize");
 		return;
 	}
@@ -117,7 +116,6 @@ void get_meminfo(meminfo_t *meminfo)
 	len = sizeof(vmt);
 	ret = sysctl(mib, 2, &vmt, &len, NULL, 0);
 	if (ret) {
-		memset(meminfo, 0, sizeof(meminfo_t));
 		perror("vm.total");
 		return;
 	}
@@ -135,10 +133,9 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	long cp_info[CPUSTATES];
 	size_t len = sizeof(cp_info);
 
-	if (sysctlbyname("kern.cp_time", &cp_info, &len, NULL, 0) < 0) {
-		memset(cpuinfo, 0, sizeof(*cpuinfo));
+	memset(cpuinfo, 0, sizeof(*cpuinfo));
+	if (sysctlbyname("kern.cp_time", &cp_info, &len, NULL, 0) < 0)
 		return;
-	}
 
 	cpuinfo->user   = cp_info[CP_USER];
 	cpuinfo->nice   = cp_info[CP_NICE];
@@ -150,18 +147,13 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 
 void get_diskinfo(diskinfo_t *diskinfo)
 {
-	size_t i;
 	struct statfs fs;
+	size_t i;
 
+	memset(diskinfo, 0, sizeof(*diskinfo));
 	for (i = 0; i < g_disk_list_length; i++) {
-		if (statfs(g_disk_list[i], &fs) == -1) {
-			diskinfo->total[i]               = 0;
-			diskinfo->free[i]                = 0;
-			diskinfo->used[i]                = 0;
-			diskinfo->blocks_used_percent[i] = 0;
-			diskinfo->inodes_used_percent[i] = 0;
+		if (statfs(g_disk_list[i], &fs) == -1)
 			continue;
-		}
 
 		diskinfo->total[i] = ((float)fs.f_blocks * fs.f_bsize) / 1024;
 		diskinfo->free[i]  = ((float)fs.f_bfree  * fs.f_bsize) / 1024;
@@ -192,15 +184,16 @@ void get_netinfo(netinfo_t *netinfo)
 {
 	struct ifaddrs *ifap, *ifa;
 
-	if (getifaddrs(&ifap) < 0) {
-		memset(netinfo, 0, sizeof(*netinfo));
+	memset(netinfo, 0, sizeof(*netinfo));
+	if (getifaddrs(&ifap) < 0)
 		return;
-	}
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		int i = find_ifname(ifa->ifa_name);
 		struct if_data *ifd = ifa->ifa_data;
+		int i;
 
+
+		i = find_ifname(ifa->ifa_name);
 		if (i == -1 || ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 
