@@ -93,7 +93,7 @@ void get_meminfo(meminfo_t *meminfo)
 	};
 
 	memset(meminfo, 0, sizeof(meminfo_t));
-	parse_file("/proc/meminfo", fields);
+	parse_file("/proc/meminfo", fields, 255);
 }
 
 void get_cpuinfo(cpuinfo_t *cpuinfo)
@@ -106,7 +106,7 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	};
 
 	memset(cpuinfo, 0, sizeof(cpuinfo_t));
-	parse_file("/proc/stat", fields);
+	parse_file("/proc/stat", fields, 255);
 }
 
 void get_diskinfo(diskinfo_t *diskinfo)
@@ -174,7 +174,7 @@ void get_netinfo(netinfo_t *netinfo)
 		memcpy(&netinfo->mac_addr[i][0], &ifreq.ifr_hwaddr.sa_data[0], 6);
 	}
 
-	parse_file("/proc/net/dev", fields);
+	parse_file("/proc/net/dev", fields, 255);
 	close(sd);
 }
 

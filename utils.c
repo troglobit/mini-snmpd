@@ -77,7 +77,7 @@ static inline int parse_lineint(char *buf, field_t *f)
 	return 1;
 }
 
-int parse_file(char *file, field_t fields[])
+int parse_file(char *file, field_t fields[], size_t limit)
 {
 	char buf[512];
 	FILE *fp;
@@ -90,9 +90,9 @@ int parse_file(char *file, field_t fields[])
 		return -1;
 
 	while (fgets(buf, sizeof(buf), fp)) {
-		int i;
+		size_t i;
 
-		for (i = 0; fields[i].prefix; i++) {
+		for (i = 0; i < limit && fields[i].prefix; i++) {
 			if (parse_lineint(buf, &fields[i]))
 				break;
 		}

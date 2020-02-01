@@ -309,7 +309,7 @@ void        *allocate    (size_t len);
 
 int          read_config (char *file);
 
-int          parse_file  (char *file, field_t fields[]);
+int          parse_file  (char *file, field_t fields[], size_t limit);
 int          read_file   (const char *filename, char *buffer, size_t size);
 
 unsigned int read_value  (const char *buffer, const char *prefix);
