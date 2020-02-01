@@ -867,6 +867,11 @@ int mib_update(int full)
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
+				if (mib_update_entry(&m_if_2_oid, 9, i + 1, &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)u.netinfo.lastchange[i]) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
 				if (mib_update_entry(&m_if_2_oid, 10, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.netinfo.rx_bytes[i]) == -1)
 					return -1;
 			}

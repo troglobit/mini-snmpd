@@ -217,6 +217,9 @@ void get_netinfo(netinfo_t *netinfo)
 		else
 			netinfo->status[i] = 2;
 
+		/* XXX: Need better tracking on Linux, c.f. FreeBSD ... */
+		netinfo->lastchange[1] = get_process_uptime();
+
 		if (ifreq.ifr_flags & IFF_POINTOPOINT)
 			netinfo->if_type[i] = 23; /* ppp(23) */
 		else if (ifreq.ifr_flags & IFF_LOOPBACK)

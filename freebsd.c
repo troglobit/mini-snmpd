@@ -297,6 +297,7 @@ void get_netinfo(netinfo_t *netinfo)
 
 		netinfo->if_mtu[i]     = ifd->ifi_mtu;
 		netinfo->if_speed[i]   = ifd->ifi_baudrate;
+		netinfo->lastchange[1] = ifd->ifi_lastchange.tv_sec;
 		netinfo->rx_bytes[i]   = ifd->ifi_ibytes;
 		netinfo->rx_packets[i] = ifd->ifi_ipackets;
 		netinfo->rx_errors[i]  = ifd->ifi_ierrors;
