@@ -169,8 +169,16 @@ void get_netinfo(netinfo_t *netinfo)
 		else
 			netinfo->status[i] = 2;
 
+		if (ifreq.ifr_flags & IFF_POINTOPOINT)
+			netinfo->if_type[i] = 23; /* ppp(23) */
+		else if (ifreq.ifr_flags & IFF_LOOPBACK)
+			netinfo->if_type[i] = 24; /* softwareLoopback(24) */
+		else
+			netinfo->if_type[i] = 6; /* ethernetCsmacd(6) */
+
 		if (ioctl(sd, SIOCGIFHWADDR, &ifreq) == -1)
 			continue;
+
 		memcpy(&netinfo->mac_addr[i][0], &ifreq.ifr_hwaddr.sa_data[0], 6);
 	}
 

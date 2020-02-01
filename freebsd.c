@@ -202,6 +202,22 @@ void get_netinfo(netinfo_t *netinfo)
 		else
 			netinfo->status[i] = ifd->ifi_link_state == LINK_STATE_UP ? 1 : 2;
 
+		switch (ifd->ifi_type) {
+		default:
+		case IFT_ETHER:
+			netinfo->if_type[i] = 6; /* ethernetCsmacd(6) */
+			break;
+		case IFT_PPP:
+			netinfo->if_type[i] = 23; /* ppp(23) */
+			break;
+		case IFT_LOOP:
+			netinfo->if_type[i] = 24; /* softwareLoopback(24) */
+			break;
+		case IFT_SLIP:
+			netinfo->if_type[i] = 28; /* slip(28) */
+			break;
+		}
+
 		netinfo->rx_bytes[i]   = ifd->ifi_ibytes;
 		netinfo->rx_packets[i] = ifd->ifi_ipackets;
 		netinfo->rx_errors[i]  = ifd->ifi_ierrors;
