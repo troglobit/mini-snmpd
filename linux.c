@@ -158,6 +158,9 @@ void get_netinfo(netinfo_t *netinfo)
 		fields[i].value[10] = &netinfo->tx_errors[i];
 		fields[i].value[11] = &netinfo->tx_drops[i];
 
+		if (-1 == read_file_value(&netinfo->if_mtu[i], "/sys/class/net/%s/mtu", g_interface_list[i]))
+			netinfo->if_mtu[i] = 1500; /* Fallback */
+
 		snprintf(ifreq.ifr_name, sizeof(ifreq.ifr_name), "%s", g_interface_list[i]);
 		if (ioctl(sd, SIOCGIFFLAGS, &ifreq) == -1) {
 			netinfo->status[i] = 4;

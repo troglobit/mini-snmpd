@@ -760,6 +760,11 @@ int mib_update(int full)
 					return -1;
 			}
 
+			for (i = 0; i < g_interface_list_length; i++) {
+				if (mib_update_entry(&m_if_2_oid, 4, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.netinfo.if_mtu[i]) == -1)
+					return -1;
+			}
+
 			for (i = 0; i < g_interface_list_length; i++)
 				if (mib_update_byte_array(&m_if_2_oid, 6, i + 1, &pos, &u.netinfo.mac_addr[i][0], sizeof(u.netinfo.mac_addr[i])))
 					return -1;
