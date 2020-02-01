@@ -138,10 +138,14 @@ void get_diskinfo(diskinfo_t *diskinfo)
 
 void get_netinfo(netinfo_t *netinfo)
 {
-	int fd = socket(AF_INET, SOCK_DGRAM, 0);
-	size_t i;
 	struct ifreq ifreq;
 	field_t fields[MAX_NR_INTERFACES + 1];
+	size_t i;
+	int sd;
+
+	sd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (-1 == sd)
+		return;
 
 	memset(fields, 0, (MAX_NR_INTERFACES + 1) * sizeof(field_t));
 	for (i = 0; i < g_interface_list_length; i++) {
@@ -157,7 +161,7 @@ void get_netinfo(netinfo_t *netinfo)
 		fields[i].value[11] = &netinfo->tx_drops[i];
 
 		snprintf(ifreq.ifr_name, sizeof(ifreq.ifr_name), "%s", g_interface_list[i]);
-		if (fd == -1 || ioctl(fd, SIOCGIFFLAGS, &ifreq) == -1) {
+		if (ioctl(sd, SIOCGIFFLAGS, &ifreq) == -1) {
 			netinfo->status[i] = 4;
 			continue;
 		}
@@ -167,15 +171,13 @@ void get_netinfo(netinfo_t *netinfo)
 		else
 			netinfo->status[i] = 2;
 
-		if (ioctl(fd, SIOCGIFHWADDR, &ifreq) == -1)
+		if (ioctl(sd, SIOCGIFHWADDR, &ifreq) == -1)
 			continue;
 		memcpy(&netinfo->mac_addr[i][0], &ifreq.ifr_hwaddr.sa_data[0], 6);
 	}
-	if (fd != -1)
-		close(fd);
 
-	if (parse_file("/proc/net/dev", fields))
-		memset(netinfo, 0, sizeof(*netinfo));
+	parse_file("/proc/net/dev", fields);
+	close(sd);
 }
 
 #endif /* __linux__ */
