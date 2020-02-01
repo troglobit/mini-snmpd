@@ -32,6 +32,8 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
+#include <netinet/udp.h>
+#include <netinet/udp_var.h>
 #include <arpa/inet.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -143,6 +145,29 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	cpuinfo->idle   = cp_info[CP_IDLE];
 	cpuinfo->irqs   = cp_info[CP_INTR];
 	cpuinfo->cntxts = 0;	/* TODO */
+}
+
+void get_udpinfo(udpinfo_t *udpinfo)
+{
+	struct udpstat udps;
+	size_t len = sizeof(udps);
+
+	memset(udpinfo, 0, sizeof(*udpinfo));
+
+	if (sysctlbyname("net.inet.udp.stats", &udps, &len, NULL, 0) == -1)
+		return;
+
+	if (sizeof(udps) != len)
+		return;
+
+	udpinfo->udpInDatagrams  = udps.udps_ipackets;
+	udpinfo->udpNoPorts      = (udps.udps_noport +
+				    udps.udps_noportbcast +
+				    udps.udps_noportmcast);
+	udpinfo->udpInErrors     = (udps.udps_hdrops +
+				    udps.udps_badsum +
+				    udps.udps_badlen);
+	udpinfo->udpOutDatagrams = udps.udps_opackets;
 }
 
 void get_diskinfo(diskinfo_t *diskinfo)
