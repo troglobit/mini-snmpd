@@ -446,8 +446,10 @@ int main(int argc, char *argv[])
 			lprintf(LOG_ERR, "Failed daemonizing: %m");
 			return 1;
 		}
-		openlog(__progname, LOG_CONS | LOG_PID, LOG_DAEMON);
 	}
+
+	if (g_syslog)
+		openlog(__progname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
 #ifdef HAVE_LIBCONFUSE
 	if (!config) {
@@ -670,6 +672,8 @@ int main(int argc, char *argv[])
 
 	/* We were killed, print a message and exit */
 	lprintf(LOG_INFO, "stopped\n");
+	if (g_syslog)
+		closelog();
 
 	return EXIT_OK;
 }

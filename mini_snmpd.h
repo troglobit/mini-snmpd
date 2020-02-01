@@ -106,7 +106,7 @@
 #define lprintf(level, format...)				\
 	do {							\
 		if (g_verbose || (level != LOG_DEBUG)) {	\
-			if (g_daemon || g_syslog)		\
+			if (g_syslog)				\
 				syslog(level, format);		\
 			else					\
 				fprintf(stderr, format);	\
