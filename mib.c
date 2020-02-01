@@ -852,7 +852,17 @@ int mib_update(int full)
 					return -1;
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.netinfo.status[i]) == -1)
+				unsigned int status = u.netinfo.status[i];
+				unsigned int updown = status != 2 ? 1 : 2;
+
+				if (mib_update_entry(&m_if_2_oid, 7, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)updown) == -1)
+					return -1;
+			}
+
+			for (i = 0; i < g_interface_list_length; i++) {
+				unsigned int status = u.netinfo.status[i];
+
+				if (mib_update_entry(&m_if_2_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)status) == -1)
 					return -1;
 			}
 
