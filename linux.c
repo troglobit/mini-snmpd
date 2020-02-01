@@ -202,6 +202,10 @@ void get_netinfo(netinfo_t *netinfo)
 		if (-1 == read_file_value(&netinfo->if_mtu[i], "/sys/class/net/%s/mtu", g_interface_list[i]))
 			netinfo->if_mtu[i] = 1500; /* Fallback */
 
+		if (-1 == read_file_value(&netinfo->if_speed[i], "/sys/class/net/%s/speed", g_interface_list[i]))
+			netinfo->if_speed[i] = 1000; /* Fallback */
+		netinfo->if_speed[i] *= 1000000;     /* to bps */
+
 		snprintf(ifreq.ifr_name, sizeof(ifreq.ifr_name), "%s", g_interface_list[i]);
 		if (ioctl(sd, SIOCGIFFLAGS, &ifreq) == -1) {
 			netinfo->status[i] = 4;
