@@ -316,6 +316,8 @@ int          read_file   (const char *filename, char *buffer, size_t size);
 unsigned int read_value  (const char *buffer, const char *prefix);
 void         read_values (const char *buffer, const char *prefix, unsigned int *values, int count);
 
+int          read_file_value(unsigned int *val, const char *fmt, ...);
+
 int          ticks_since (const struct timeval *tv_last, struct timeval *tv_now);
 
 unsigned int get_process_uptime (void);

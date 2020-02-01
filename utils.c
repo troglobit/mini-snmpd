@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
 
@@ -166,6 +167,31 @@ void read_values(const char *buf, const char *prefix, unsigned int *values, int 
 
 		values[i] = strtoul(buf, (char **)&buf, 0);
 	}
+}
+
+/* For files like Linux /sys/class/net/lo/mtu */
+int read_file_value(unsigned int *val, const char *fmt, ...)
+{
+	va_list ap;
+	FILE *fp;
+	char buf[256];
+	int rc = -1;
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	fp = fopen(buf, "r");
+	if (fp) {
+		if (fgets(buf, sizeof(buf), fp)) {
+			*val = strtoul(buf, NULL, 0);
+			rc = 0;
+		}
+
+		fclose(fp);
+	}
+
+	return rc;
 }
 
 int ticks_since(const struct timeval *tv_last, struct timeval *tv_now)
