@@ -32,6 +32,9 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_var.h>
+#include <netinet/tcp_timer.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <arpa/inet.h>
@@ -145,6 +148,45 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	cpuinfo->idle   = cp_info[CP_IDLE];
 	cpuinfo->irqs   = cp_info[CP_INTR];
 	cpuinfo->cntxts = 0;	/* TODO */
+}
+
+void get_tcpinfo(tcpinfo_t *tcpinfo)
+{
+	struct clockinfo clockinfo;
+	struct tcpstat tcps;
+	size_t len;
+
+	memset(tcpinfo, 0, sizeof(*tcpinfo));
+
+	len = sizeof(clockinfo);
+	if (sysctlbyname("kern.clockrate", &clockinfo, &len, NULL, 0) == -1)
+		return;
+	if (len != sizeof(clockinfo))
+		return;
+
+	len = sizeof(tcps);
+	if (sysctlbyname("net.inet.tcp.stats", &tcps, &len, NULL, 0) == -1)
+		return;
+
+	if (sizeof(udps) != len)
+		return;
+
+	tcpinfo->tcpRtoAlgorithm = 4; /* Van Jacobson */
+#define hz clockinfo.hz
+	tcpinfo->tcpRtoMin = 1000 * TCPTV_MIN / hz;
+	tcpinfo->tcpRtoMax = 1000 * TCPTV_REXMTMAX / hz;
+#undef hz
+	tcpinfo->tcpMaxConn = -1;
+	tcpinfo->tcpActiveOpens = tcps.tcps_connattempt;
+	tcpinfo->tcpPassiveOpens = tcps.tcps_accepts;
+	tcpinfo->tcpAttemptFails = tcps.tcps_conndrops;
+	tcpinfo->tcpEstabResets = tcps.tcps_drops;
+	tcpinfo->tcpCurrEstab = tcps.tcps_connects + tcps.tcps_closed;
+	tcpinfo->tcpInSegs = tcps.tcps_rcvtotal;
+	tcpinfo->tcpOutSegs = tcps.tcps_sndtotal - tcps.tcps_sndrexmitpack;
+	tcpinfo->tcpRetransSegs = tcps.tcps_sndrexmitpack;
+	tcpinfo->tcpInErrs = tcps.tcps_rcvbadsum + tcps.tcps_rcvbadoff + tcps.tcps_rcvshort
+	tcpinfo->tcpOutRsts = tcps.tcps_sndctrl; /* Not just sent RSTs, includes SYN + FIN */
 }
 
 void get_udpinfo(udpinfo_t *udpinfo)
