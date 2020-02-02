@@ -109,6 +109,31 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	parse_file("/proc/stat", fields, 255, 0);
 }
 
+void get_ipinfo(ipinfo_t *ipinfo)
+{
+	long long garbage;
+	field_t fields[] = {
+		{ "Ip", 13,
+			{ &ipinfo->ipForwarding,
+			  &ipinfo->ipDefaultTTL,
+			  &garbage,
+			  &garbage,
+			  &garbage,
+			  &garbage,
+			  &garbage,
+			  &garbage,
+			  &garbage,
+			  &garbage,
+			  &garbage,
+			  &garbage,
+			  &ipinfo->ipReasmTimeout } },
+		{ NULL,  0, { NULL              } }
+	};
+
+	memset(ipinfo, 0, sizeof(ipinfo_t));
+	parse_file("/proc/net/snmp", fields, 255, 1);
+}
+
 void get_tcpinfo(tcpinfo_t *tcpinfo)
 {
 	field_t fields[] = {

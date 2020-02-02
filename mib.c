@@ -44,6 +44,7 @@
 static const oid_t m_system_oid         = { { 1, 3, 6, 1, 2, 1, 1               },  7, 8  };
 static const oid_t m_if_1_oid           = { { 1, 3, 6, 1, 2, 1, 2               },  7, 8  };
 static const oid_t m_if_2_oid           = { { 1, 3, 6, 1, 2, 1, 2, 2, 1         },  9, 10 };
+static const oid_t m_ip_oid             = { { 1, 3, 6, 1, 2, 1, 4               },  7, 8  };
 static const oid_t m_tcp_oid            = { { 1, 3, 6, 1, 2, 1, 6               },  7, 8  };
 static const oid_t m_udp_oid            = { { 1, 3, 6, 1, 2, 1, 7               },  7, 8  };
 static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           },  8, 9  };
@@ -124,6 +125,24 @@ static int encode_byte_array(data_t *data, const char *string, size_t len)
 
 	while (len--)
 		*buffer++ = *string++;
+
+	data->encoded_length = buffer - data->buffer;
+
+	return 0;
+}
+
+
+static int encode_ipaddress(data_t *data, int ipaddress)
+{
+	unsigned char *buffer;
+	int length = 4;
+
+	buffer = data->buffer;
+
+	*buffer++ = BER_TYPE_IP_ADDRESS;
+	*buffer++ = length;
+	while (length--)
+		*buffer++ = (ipaddress >> (8 * length)) & 0xFF;
 
 	data->encoded_length = buffer - data->buffer;
 
@@ -261,6 +280,43 @@ static int encode_unsigned64(data_t *data, int type, uint64_t ticks_value)
 		*buffer++ = (ticks_value >> (8 * length)) & 0xFF;
 
 	data->encoded_length = buffer - data->buffer;
+
+	return 0;
+}
+
+static int mib_build_ip_entry(const oid_t *prefix, int type, const void *arg)
+{
+	int ret;
+	value_t *value;
+	const char *msg = "Failed creating MIB entry";
+	const char *msg2 = "Failed assigning value to OID";
+
+	/* Create a new entry in the MIB table */
+	if (g_mib_length >= MAX_NR_VALUES) {
+		lprintf(LOG_ERR, "%s '%s': table overflow\n", msg, oid_ntoa(prefix));
+		return -1;
+	}
+
+	value = &g_mib[g_mib_length++];
+	memcpy(&value->oid, prefix, sizeof(value->oid));
+
+	ret  = encode_oid_len(&value->oid);
+	ret += data_alloc(&value->data, type);
+	if (ret) {
+		lprintf(LOG_ERR, "%s '%s': unsupported type %d\n", msg,
+			oid_ntoa(&value->oid), type);
+		return -1;
+	}
+
+	ret = data_set(&value->data, type, arg);
+	if (ret) {
+		if (ret == 1)
+			lprintf(LOG_ERR, "%s '%s': unsupported type %d\n", msg2, oid_ntoa(&value->oid), type);
+		else if (ret == 2)
+			lprintf(LOG_ERR, "%s '%s': invalid default value\n", msg2, oid_ntoa(&value->oid));
+
+		return -1;
+	}
 
 	return 0;
 }
@@ -415,6 +471,12 @@ static int data_alloc(data_t *data, int type)
 			data->buffer = allocate(data->max_length);
 			break;
 
+		case BER_TYPE_IP_ADDRESS:
+			data->max_length = sizeof(uint32_t) + 2;
+			data->encoded_length = 0;
+			data->buffer = allocate(data->max_length);
+			break;
+
 		case BER_TYPE_OCTET_STRING:
 			data->max_length = 4;
 			data->encoded_length = 0;
@@ -470,6 +532,9 @@ static int data_set(data_t *data, int type, const void *arg)
 	switch (type) {
 		case BER_TYPE_INTEGER:
 			return encode_integer(data, (intptr_t)arg);
+
+		case BER_TYPE_IP_ADDRESS:
+			return encode_ipaddress(data, (uintptr_t)arg);
 
 		case BER_TYPE_OCTET_STRING:
 			return encode_string(data, (const char *)arg);
@@ -678,6 +743,85 @@ int mib_build(void)
 	}
 
 	/*
+	 * The IP-MIB.
+	 */
+	if (!mib_alloc_entry(&m_ip_oid,  1, 0, BER_TYPE_INTEGER) ||
+	    !mib_alloc_entry(&m_ip_oid,  2, 0, BER_TYPE_INTEGER) ||
+	    !mib_alloc_entry(&m_ip_oid, 13, 0, BER_TYPE_INTEGER) )
+		return -1;
+
+	{
+		netinfo_t netinfo;
+		size_t j;
+		oid_t m_ip_adentryaddr_oid    = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 1, 0, 0, 0, 0 },  14, 15  };
+		oid_t m_ip_adentryifidx_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 2, 0, 0, 0, 0 },  14, 15  };
+		oid_t m_ip_adentrynetmask_oid = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 3, 0, 0, 0, 0 },  14, 15  };
+		oid_t m_ip_adentrybcaddr_oid  = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 4, 0, 0, 0, 0 },  14, 15  };
+
+		get_netinfo(&netinfo);
+
+		for (i = 0; i < g_interface_list_length; ++i) {
+			unsigned int ip;
+
+			if (!netinfo.in_addr[i] || !netinfo.in_mask[i])
+				continue;
+
+			ip = htonl(netinfo.in_addr[i]);
+			for (j = 0; j < 4; ++j)
+				m_ip_adentryaddr_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
+
+			if (mib_build_ip_entry(&m_ip_adentryaddr_oid, BER_TYPE_IP_ADDRESS,
+					       (const void *)(intptr_t)netinfo.in_addr[i]) == -1)
+				return -1;
+		}
+
+		for (i = 0; i < g_interface_list_length; ++i) {
+			unsigned int ip;
+
+			if (!netinfo.in_addr[i] || !netinfo.in_mask[i])
+				continue;
+
+			ip = htonl(netinfo.in_addr[i]);
+			for (j = 0; j < 4; ++j)
+				m_ip_adentryifidx_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
+
+			if (mib_build_ip_entry(&m_ip_adentryifidx_oid, BER_TYPE_INTEGER,
+					       (const void *)(intptr_t)i) == -1)
+				return -1;
+		}
+
+		for (i = 0; i < g_interface_list_length; ++i) {
+			unsigned int ip;
+
+			if (!netinfo.in_addr[i] || !netinfo.in_mask[i])
+				continue;
+
+			ip = htonl(netinfo.in_addr[i]);
+			for (j = 0; j < 4; ++j)
+				m_ip_adentrynetmask_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
+
+			if (mib_build_ip_entry(&m_ip_adentrynetmask_oid, BER_TYPE_IP_ADDRESS,
+					       (const void *)(intptr_t)netinfo.in_mask[i]) == -1)
+				return -1;
+		}
+
+		for (i = 0; i < g_interface_list_length; ++i) {
+			unsigned int ip;
+
+			if (!netinfo.in_addr[i] || !netinfo.in_mask[i])
+				continue;
+
+			ip = htonl(netinfo.in_addr[i]);
+			for (j = 0; j < 4; ++j)
+				m_ip_adentrybcaddr_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
+
+			if (mib_build_ip_entry(&m_ip_adentrybcaddr_oid, BER_TYPE_INTEGER,
+					       (const void *)(intptr_t)1) == -1)
+				return -1;
+		}
+	}
+
+	/*
 	 * The TCP-MIB.
 	 */
 	if (!mib_alloc_entry(&m_tcp_oid,  1, 0, BER_TYPE_INTEGER) ||
@@ -873,6 +1017,7 @@ int mib_update(int full)
 		diskinfo_t diskinfo;
 		loadinfo_t loadinfo;
 		meminfo_t meminfo;
+		ipinfo_t ipinfo;
 		tcpinfo_t tcpinfo;
 		udpinfo_t udpinfo;
 		cpuinfo_t cpuinfo;
@@ -979,6 +1124,22 @@ int mib_update(int full)
 					return -1;
 			}
 		}
+	}
+
+	/*
+	 * IP-MIB
+	 */
+
+	if (full) {
+		get_ipinfo(&u.ipinfo);
+
+		if (mib_update_entry(&m_ip_oid,  1, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.ipinfo.ipForwarding)      == -1 ||
+		    mib_update_entry(&m_ip_oid,  2, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.ipinfo.ipDefaultTTL)      == -1 ||
+		    mib_update_entry(&m_ip_oid,  13, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.ipinfo.ipReasmTimeout)   == -1 )
+		{
+			return -1;
+		}
+
 	}
 
 	/*

@@ -20,7 +20,7 @@
 #include <syslog.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-
+#include <arpa/inet.h>
 
 /*
  * Project dependent defines
@@ -51,6 +51,7 @@
 #define BER_TYPE_NULL                                   0x05
 #define BER_TYPE_OID                                    0x06
 #define BER_TYPE_SEQUENCE                               0x30
+#define BER_TYPE_IP_ADDRESS                             0x40
 #define BER_TYPE_COUNTER                                0x41
 #define BER_TYPE_GAUGE                                  0x42
 #define BER_TYPE_TIME_TICKS                             0x43
@@ -227,6 +228,8 @@ typedef struct diskinfo_s {
 } diskinfo_t;
 
 typedef struct netinfo_s {
+	unsigned int in_addr[MAX_NR_INTERFACES];
+	unsigned int in_mask[MAX_NR_INTERFACES];
 	unsigned int if_type[MAX_NR_INTERFACES];
 	unsigned int if_mtu[MAX_NR_INTERFACES];
 	unsigned int if_speed[MAX_NR_INTERFACES];
@@ -246,6 +249,13 @@ typedef struct netinfo_s {
 	long long tx_drops[MAX_NR_INTERFACES];
 	char mac_addr[MAX_NR_INTERFACES][6];
 } netinfo_t;
+
+ 
+typedef struct ipinfo_s {
+	long long ipForwarding;
+	long long ipDefaultTTL;
+	long long ipReasmTimeout;
+} ipinfo_t;
 
 typedef struct tcpinfo_s {
 	long long tcpRtoAlgorithm;
@@ -358,6 +368,7 @@ unsigned int get_system_uptime  (void);
 void         get_loadinfo       (loadinfo_t *loadinfo);
 void         get_meminfo        (meminfo_t *meminfo);
 void         get_cpuinfo        (cpuinfo_t *cpuinfo);
+void         get_ipinfo         (ipinfo_t *ipinfo);
 void         get_tcpinfo        (tcpinfo_t *tcpinfo);
 void         get_udpinfo        (udpinfo_t *udpinfo);
 void         get_diskinfo       (diskinfo_t *diskinfo);
