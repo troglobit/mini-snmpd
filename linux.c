@@ -213,7 +213,7 @@ void get_netinfo(netinfo_t *netinfo)
 	memset(netinfo, 0, sizeof(*netinfo));
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		struct sockaddr_in *addr, *mask;
+		struct sockaddr_in *addr, *mask, *bcaddr;
 		struct sockaddr_ll *sll;
 		int i;
 
@@ -234,6 +234,12 @@ void get_netinfo(netinfo_t *netinfo)
 			if (addr) {
 				netinfo->in_addr[i] = ntohl(addr->sin_addr.s_addr);
 				netinfo->in_mask[i] = ntohl(mask->sin_addr.s_addr);
+			}
+
+			bcaddr = (struct sockaddr_in *)ifa->ifa_broadaddr;
+			if (bcaddr && (ifa->ifa_flags & IFF_BROADCAST)) {
+				netinfo->in_bcaddr[i] = ntohl(bcaddr->sin_addr.s_addr);
+				netinfo->in_bcent[i]  = netinfo->in_bcaddr[i] ? 1 : 0;
 			}
 			break;
 
@@ -276,6 +282,8 @@ void get_netinfo(netinfo_t *netinfo)
 			if (-1 == read_file_value(&netinfo->if_speed[i], "/sys/class/net/%s/speed", g_interface_list[i]))
 				netinfo->if_speed[i] = 1000; /* Fallback */
 			netinfo->if_speed[i] *= 1000000;     /* to bps */
+
+			netinfo->ifindex[i] = if_nametoindex(ifa->ifa_name);
 
 			/* XXX: Need better tracking on Linux, c.f. FreeBSD ... */
 			netinfo->lastchange[1] = get_process_uptime();

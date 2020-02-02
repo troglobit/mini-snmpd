@@ -285,6 +285,7 @@ void get_netinfo(netinfo_t *netinfo)
 
 		netinfo->if_mtu[i]        = ifd->ifi_mtu;
 		netinfo->if_speed[i]      = ifd->ifi_baudrate;
+		netinfo->ifindex[i]       = if_nametoindex(ifa->ifa_name);
 		netinfo->lastchange[1]    = ifd->ifi_lastchange.tv_sec;
 		netinfo->rx_bytes[i]      = ifd->ifi_ibytes;
 		netinfo->rx_packets[i]    = ifd->ifi_ipackets;
@@ -300,7 +301,7 @@ void get_netinfo(netinfo_t *netinfo)
 		netinfo->tx_drops[i]      = ifd->ifi_collisions;
 
 		if (ifa->ifa_addr && ifa->ifa_netmask && ifa->ifa_addr->sa_family == AF_INET) {
-			unsigned int addr, mask;
+			unsigned int addr, mask, bcaddr;
 
 			addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 			mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
@@ -308,6 +309,12 @@ void get_netinfo(netinfo_t *netinfo)
 			if (!netinfo->in_addr[i]) {
 				netinfo->in_addr[i] = addr;
 				netinfo->in_mask[i] = mask;
+			}
+
+			if (ifa->ifa_broadaddr) {
+				bcaddr = ((struct sockaddr_in *)ifa->ifa_broadaddr)->sin_addr.s_addr;
+				netinfo->in_bcaddr[i] = bcaddr;
+				netinfo->in_bcent[i]  = bcaddr ? 1 : 0;
 			}
 		}
 

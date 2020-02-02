@@ -561,6 +561,28 @@ static int data_set(data_t *data, int type, const void *arg)
 	return 1;
 }
 
+static int build_ip_mib(oid_t *oid, int type, unsigned int in_addr[], unsigned int value[])
+{
+	size_t i;
+
+	for (i = 0; i < g_interface_list_length; i++) {
+		unsigned int ip;
+		int j;
+
+		if (!in_addr[i])
+			continue;
+
+		ip = htonl(in_addr[i]);
+		for (j = 0; j < 4; ++j)
+			oid->subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
+
+		if (mib_build_ip_entry(oid, type, (const void *)(intptr_t)value[i]) == -1)
+			return -1;
+	}
+
+	return 0;
+}
+
 static int mib_build_entries(const oid_t *prefix, int column, int row_from, int row_to, int type)
 {
 	int row;
@@ -756,73 +778,17 @@ int mib_build(void)
 
 	{
 		netinfo_t netinfo;
-		size_t j;
-		oid_t m_ip_adentryaddr_oid    = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 1, 0, 0, 0, 0 },  14, 15  };
-		oid_t m_ip_adentryifidx_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 2, 0, 0, 0, 0 },  14, 15  };
-		oid_t m_ip_adentrynetmask_oid = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 3, 0, 0, 0, 0 },  14, 15  };
-		oid_t m_ip_adentrybcaddr_oid  = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 4, 0, 0, 0, 0 },  14, 15  };
+		oid_t m_ip_adentryaddr_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 1, 0, 0, 0, 0 },  14, 15  };
+		oid_t m_ip_adentryifidx_oid  = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 2, 0, 0, 0, 0 },  14, 15  };
+		oid_t m_ip_adentrymask_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 3, 0, 0, 0, 0 },  14, 15  };
+		oid_t m_ip_adentrybcaddr_oid = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 4, 0, 0, 0, 0 },  14, 15  };
 
 		get_netinfo(&netinfo);
 
-		for (i = 0; i < g_interface_list_length; ++i) {
-			unsigned int ip;
-
-			if (!netinfo.in_addr[i] || !netinfo.in_mask[i])
-				continue;
-
-			ip = htonl(netinfo.in_addr[i]);
-			for (j = 0; j < 4; ++j)
-				m_ip_adentryaddr_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
-
-			if (mib_build_ip_entry(&m_ip_adentryaddr_oid, BER_TYPE_IP_ADDRESS,
-					       (const void *)(intptr_t)netinfo.in_addr[i]) == -1)
-				return -1;
-		}
-
-		for (i = 0; i < g_interface_list_length; ++i) {
-			unsigned int ip;
-
-			if (!netinfo.in_addr[i] || !netinfo.in_mask[i])
-				continue;
-
-			ip = htonl(netinfo.in_addr[i]);
-			for (j = 0; j < 4; ++j)
-				m_ip_adentryifidx_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
-
-			if (mib_build_ip_entry(&m_ip_adentryifidx_oid, BER_TYPE_INTEGER,
-					       (const void *)(intptr_t)i) == -1)
-				return -1;
-		}
-
-		for (i = 0; i < g_interface_list_length; ++i) {
-			unsigned int ip;
-
-			if (!netinfo.in_addr[i] || !netinfo.in_mask[i])
-				continue;
-
-			ip = htonl(netinfo.in_addr[i]);
-			for (j = 0; j < 4; ++j)
-				m_ip_adentrynetmask_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
-
-			if (mib_build_ip_entry(&m_ip_adentrynetmask_oid, BER_TYPE_IP_ADDRESS,
-					       (const void *)(intptr_t)netinfo.in_mask[i]) == -1)
-				return -1;
-		}
-
-		for (i = 0; i < g_interface_list_length; ++i) {
-			unsigned int ip;
-
-			if (!netinfo.in_addr[i] || !netinfo.in_mask[i])
-				continue;
-
-			ip = htonl(netinfo.in_addr[i]);
-			for (j = 0; j < 4; ++j)
-				m_ip_adentrybcaddr_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
-
-			if (mib_build_ip_entry(&m_ip_adentrybcaddr_oid, BER_TYPE_INTEGER,
-					       (const void *)(intptr_t)1) == -1)
-				return -1;
-		}
+		build_ip_mib(&m_ip_adentryaddr_oid,   BER_TYPE_IP_ADDRESS, netinfo.in_addr, netinfo.in_addr);
+		build_ip_mib(&m_ip_adentryifidx_oid,  BER_TYPE_INTEGER,    netinfo.in_addr, netinfo.ifindex);
+		build_ip_mib(&m_ip_adentrymask_oid,   BER_TYPE_IP_ADDRESS, netinfo.in_addr, netinfo.in_mask);
+		build_ip_mib(&m_ip_adentrybcaddr_oid, BER_TYPE_INTEGER,    netinfo.in_addr, netinfo.in_bcent);
 	}
 
 	/*

@@ -231,9 +231,12 @@ typedef struct diskinfo_s {
 typedef struct netinfo_s {
 	unsigned int in_addr[MAX_NR_INTERFACES];
 	unsigned int in_mask[MAX_NR_INTERFACES];
+	unsigned int in_bcaddr[MAX_NR_INTERFACES];
+	unsigned int in_bcent[MAX_NR_INTERFACES];
 	unsigned int if_type[MAX_NR_INTERFACES];
 	unsigned int if_mtu[MAX_NR_INTERFACES];
 	unsigned int if_speed[MAX_NR_INTERFACES];
+	unsigned int ifindex[MAX_NR_INTERFACES];
 	unsigned int status[MAX_NR_INTERFACES];
 	unsigned int lastchange[MAX_NR_INTERFACES];
 	long long rx_bytes[MAX_NR_INTERFACES];
