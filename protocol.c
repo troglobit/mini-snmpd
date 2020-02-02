@@ -651,7 +651,7 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 		if (request->oid_list_length > MAX_NR_VALUES)
 			return log_encoding_error("SNMP response", "value list overflow");
 
-		for (i = 0; i < request->oid_list_length; i++) {
+		for (i = 0; i < request->oid_list_length && i < NELEMS(request->oid_list); i++) {
 			memcpy(&response->value_list[i].oid, &request->oid_list[i], sizeof(request->oid_list[i]));
 			memcpy(&response->value_list[i].data, &m_null, sizeof(m_null));
 		}
