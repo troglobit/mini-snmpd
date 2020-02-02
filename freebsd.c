@@ -311,6 +311,18 @@ void get_netinfo(netinfo_t *netinfo)
 		netinfo->tx_errors[i]     = ifd->ifi_oerrors;
 		netinfo->tx_drops[i]      = ifd->ifi_collisions;
 
+		if (ifa->ifa_addr && ifa->ifa_netmask && ifa->ifa_addr->sa_family == AF_INET) {
+			unsigned int addr, mask;
+
+			addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
+			mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
+
+			if (!netinfo->in_addr[i]) {
+				netinfo->in_addr[i] = addr;
+				netinfo->in_mask[i] = mask;
+			}
+		}
+
 		memcpy(&netinfo->mac_addr[i][0], LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 6);
 	}
 
