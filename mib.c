@@ -236,11 +236,6 @@ static int encode_unsigned(data_t *data, int type, unsigned int ticks_value)
 	else
 		length = 1;
 
-	/* check if the integer could be interpreted negative during a signed decode and prepend a zero-byte if necessary */
-	if ((ticks_value >> (8 * (length - 1))) & 0x80) {
-		length++;
-	}
-
 	*buffer++ = type;
 	*buffer++ = length;
 	while (length--)
