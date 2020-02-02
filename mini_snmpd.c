@@ -44,7 +44,7 @@ static void print_help(void)
 	       "  -6, --use-ipv6         Use IPv6\n"
 #endif
 #ifdef HAVE_LIBCONFUSE
-	       "  -f, --file=FILE        Configuration file. Default: " CONFDIR "/%s.conf\n"
+	       "  -f, --file FILE        Configuration file. Default: " CONFDIR "/%s.conf\n"
 #endif
 	       "  -p, --udp-port PORT    UDP port to bind to, default: 161\n"
 	       "  -P, --tcp-port PORT    TCP port to bind to, default: 161\n"
