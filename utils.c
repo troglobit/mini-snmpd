@@ -100,7 +100,10 @@ int parse_file(char *file, field_t fields[], size_t limit, size_t skip_prefix)
 	while (fgets(buf, sizeof(buf), fp)) {
 		size_t i;
 
-		for (i = 0; i < limit && fields[i].prefix; i++) {
+		for (i = 0; i < limit; i++) {
+			if (!fields[i].prefix)
+				continue;
+
 			if (parse_lineint(buf, &fields[i], &skip_prefix))
 				break;
 		}

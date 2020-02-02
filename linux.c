@@ -92,11 +92,10 @@ void get_meminfo(meminfo_t *meminfo)
 		{ "MemShared", 1, { &meminfo->shared  }},
 		{ "Buffers",   1, { &meminfo->buffers }},
 		{ "Cached",    1, { &meminfo->cached  }},
-		{ NULL }
 	};
 
 	memset(meminfo, 0, sizeof(meminfo_t));
-	parse_file("/proc/meminfo", fields, 255, 0);
+	parse_file("/proc/meminfo", fields, NELEMS(fields), 0);
 }
 
 void get_cpuinfo(cpuinfo_t *cpuinfo)
@@ -105,11 +104,10 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 		{ "cpu ",  4, { &cpuinfo->user, &cpuinfo->nice, &cpuinfo->system, &cpuinfo->idle }},
 		{ "intr ", 1, { &cpuinfo->irqs   }},
 		{ "ctxt ", 1, { &cpuinfo->cntxts }},
-		{ NULL }
 	};
 
 	memset(cpuinfo, 0, sizeof(cpuinfo_t));
-	parse_file("/proc/stat", fields, 255, 0);
+	parse_file("/proc/stat", fields, NELEMS(fields), 0);
 }
 
 void get_ipinfo(ipinfo_t *ipinfo)
@@ -130,11 +128,10 @@ void get_ipinfo(ipinfo_t *ipinfo)
 			  &garbage,
 			  &garbage,
 			  &ipinfo->ipReasmTimeout } },
-		{ NULL,  0, { NULL              } }
 	};
 
 	memset(ipinfo, 0, sizeof(ipinfo_t));
-	parse_file("/proc/net/snmp", fields, 255, 1);
+	parse_file("/proc/net/snmp", fields, NELEMS(fields), 1);
 }
 
 void get_tcpinfo(tcpinfo_t *tcpinfo)
@@ -155,10 +152,9 @@ void get_tcpinfo(tcpinfo_t *tcpinfo)
 		    &tcpinfo->tcpRetransSegs,
 		    &tcpinfo->tcpInErrs,
 		    &tcpinfo->tcpOutRsts } },
-		{ NULL,     0, { NULL    } }
 	};
 
-	if (parse_file("/proc/net/snmp", fields, 255, 1))
+	if (parse_file("/proc/net/snmp", fields, NELEMS(fields), 1))
 		memset(tcpinfo, 0, sizeof(tcpinfo_t));
 }
 
@@ -170,10 +166,9 @@ void get_udpinfo(udpinfo_t *udpinfo)
 		    &udpinfo->udpNoPorts,
 		    &udpinfo->udpInErrors,
 		    &udpinfo->udpOutDatagrams } },
-		{ NULL,  0, { NULL            } }
 	};
 
-	if (parse_file("/proc/net/snmp", fields, 255, 1))
+	if (parse_file("/proc/net/snmp", fields, NELEMS(fields), 1))
 		memset(udpinfo, 0, sizeof(udpinfo_t));
 }
 
@@ -294,7 +289,7 @@ void get_netinfo(netinfo_t *netinfo)
 		}
 	}
 
-	parse_file("/proc/net/dev", fields, 255, 0);
+	parse_file("/proc/net/dev", fields, NELEMS(fields), 0);
 }
 
 #endif /* __linux__ */
