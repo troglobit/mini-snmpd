@@ -14,6 +14,8 @@
  */
 #ifdef __linux__
 
+#include <netpacket/packet.h>
+#include <linux/if_link.h>
 #include <sys/sysinfo.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -28,6 +30,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ifaddrs.h>
 #include <errno.h>
 #include <ctype.h>
 #include <time.h>
@@ -200,68 +203,96 @@ void get_diskinfo(diskinfo_t *diskinfo)
 
 void get_netinfo(netinfo_t *netinfo)
 {
-	struct ifreq ifreq;
+	struct ifaddrs *ifap, *ifa;
 	field_t fields[MAX_NR_INTERFACES + 1];
-	size_t i;
-	int sd;
 
-	memset(netinfo, 0, sizeof(*netinfo));
-
-	sd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (-1 == sd)
+	if (getifaddrs(&ifap) < 0)
 		return;
 
-	memset(fields, 0, (MAX_NR_INTERFACES + 1) * sizeof(field_t));
-	for (i = 0; i < g_interface_list_length; i++) {
-		/* XXX: Tx multicast and Rx/Tx broadcast not available atm. */
-		fields[i].prefix    = g_interface_list[i];
-		fields[i].len       = 12;
-		fields[i].value[0]  = &netinfo->rx_bytes[i];
-		fields[i].value[1]  = &netinfo->rx_packets[i];
-		fields[i].value[2]  = &netinfo->rx_errors[i];
-		fields[i].value[3]  = &netinfo->rx_drops[i];
-		fields[i].value[7]  = &netinfo->rx_mc_packets[i];
-		fields[i].value[8]  = &netinfo->tx_bytes[i];
-		fields[i].value[9]  = &netinfo->tx_packets[i];
-		fields[i].value[10] = &netinfo->tx_errors[i];
-		fields[i].value[11] = &netinfo->tx_drops[i];
+	memset(fields, 0, sizeof(fields));
+	memset(netinfo, 0, sizeof(*netinfo));
 
-		if (-1 == read_file_value(&netinfo->if_mtu[i], "/sys/class/net/%s/mtu", g_interface_list[i]))
-			netinfo->if_mtu[i] = 1500; /* Fallback */
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		struct sockaddr_in *addr, *mask;
+		struct sockaddr_ll *sll;
+		int i;
 
-		if (-1 == read_file_value(&netinfo->if_speed[i], "/sys/class/net/%s/speed", g_interface_list[i]))
-			netinfo->if_speed[i] = 1000; /* Fallback */
-		netinfo->if_speed[i] *= 1000000;     /* to bps */
-
-		snprintf(ifreq.ifr_name, sizeof(ifreq.ifr_name), "%s", g_interface_list[i]);
-		if (ioctl(sd, SIOCGIFFLAGS, &ifreq) == -1) {
-			netinfo->status[i] = 4;
+		if (!ifa->ifa_addr)
 			continue;
+
+		i = find_ifname(ifa->ifa_name);
+		if (i == -1)
+			continue;
+
+		switch (ifa->ifa_addr->sa_family) {
+		case AF_INET:
+			/* lprintf(LOG_INFO, "Interface %s family AF_INET(%d)\n", ifa->ifa_name, ifa->ifa_addr->sa_family); */
+			if (!ifa->ifa_addr || !ifa->ifa_netmask)
+				continue;
+
+			addr = (struct sockaddr_in *)ifa->ifa_addr;
+			mask = (struct sockaddr_in *)ifa->ifa_netmask;
+			/* lprintf(LOG_INFO, "Interface %s address %s\n", ifa->ifa_name, inet_ntoa(addr->sin_addr)); */
+			/* lprintf(LOG_INFO, "Interface %s netmask %s\n", ifa->ifa_name, inet_ntoa(mask->sin_addr)); */
+			if (!netinfo->in_addr[i]) {
+				netinfo->in_addr[i] = ntohl(addr->sin_addr.s_addr);
+				netinfo->in_mask[i] = ntohl(mask->sin_addr.s_addr);
+			}
+			break;
+
+		case AF_INET6:
+			/* lprintf(LOG_INFO, "Interface %s family AF_INET6(%d)\n", ifa->ifa_name, ifa->ifa_addr->sa_family); */
+			/* XXX: Not supported yet */
+			break;
+
+		case AF_PACKET:
+			/* lprintf(LOG_INFO, "Interface %s family AF_PACKET(%d)\n", ifa->ifa_name, ifa->ifa_addr->sa_family); */
+			if (ifa->ifa_flags & IFF_UP)
+				netinfo->status[i] = (ifa->ifa_flags & IFF_RUNNING) ? 1 : 7;
+			else
+				netinfo->status[i] = 2;
+
+			if (ifa->ifa_flags & IFF_POINTOPOINT)
+				netinfo->if_type[i] = 23; /* ppp(23) */
+			else if (ifa->ifa_flags & IFF_LOOPBACK)
+				netinfo->if_type[i] = 24; /* softwareLoopback(24) */
+			else
+				netinfo->if_type[i] = 6; /* ethernetCsmacd(6) */
+
+			sll = (struct sockaddr_ll *)ifa->ifa_addr;
+			memcpy(netinfo->mac_addr[i], sll->sll_addr, sizeof(netinfo->mac_addr[i]));
+
+			/* XXX: Tx multicast and Rx/Tx broadcast not available atm. */
+			fields[i].prefix    = g_interface_list[i];
+			fields[i].len       = 12;
+			fields[i].value[0]  = &netinfo->rx_bytes[i];
+			fields[i].value[1]  = &netinfo->rx_packets[i];
+			fields[i].value[2]  = &netinfo->rx_errors[i];
+			fields[i].value[3]  = &netinfo->rx_drops[i];
+			fields[i].value[7]  = &netinfo->rx_mc_packets[i];
+			fields[i].value[8]  = &netinfo->tx_bytes[i];
+			fields[i].value[9]  = &netinfo->tx_packets[i];
+			fields[i].value[10] = &netinfo->tx_errors[i];
+			fields[i].value[11] = &netinfo->tx_drops[i];
+
+			if (-1 == read_file_value(&netinfo->if_mtu[i], "/sys/class/net/%s/mtu", g_interface_list[i]))
+				netinfo->if_mtu[i] = 1500; /* Fallback */
+
+			if (-1 == read_file_value(&netinfo->if_speed[i], "/sys/class/net/%s/speed", g_interface_list[i]))
+				netinfo->if_speed[i] = 1000; /* Fallback */
+			netinfo->if_speed[i] *= 1000000;     /* to bps */
+
+			/* XXX: Need better tracking on Linux, c.f. FreeBSD ... */
+			netinfo->lastchange[1] = get_process_uptime();
+			break;
+
+		default:
+			/* lprintf(LOG_INFO, "Interface %s family %d\n", ifa->ifa_name, ifa->ifa_addr->sa_family); */
+			break;
 		}
-
-		if (ifreq.ifr_flags & IFF_UP)
-			netinfo->status[i] = (ifreq.ifr_flags & IFF_RUNNING) ? 1 : 7;
-		else
-			netinfo->status[i] = 2;
-
-		/* XXX: Need better tracking on Linux, c.f. FreeBSD ... */
-		netinfo->lastchange[1] = get_process_uptime();
-
-		if (ifreq.ifr_flags & IFF_POINTOPOINT)
-			netinfo->if_type[i] = 23; /* ppp(23) */
-		else if (ifreq.ifr_flags & IFF_LOOPBACK)
-			netinfo->if_type[i] = 24; /* softwareLoopback(24) */
-		else
-			netinfo->if_type[i] = 6; /* ethernetCsmacd(6) */
-
-		if (ioctl(sd, SIOCGIFHWADDR, &ifreq) == -1)
-			continue;
-
-		memcpy(&netinfo->mac_addr[i][0], &ifreq.ifr_hwaddr.sa_data[0], 6);
 	}
 
 	parse_file("/proc/net/dev", fields, 255, 0);
-	close(sd);
 }
 
 #endif /* __linux__ */
