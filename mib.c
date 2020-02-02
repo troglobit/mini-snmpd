@@ -503,6 +503,12 @@ static int data_alloc(data_t *data, int type)
 			data->buffer = allocate(data->max_length);
 			break;
 
+		case BER_TYPE_NULL:
+			data->max_length = 0 + 3;
+			data->encoded_length = 0;
+			data->buffer = allocate(data->max_length);
+			break;
+
 		default:
 			return -1;
 	}
@@ -549,6 +555,9 @@ static int data_set(data_t *data, int type, const void *arg)
 		case BER_TYPE_GAUGE:
 		case BER_TYPE_TIME_TICKS:
 			return encode_unsigned(data, type, (uintptr_t)arg);
+
+		case BER_TYPE_NULL:
+			return 0;
 
 		default:
 			break;	/* Fall through */
@@ -757,6 +766,7 @@ int mib_build(void)
 		oid_t m_ip_adentryifidx_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 2, 0, 0, 0, 0 },  14, 15  };
 		oid_t m_ip_adentrynetmask_oid = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 3, 0, 0, 0, 0 },  14, 15  };
 		oid_t m_ip_adentrybcaddr_oid  = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 4, 0, 0, 0, 0 },  14, 15  };
+		oid_t m_ip_adentryreasm_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 5 },  10, 15  };
 
 		get_netinfo(&netinfo);
 
@@ -817,6 +827,17 @@ int mib_build(void)
 
 			if (mib_build_ip_entry(&m_ip_adentrybcaddr_oid, BER_TYPE_INTEGER,
 					       (const void *)(intptr_t)1) == -1)
+				return -1;
+		}
+
+		for (i = 0; i < g_interface_list_length; ++i) {
+			unsigned int ip;
+
+			ip = htonl(netinfo.in_addr[i]);
+			for (j = 0; j < 4; ++j)
+				m_ip_adentryreasm_oid.subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
+
+			if (mib_build_ip_entry(&m_ip_adentryreasm_oid, BER_TYPE_NULL, NULL) == -1)
 				return -1;
 		}
 	}
