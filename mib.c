@@ -583,6 +583,26 @@ static int build_ip_mib(oid_t *oid, int type, unsigned int in_addr[], unsigned i
 	return 0;
 }
 
+static int build_int(const oid_t *oid, int col, int row, unsigned int val)
+{
+	return mib_build_entry(oid, col, row, BER_TYPE_INTEGER, (const void *)(intptr_t)val);
+}
+
+static int build_str(const oid_t *oid, int col, int row, char *str)
+{
+	return mib_build_entry(oid, col, row, BER_TYPE_OCTET_STRING, str);
+}
+
+static int build_gge(const oid_t *oid, int col, int row, unsigned int val)
+{
+	return mib_build_entry(oid, col, row, BER_TYPE_GAUGE, (const void *)(intptr_t)val);
+}
+
+static int build_tm(const oid_t *oid, int col, int row, unsigned int tm)
+{
+	return mib_build_entry(oid, col, row, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)tm);
+}
+
 static int mib_build_entries(const oid_t *prefix, int column, int row_from, int row_to, int type)
 {
 	int row;
@@ -639,6 +659,36 @@ static int mib_update_byte_array(const oid_t *prefix, int column, int row, size_
 	return mib_byte_array_set(prefix, &value->data, column, row, arg, len);
 }
 
+static int update_int(const oid_t *oid, int col, int row, size_t *pos, unsigned int val)
+{
+	return mib_update_entry(oid, col, row, pos, BER_TYPE_INTEGER, (const void *)(intptr_t)val);
+}
+
+static int update_str(const oid_t *oid, int col, int row, size_t *pos, char *str)
+{
+	return mib_update_entry(oid, col, row, pos, BER_TYPE_OCTET_STRING, str);
+}
+
+static int update_gge(const oid_t *oid, int col, int row, size_t *pos, unsigned int val)
+{
+	return mib_update_entry(oid, col, row, pos, BER_TYPE_GAUGE, (const void *)(intptr_t)val);
+}
+
+static int update_tm(const oid_t *oid, int col, int row, size_t *pos, unsigned int tm)
+{
+	return mib_update_entry(oid, col, row, pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)tm);
+}
+
+static int update_cnt(const oid_t *oid, int col, int row, size_t *pos, unsigned int cnt)
+{
+	return mib_update_entry(oid, col, row, pos, BER_TYPE_COUNTER, (const void *)(intptr_t)cnt);
+}
+
+static int update_c64(const oid_t *oid, int col, int row, size_t *pos, long long cnt)
+{
+	return mib_update_entry(oid, col, row, pos, BER_TYPE_COUNTER64, (const void *)&cnt);
+}
+
 /* -----------------------------------------------------------------------------
  * Interface functions
  *
@@ -666,6 +716,7 @@ static int mib_update_byte_array(const oid_t *prefix, int column, int row, size_
 
 int mib_build(void)
 {
+	netinfo_t netinfo;
 	char hostname[MAX_STRING_SIZE];
 	char name[16];
 	size_t i;
@@ -682,6 +733,8 @@ int mib_build(void)
 		hostname[0] = '\0';
 	else
 		hostname[sizeof(hostname) - 1] = '\0';
+
+	get_netinfo(&netinfo);
 
 	/*
 	 * The system MIB: basic info about the host (SNMPv2-MIB.txt)
@@ -701,59 +754,60 @@ int mib_build(void)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
 	if (g_interface_list_length > 0) {
-		if (mib_build_entry(&m_if_1_oid, 1, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)g_interface_list_length) == -1)
+		if (build_int(&m_if_1_oid, 1, 0, g_interface_list_length) == -1)
 			return -1;
 
-		/* ifIndex -- XXX: Should be system ifindex! */
+		/* ifIndex */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)(i + 1)) == -1)
+			if (build_int(&m_if_2_oid, 1, i + 1, netinfo.ifindex[i]) == -1)
 				return -1;
 		}
 
 		/* ifDescription */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 2, i + 1, BER_TYPE_OCTET_STRING, g_interface_list[i]) == -1)
+			if (build_str(&m_if_2_oid, 2, i + 1, g_interface_list[i]) == -1)
 				return -1;
 		}
 
 		/* ifType: ENUM, ethernetCsmacd(6) <-- recommended for all types of Ethernets */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 3, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)6) == -1)
+			if (build_int(&m_if_2_oid, 3, i + 1, 6) == -1)
 				return -1;
 		}
 
 		/* ifMtu */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 4, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)1500) == -1)
+			if (build_int(&m_if_2_oid, 4, i + 1, 1500) == -1)
 				return -1;
 		}
 
 		/* ifSpeed (in bps) */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 5, i + 1, BER_TYPE_GAUGE, (const void *)(intptr_t)1000000000) == -1)
+			if (build_gge(&m_if_2_oid, 5, i + 1, 1000000000) == -1)
 				return -1;
 		}
 
 		/* ifPhysAddress */
-		for (i = 1; i <= g_interface_list_length; i++)
-			if (mib_build_entry(&m_if_2_oid, 6, i, BER_TYPE_OCTET_STRING, "") == -1)
+		for (i = 1; i <= g_interface_list_length; i++) {
+			if (build_str(&m_if_2_oid, 6, i, "") == -1)
 				return -1;
+		}
 
 		/* ifAdminStatus: up(1), down(2), testing(3) */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 7, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)1) == -1)
+			if (build_int(&m_if_2_oid, 7, i + 1, 1) == -1)
 				return -1;
 		}
 
 		/* ifOperStatus: up(1), down(2), testing(3), unknown(4), dormant(5), notPresent(6), lowerLayerDown(7) */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 8, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)1) == -1)
+			if (build_int(&m_if_2_oid, 8, i + 1, 1) == -1)
 				return -1;
 		}
 
 		/* ifLastChange */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_if_2_oid, 9, i + 1, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)0) == -1)
+			if (build_tm(&m_if_2_oid, 9, i + 1, 0) == -1)
 				return -1;
 		}
 
@@ -777,13 +831,10 @@ int mib_build(void)
 		return -1;
 
 	{
-		netinfo_t netinfo;
 		oid_t m_ip_adentryaddr_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 1, 0, 0, 0, 0 },  14, 15  };
 		oid_t m_ip_adentryifidx_oid  = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 2, 0, 0, 0, 0 },  14, 15  };
 		oid_t m_ip_adentrymask_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 3, 0, 0, 0, 0 },  14, 15  };
 		oid_t m_ip_adentrybcaddr_oid = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 4, 0, 0, 0, 0 },  14, 15  };
-
-		get_netinfo(&netinfo);
 
 		build_ip_mib(&m_ip_adentryaddr_oid,   BER_TYPE_IP_ADDRESS, netinfo.in_addr, netinfo.in_addr);
 		build_ip_mib(&m_ip_adentryifidx_oid,  BER_TYPE_INTEGER,    netinfo.in_addr, netinfo.ifindex);
@@ -837,60 +888,58 @@ int mib_build(void)
 
 		/* ifName */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_ifxtable_oid, 1, i + 1, BER_TYPE_OCTET_STRING, g_interface_list[i]) == -1)
+			if (build_str(&m_ifxtable_oid, 1, i + 1, g_interface_list[i]) == -1)
 				return -1;
 		}
 
-		/* Just a counters */
-
-		if (mib_build_entries(&m_ifxtable_oid, 2, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 3, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 4, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 5, 1, g_interface_list_length, BER_TYPE_COUNTER) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 6, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 7, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 8, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 9, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 10, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 11, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 12, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
-			mib_build_entries(&m_ifxtable_oid, 13, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1)
+		/* Counters */
+		if (mib_build_entries(&m_ifxtable_oid,  2, 1, g_interface_list_length, BER_TYPE_COUNTER)   == -1 ||
+		    mib_build_entries(&m_ifxtable_oid,  3, 1, g_interface_list_length, BER_TYPE_COUNTER)   == -1 ||
+		    mib_build_entries(&m_ifxtable_oid,  4, 1, g_interface_list_length, BER_TYPE_COUNTER)   == -1 ||
+		    mib_build_entries(&m_ifxtable_oid,  5, 1, g_interface_list_length, BER_TYPE_COUNTER)   == -1 ||
+		    mib_build_entries(&m_ifxtable_oid,  6, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+		    mib_build_entries(&m_ifxtable_oid,  7, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+		    mib_build_entries(&m_ifxtable_oid,  8, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+		    mib_build_entries(&m_ifxtable_oid,  9, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+		    mib_build_entries(&m_ifxtable_oid, 10, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+		    mib_build_entries(&m_ifxtable_oid, 11, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+		    mib_build_entries(&m_ifxtable_oid, 12, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1 ||
+		    mib_build_entries(&m_ifxtable_oid, 13, 1, g_interface_list_length, BER_TYPE_COUNTER64) == -1)
 			return -1;
 
 		/* ifLinkUpDownTrapEnable */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_ifxtable_oid, 14, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)2 /* disabled */) == -1)
+			if (build_int(&m_ifxtable_oid, 14, i + 1, 2 /* disabled */) == -1)
 				return -1;
 		}
 
 		/* ifHighSpeed */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_ifxtable_oid, 15, i + 1, BER_TYPE_GAUGE, (const void *)(intptr_t)0) == -1) {
+			if (build_gge(&m_ifxtable_oid, 15, i + 1, 0) == -1)
 				return -1;
-			}
 		}
 
 		/* ifPromiscuousMode */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_ifxtable_oid, 16, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)2 /* false */) == -1)
+			if (build_int(&m_ifxtable_oid, 16, i + 1, 2 /* false */) == -1)
 				return -1;
 		}
 
 		/* ifConnectorPresent */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_ifxtable_oid, 17, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)1 /* true */) == -1)
+			if (build_int(&m_ifxtable_oid, 17, i + 1, 1 /* true */) == -1)
 				return -1;
 		}
 
 		/* ifAlias */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_ifxtable_oid, 18, i + 1, BER_TYPE_OCTET_STRING, g_interface_list[i]) == -1)
+			if (build_str(&m_ifxtable_oid, 18, i + 1, g_interface_list[i]) == -1)
 				return -1;
 		}
 
 		/* ifCounterDiscontinuityTime */
 		for (i = 0; i < g_interface_list_length; i++) {
-			if (mib_build_entry(&m_ifxtable_oid, 19, i + 1, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)0) == -1)
+			if (build_tm(&m_ifxtable_oid, 19, i + 1, 0) == -1)
 				return -1;
 		}
 	}
@@ -912,12 +961,12 @@ int mib_build(void)
 	 */
 	if (g_disk_list_length > 0) {
 		for (i = 0; i < g_disk_list_length; i++) {
-			if (mib_build_entry(&m_disk_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)(i + 1)) == -1)
+			if (build_int(&m_disk_oid, 1, i + 1, i + 1) == -1)
 				return -1;
 		}
 
 		for (i = 0; i < g_disk_list_length; i++) {
-			if (mib_build_entry(&m_disk_oid, 2, i + 1, BER_TYPE_OCTET_STRING, g_disk_list[i]) == -1)
+			if (build_str(&m_disk_oid, 2, i + 1, g_disk_list[i]) == -1)
 				return -1;
 		}
 
@@ -934,13 +983,13 @@ int mib_build(void)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
 	for (i = 0; i < 3; i++) {
-		if (mib_build_entry(&m_load_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(intptr_t)(i + 1)) == -1)
+		if (build_int(&m_load_oid, 1, i + 1, i + 1) == -1)
 			return -1;
 	}
 
 	for (i = 0; i < 3; i++) {
 		snprintf(name, sizeof(name), "Load-%d", m_load_avg_times[i]);
-		if (mib_build_entry(&m_load_oid, 2, i + 1, BER_TYPE_OCTET_STRING, name) == -1)
+		if (build_str(&m_load_oid, 2, i + 1, name) == -1)
 			return -1;
 	}
 
@@ -949,7 +998,7 @@ int mib_build(void)
 
 	for (i = 0; i < 3; i++) {
 		snprintf(name, sizeof(name), "%d", m_load_avg_times[i]);
-		if (mib_build_entry(&m_load_oid, 4, i + 1, BER_TYPE_OCTET_STRING, name) == -1)
+		if (build_str(&m_load_oid, 4, i + 1, name) == -1)
 			return -1;
 	}
 
@@ -1016,81 +1065,83 @@ int mib_update(int full)
 			get_netinfo(&netinfo);
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 3, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.if_type[i]) == -1)
+				if (update_int(&m_if_2_oid, 3, i + 1, &pos, netinfo.if_type[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 4, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.if_mtu[i]) == -1)
+				if (update_int(&m_if_2_oid, 4, i + 1, &pos, netinfo.if_mtu[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 5, i + 1, &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)netinfo.if_speed[i]) == -1)
+				if (update_gge(&m_if_2_oid, 5, i + 1, &pos, netinfo.if_speed[i]) == -1)
 					return -1;
 			}
 
-			for (i = 0; i < g_interface_list_length; i++)
-				if (mib_update_byte_array(&m_if_2_oid, 6, i + 1, &pos, &netinfo.mac_addr[i][0], sizeof(netinfo.mac_addr[i])))
+			for (i = 0; i < g_interface_list_length; i++) {
+				size_t len = sizeof(netinfo.mac_addr[i]);
+				char *mac = netinfo.mac_addr[i];
+
+				if (mib_update_byte_array(&m_if_2_oid, 6, i + 1, &pos, mac, len))
 					return -1;
+			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				unsigned int status = netinfo.status[i];
 				unsigned int updown = status != 2 ? 1 : 2;
 
-				if (mib_update_entry(&m_if_2_oid, 7, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)updown) == -1)
+				if (update_int(&m_if_2_oid, 7, i + 1, &pos, updown) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				unsigned int status = netinfo.status[i];
-
-				if (mib_update_entry(&m_if_2_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)status) == -1)
+				if (update_int(&m_if_2_oid, 8, i + 1, &pos, netinfo.status[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 9, i + 1, &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)netinfo.lastchange[i]) == -1)
+				if (update_tm(&m_if_2_oid, 9, i + 1, &pos, netinfo.lastchange[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 10, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_bytes[i] % UINT_MAX)) == -1)
+				if (update_cnt(&m_if_2_oid, 10, i + 1, &pos, netinfo.rx_bytes[i] % UINT_MAX) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 11, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_packets[i] % UINT_MAX)) == -1)
+				if (update_cnt(&m_if_2_oid, 11, i + 1, &pos, netinfo.rx_packets[i] % UINT_MAX) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 13, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_drops[i] % UINT_MAX)) == -1)
+				if (update_cnt(&m_if_2_oid, 13, i + 1, &pos, netinfo.rx_drops[i] % UINT_MAX) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 14, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_errors[i] % UINT_MAX)) == -1)
+				if (update_cnt(&m_if_2_oid, 14, i + 1, &pos, netinfo.rx_errors[i] % UINT_MAX) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 16, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_bytes[i] % UINT_MAX)) == -1)
+				if (update_cnt(&m_if_2_oid, 16, i + 1, &pos, netinfo.tx_bytes[i] % UINT_MAX) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 17, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_packets[i] % UINT_MAX)) == -1)
+				if (update_cnt(&m_if_2_oid, 17, i + 1, &pos, netinfo.tx_packets[i] % UINT_MAX) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 19, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_drops[i] % UINT_MAX)) == -1)
+				if (update_cnt(&m_if_2_oid, 19, i + 1, &pos, netinfo.tx_drops[i] % UINT_MAX) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 20, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_errors[i] % UINT_MAX)) == -1)
+				if (update_cnt(&m_if_2_oid, 20, i + 1, &pos, netinfo.tx_errors[i] % UINT_MAX) == -1)
 					return -1;
 			}
 		}
@@ -1099,56 +1150,51 @@ int mib_update(int full)
 	/*
 	 * IP-MIB
 	 */
-
 	if (full) {
 		get_ipinfo(&u.ipinfo);
 
-		if (mib_update_entry(&m_ip_oid,  1, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.ipinfo.ipForwarding)      == -1 ||
-		    mib_update_entry(&m_ip_oid,  2, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.ipinfo.ipDefaultTTL)      == -1 ||
-		    mib_update_entry(&m_ip_oid,  13, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.ipinfo.ipReasmTimeout)   == -1 )
-		{
+		if (update_int(&m_ip_oid,  1, 0, &pos, u.ipinfo.ipForwarding)   == -1 ||
+		    update_int(&m_ip_oid,  2, 0, &pos, u.ipinfo.ipDefaultTTL)   == -1 ||
+		    update_int(&m_ip_oid, 13, 0, &pos, u.ipinfo.ipReasmTimeout) == -1 )
 			return -1;
-		}
 
 	}
 
 	/*
 	 * TCP-MIB
 	 */
-
 	if (full) {
 		get_tcpinfo(&u.tcpinfo);
 
-		if (mib_update_entry(&m_tcp_oid,  1, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.tcpinfo.tcpRtoAlgorithm)   == -1 ||
-		    mib_update_entry(&m_tcp_oid,  2, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.tcpinfo.tcpRtoMin)         == -1 ||
-		    mib_update_entry(&m_tcp_oid,  3, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.tcpinfo.tcpRtoMax)         == -1 ||
-		    mib_update_entry(&m_tcp_oid,  4, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.tcpinfo.tcpMaxConn)        == -1 ||
-		    mib_update_entry(&m_tcp_oid,  5, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpActiveOpens)   == -1 ||
-		    mib_update_entry(&m_tcp_oid,  6, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpPassiveOpens)  == -1 ||
-		    mib_update_entry(&m_tcp_oid,  7, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpAttemptFails)  == -1 ||
-		    mib_update_entry(&m_tcp_oid,  8, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpEstabResets)   == -1 ||
-		    mib_update_entry(&m_tcp_oid,  9, 0, &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)u.tcpinfo.tcpCurrEstab)        == -1 ||
-		    mib_update_entry(&m_tcp_oid, 10, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpInSegs)        == -1 ||
-		    mib_update_entry(&m_tcp_oid, 11, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpOutSegs)       == -1 ||
-		    mib_update_entry(&m_tcp_oid, 12, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpRetransSegs)   == -1 ||
-		    mib_update_entry(&m_tcp_oid, 14, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpInErrs)        == -1 ||
-		    mib_update_entry(&m_tcp_oid, 15, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.tcpinfo.tcpOutRsts)       == -1)
+		if (update_int(&m_tcp_oid,  1, 0, &pos, u.tcpinfo.tcpRtoAlgorithm) == -1 ||
+		    update_int(&m_tcp_oid,  2, 0, &pos, u.tcpinfo.tcpRtoMin)       == -1 ||
+		    update_int(&m_tcp_oid,  3, 0, &pos, u.tcpinfo.tcpRtoMax)       == -1 ||
+		    update_int(&m_tcp_oid,  4, 0, &pos, u.tcpinfo.tcpMaxConn)      == -1 ||
+		    update_cnt(&m_tcp_oid,  5, 0, &pos, u.tcpinfo.tcpActiveOpens)  == -1 ||
+		    update_cnt(&m_tcp_oid,  6, 0, &pos, u.tcpinfo.tcpPassiveOpens) == -1 ||
+		    update_cnt(&m_tcp_oid,  7, 0, &pos, u.tcpinfo.tcpAttemptFails) == -1 ||
+		    update_cnt(&m_tcp_oid,  8, 0, &pos, u.tcpinfo.tcpEstabResets)  == -1 ||
+		    update_gge(&m_tcp_oid,  9, 0, &pos, u.tcpinfo.tcpCurrEstab)    == -1 ||
+		    update_cnt(&m_tcp_oid, 10, 0, &pos, u.tcpinfo.tcpInSegs)       == -1 ||
+		    update_cnt(&m_tcp_oid, 11, 0, &pos, u.tcpinfo.tcpOutSegs)      == -1 ||
+		    update_cnt(&m_tcp_oid, 12, 0, &pos, u.tcpinfo.tcpRetransSegs)  == -1 ||
+		    update_cnt(&m_tcp_oid, 14, 0, &pos, u.tcpinfo.tcpInErrs)       == -1 ||
+		    update_cnt(&m_tcp_oid, 15, 0, &pos, u.tcpinfo.tcpOutRsts)      == -1)
 			return -1;
 	}
 
 	/*
 	 * UDP-MIB
 	 */
-
 	if (full) {
 		get_udpinfo(&u.udpinfo);
 
-		if (mib_update_entry(&m_udp_oid,  1, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(u.udpinfo.udpInDatagrams & 0xFFFFFFFF))   == -1 ||
-		    mib_update_entry(&m_udp_oid,  2, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.udpinfo.udpNoPorts)                      == -1 ||
-		    mib_update_entry(&m_udp_oid,  3, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.udpinfo.udpInErrors)                     == -1 ||
-		    mib_update_entry(&m_udp_oid,  4, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(u.udpinfo.udpOutDatagrams & 0xFFFFFFFF))  == -1 ||
-		    mib_update_entry(&m_udp_oid,  8, 0, &pos, BER_TYPE_COUNTER64, (const void *)(&u.udpinfo.udpInDatagrams))                        == -1 ||
-		    mib_update_entry(&m_udp_oid,  9, 0, &pos, BER_TYPE_COUNTER64, (const void *)(&u.udpinfo.udpOutDatagrams))                       == -1  )
+		if (update_cnt(&m_udp_oid,  1, 0, &pos, u.udpinfo.udpInDatagrams & 0xFFFFFFFF)  == -1 ||
+		    update_cnt(&m_udp_oid,  2, 0, &pos, u.udpinfo.udpNoPorts)                   == -1 ||
+		    update_cnt(&m_udp_oid,  3, 0, &pos, u.udpinfo.udpInErrors)                  == -1 ||
+		    update_cnt(&m_udp_oid,  4, 0, &pos, u.udpinfo.udpOutDatagrams & 0xFFFFFFFF) == -1 ||
+		    update_c64(&m_udp_oid,  8, 0, &pos, u.udpinfo.udpInDatagrams)               == -1 ||
+		    update_c64(&m_udp_oid,  9, 0, &pos, u.udpinfo.udpOutDatagrams)              == -1)
 			return -1;
 	}
 
@@ -1156,92 +1202,95 @@ int mib_update(int full)
 	 * The host MIB: additional host info (HOST-RESOURCES-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
-	if (mib_update_entry(&m_host_oid, 1, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)(uintptr_t)get_system_uptime()) == -1)
+	if (update_tm(&m_host_oid, 1, 0, &pos, get_system_uptime()) == -1)
 		return -1;
 
 	/*
 	 * IF-MIB
 	 * ifXTable
 	 */
-
 	if (full) {
 		if (g_interface_list_length > 0) {
-			uint64_t val = 0;
+			long long val;
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				unsigned int packets = netinfo.rx_mc_packets[i] % UINT_MAX;
-				if (mib_update_entry(&m_ifxtable_oid, 2, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
+
+				if (update_cnt(&m_ifxtable_oid, 2, i + 1, &pos, packets) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				unsigned int packets = netinfo.rx_bc_packets[i] % UINT_MAX;
-				if (mib_update_entry(&m_ifxtable_oid, 3, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
+
+				if (update_cnt(&m_ifxtable_oid, 3, i + 1, &pos, packets) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				unsigned int packets = netinfo.tx_mc_packets[i] % UINT_MAX;
-				if (mib_update_entry(&m_ifxtable_oid, 4, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
+
+				if (update_cnt(&m_ifxtable_oid, 4, i + 1, &pos, packets) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				unsigned int packets = netinfo.tx_bc_packets[i] % UINT_MAX;
-				if (mib_update_entry(&m_ifxtable_oid, 5, i + 1, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
+
+				if (update_cnt(&m_ifxtable_oid, 5, i + 1, &pos, packets) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				val = (netinfo.rx_bytes[i] & 0xBFFFFFFFFFFFFFFFULL);
-				if (mib_update_entry(&m_ifxtable_oid, 6, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+				if (update_c64(&m_ifxtable_oid, 6, i + 1, &pos, val) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				val = (netinfo.rx_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
-				if (mib_update_entry(&m_ifxtable_oid, 7, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+				if (update_c64(&m_ifxtable_oid, 7, i + 1, &pos, val) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				val = (netinfo.rx_mc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
-				if (mib_update_entry(&m_ifxtable_oid, 8, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+				if (update_c64(&m_ifxtable_oid, 8, i + 1, &pos, val) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				val = (netinfo.rx_bc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
-				if (mib_update_entry(&m_ifxtable_oid, 9, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+				if (update_c64(&m_ifxtable_oid, 9, i + 1, &pos, val) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				val = (netinfo.tx_bytes[i] & 0xBFFFFFFFFFFFFFFFULL);
-				if (mib_update_entry(&m_ifxtable_oid, 10, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+				if (update_c64(&m_ifxtable_oid, 10, i + 1, &pos, val) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				val = (netinfo.tx_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
-				if (mib_update_entry(&m_ifxtable_oid, 11, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+				if (update_c64(&m_ifxtable_oid, 11, i + 1, &pos, val) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				val = (netinfo.tx_mc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
-				if (mib_update_entry(&m_ifxtable_oid, 12, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+				if (update_c64(&m_ifxtable_oid, 12, i + 1, &pos, val) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				val = (netinfo.tx_bc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
-				if (mib_update_entry(&m_ifxtable_oid, 13, i + 1, &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
+				if (update_c64(&m_ifxtable_oid, 13, i + 1, &pos, val) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_ifxtable_oid, 15, i + 1, &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)(netinfo.if_speed[i] / 1000000)) == -1)
+				if (update_gge(&m_ifxtable_oid, 15, i + 1, &pos, netinfo.if_speed[i] / 1000000) == -1)
 					return -1;
 			}
 
@@ -1249,12 +1298,12 @@ int mib_update(int full)
 			for (i = 0; i < g_interface_list_length; i++) {
 				int ifConnectorPresent = netinfo.is_port[i] ? 1 : 2; /* XXX: Add support for ethtool on Linux */
 
-				if (mib_update_entry(&m_ifxtable_oid, 17, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)ifConnectorPresent) == -1)
+				if (update_int(&m_ifxtable_oid, 17, i + 1, &pos, ifConnectorPresent) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_ifxtable_oid, 19, i + 1, &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)netinfo.discont_time[i]) == -1)
+				if (update_tm(&m_ifxtable_oid, 19, i + 1, &pos, netinfo.discont_time[i]) == -1)
 					return -1;
 			}
 #endif
@@ -1267,11 +1316,11 @@ int mib_update(int full)
 	 */
 	if (full) {
 		get_meminfo(&u.meminfo);
-		if (mib_update_entry(&m_memory_oid,  5, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.total)   == -1 ||
-		    mib_update_entry(&m_memory_oid,  6, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.free)    == -1 ||
-		    mib_update_entry(&m_memory_oid, 13, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.shared)  == -1 ||
-		    mib_update_entry(&m_memory_oid, 14, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.buffers) == -1 ||
-		    mib_update_entry(&m_memory_oid, 15, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.meminfo.cached)  == -1)
+		if (update_int(&m_memory_oid,  5, 0, &pos, u.meminfo.total)   == -1 ||
+		    update_int(&m_memory_oid,  6, 0, &pos, u.meminfo.free)    == -1 ||
+		    update_int(&m_memory_oid, 13, 0, &pos, u.meminfo.shared)  == -1 ||
+		    update_int(&m_memory_oid, 14, 0, &pos, u.meminfo.buffers) == -1 ||
+		    update_int(&m_memory_oid, 15, 0, &pos, u.meminfo.cached)  == -1)
 			return -1;
 	}
 
@@ -1283,27 +1332,27 @@ int mib_update(int full)
 		if (g_disk_list_length > 0) {
 			get_diskinfo(&u.diskinfo);
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 6, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.total[i]) == -1)
+				if (update_int(&m_disk_oid, 6, i + 1, &pos, u.diskinfo.total[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 7, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.free[i]) == -1)
+				if (update_int(&m_disk_oid, 7, i + 1, &pos, u.diskinfo.free[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.used[i]) == -1)
+				if (update_int(&m_disk_oid, 8, i + 1, &pos, u.diskinfo.used[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 9, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.blocks_used_percent[i]) == -1)
+				if (update_int(&m_disk_oid, 9, i + 1, &pos, u.diskinfo.blocks_used_percent[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (mib_update_entry(&m_disk_oid, 10, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.diskinfo.inodes_used_percent[i]) == -1)
+				if (update_int(&m_disk_oid, 10, i + 1, &pos, u.diskinfo.inodes_used_percent[i]) == -1)
 					return -1;
 			}
 		}
@@ -1317,12 +1366,12 @@ int mib_update(int full)
 		get_loadinfo(&u.loadinfo);
 		for (i = 0; i < 3; i++) {
 			snprintf(nr, sizeof(nr), "%d.%02d", u.loadinfo.avg[i] / 100, u.loadinfo.avg[i] % 100);
-			if (mib_update_entry(&m_load_oid, 3, i + 1, &pos, BER_TYPE_OCTET_STRING, nr) == -1)
+			if (update_str(&m_load_oid, 3, i + 1, &pos, nr) == -1)
 				return -1;
 		}
 
 		for (i = 0; i < 3; i++) {
-			if (mib_update_entry(&m_load_oid, 5, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.loadinfo.avg[i]) == -1)
+			if (update_int(&m_load_oid, 5, i + 1, &pos, u.loadinfo.avg[i]) == -1)
 				return -1;
 		}
 	}
@@ -1333,12 +1382,12 @@ int mib_update(int full)
 	 */
 	if (full) {
 		get_cpuinfo(&u.cpuinfo);
-		if (mib_update_entry(&m_cpu_oid, 50, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.user)   == -1 ||
-		    mib_update_entry(&m_cpu_oid, 51, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.nice)   == -1 ||
-		    mib_update_entry(&m_cpu_oid, 52, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.system) == -1 ||
-		    mib_update_entry(&m_cpu_oid, 53, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.idle)   == -1 ||
-		    mib_update_entry(&m_cpu_oid, 59, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.irqs)   == -1 ||
-		    mib_update_entry(&m_cpu_oid, 60, 0, &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)u.cpuinfo.cntxts) == -1)
+		if (update_cnt(&m_cpu_oid, 50, 0, &pos, u.cpuinfo.user)   == -1 ||
+		    update_cnt(&m_cpu_oid, 51, 0, &pos, u.cpuinfo.nice)   == -1 ||
+		    update_cnt(&m_cpu_oid, 52, 0, &pos, u.cpuinfo.system) == -1 ||
+		    update_cnt(&m_cpu_oid, 53, 0, &pos, u.cpuinfo.idle)   == -1 ||
+		    update_cnt(&m_cpu_oid, 59, 0, &pos, u.cpuinfo.irqs)   == -1 ||
+		    update_cnt(&m_cpu_oid, 60, 0, &pos, u.cpuinfo.cntxts) == -1)
 			return -1;
 	}
 
@@ -1351,8 +1400,8 @@ int mib_update(int full)
 #ifdef CONFIG_ENABLE_DEMO
 	if (full) {
 		get_demoinfo(&u.demoinfo);
-		if (mib_update_entry(&m_demo_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.demoinfo.random_value_1) == -1 ||
-		    mib_update_entry(&m_demo_oid, 2, 0, &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)u.demoinfo.random_value_2) == -1)
+		if (update_int(&m_demo_oid, 1, 0, &pos, u.demoinfo.random_value_1) == -1 ||
+		    update_int(&m_demo_oid, 2, 0, &pos, u.demoinfo.random_value_2) == -1)
 			return -1;
 	}
 #endif
