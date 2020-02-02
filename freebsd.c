@@ -235,18 +235,6 @@ void get_diskinfo(diskinfo_t *diskinfo)
 	}
 }
 
-static int find_ifname(char *ifname)
-{
-	int i;
-
-	for (i = 0; i < g_interface_list_length; i++) {
-		if (!strcmp(g_interface_list[i], ifname))
-			return i;
-	}
-
-	return -1;
-}
-
 void get_netinfo(netinfo_t *netinfo)
 {
 	struct ifaddrs *ifap, *ifa;

@@ -393,6 +393,18 @@ client_t *find_oldest_client(void)
 	return found ? g_tcp_client_list[pos] : NULL;
 }
 
+int find_ifname(char *ifname)
+{
+	int i;
+
+	for (i = 0; i < (int)g_interface_list_length; i++) {
+		if (!strcmp(g_interface_list[i], ifname))
+			return i;
+	}
+
+	return -1;
+}
+
 #ifdef CONFIG_ENABLE_DEMO
 void get_demoinfo(demoinfo_t *demoinfo)
 {
