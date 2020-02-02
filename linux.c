@@ -226,27 +226,22 @@ void get_netinfo(netinfo_t *netinfo)
 
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET:
-			/* lprintf(LOG_INFO, "Interface %s family AF_INET(%d)\n", ifa->ifa_name, ifa->ifa_addr->sa_family); */
 			if (!ifa->ifa_addr || !ifa->ifa_netmask)
 				continue;
 
 			addr = (struct sockaddr_in *)ifa->ifa_addr;
 			mask = (struct sockaddr_in *)ifa->ifa_netmask;
-			/* lprintf(LOG_INFO, "Interface %s address %s\n", ifa->ifa_name, inet_ntoa(addr->sin_addr)); */
-			/* lprintf(LOG_INFO, "Interface %s netmask %s\n", ifa->ifa_name, inet_ntoa(mask->sin_addr)); */
-			if (!netinfo->in_addr[i]) {
+			if (addr) {
 				netinfo->in_addr[i] = ntohl(addr->sin_addr.s_addr);
 				netinfo->in_mask[i] = ntohl(mask->sin_addr.s_addr);
 			}
 			break;
 
 		case AF_INET6:
-			/* lprintf(LOG_INFO, "Interface %s family AF_INET6(%d)\n", ifa->ifa_name, ifa->ifa_addr->sa_family); */
 			/* XXX: Not supported yet */
 			break;
 
 		case AF_PACKET:
-			/* lprintf(LOG_INFO, "Interface %s family AF_PACKET(%d)\n", ifa->ifa_name, ifa->ifa_addr->sa_family); */
 			if (ifa->ifa_flags & IFF_UP)
 				netinfo->status[i] = (ifa->ifa_flags & IFF_RUNNING) ? 1 : 7;
 			else
@@ -287,7 +282,6 @@ void get_netinfo(netinfo_t *netinfo)
 			break;
 
 		default:
-			/* lprintf(LOG_INFO, "Interface %s family %d\n", ifa->ifa_name, ifa->ifa_addr->sa_family); */
 			break;
 		}
 	}
