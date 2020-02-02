@@ -4,6 +4,29 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
+[v1.5][] -- 2020-02-02
+----------------------
+
+Major feature release.  Support for TCP-MIB, UDP-MIB, IP-MIB,
+ifXTable with 64-bit counters.
+
+Most of the new features are courtesy of [NDM Systems][].
+
+### Changes
+- Add support for ifXTable (64-bit counters), from NDM Systems
+- Add support for TCP-MIB, from NDM Systems
+- Add support for UDP-MIB, from NDM Systems
+- Add support for IP-MIB, from NDM Systems
+- Add support for ifType
+- Add support for ifMtu
+
+### Fixes
+- CVE-2020-6060: Fix stack overflow in client connection handler
+- CVE-2020-6059: Fix out-of-bounds read in parsing of SNMP packet
+- CVE-2020-6058: Fix out-of-bounds read in parsing of SNMP packet
+- Let `-s` flag control use of syslog, when running in foreground
+
+
 [v1.4][] -- 2017-06-26
 ----------------------
 
@@ -142,14 +165,16 @@ This is the first feature-complete version.  SNMP get, getnext, and
 getbulk are supported on UDP and TCP connections.
 
 
-[UNRELEASED]: https://github.com/troglobit/mini-snmpd/compare/v1.4...HEAD
-[v1.4]:       https://github.com/troglobit/mini-snmpd/compare/v1.3...v1.4
-[v1.3]:       https://github.com/troglobit/mini-snmpd/compare/v1.2b...v1.3
-[v1.2b]:      https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
-[v1.1]:       https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
-[dzo]:        <mailto:dzo@simtreas.ru>
-[hno]:        https://github.com/hno
-[home]:       https://github.com/troglobit/mini-snmpd
-[palacios]:   https://github.com/javiplx
-[troglobit]:  https://github.com/troglobit
-[vodz-fork]:  http://www.simtreas.ru/~dzo/busybox-vodz.html
+[UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v1.5...HEAD
+[v1.5]:        https://github.com/troglobit/mini-snmpd/compare/v1.4...v1.5
+[v1.4]:        https://github.com/troglobit/mini-snmpd/compare/v1.3...v1.4
+[v1.3]:        https://github.com/troglobit/mini-snmpd/compare/v1.2b...v1.3
+[v1.2b]:       https://github.com/troglobit/mini-snmpd/compare/v1.1...v1.2b
+[v1.1]:        https://github.com/troglobit/mini-snmpd/compare/v1.0...v1.1
+[dzo]:         <mailto:dzo@simtreas.ru>
+[hno]:         https://github.com/hno
+[home]:        https://github.com/troglobit/mini-snmpd
+[palacios]:    https://github.com/javiplx
+[NDM Systems]: https://github.com/ndmsystems
+[troglobit]:   https://github.com/troglobit
+[vodz-fork]:   http://www.simtreas.ru/~dzo/busybox-vodz.html
