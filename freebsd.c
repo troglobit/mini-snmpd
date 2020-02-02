@@ -259,15 +259,25 @@ void get_netinfo(netinfo_t *netinfo)
 		struct if_data *ifd = ifa->ifa_data;
 		int i;
 
-
 		i = find_ifname(ifa->ifa_name);
 		if (i == -1 || ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 
-		if (ifd->ifi_link_state == LINK_STATE_UNKNOWN)
-			netinfo->status[i] = 4;
+		if (ifa->ifa_flags & IFF_UP)
+			switch (ifd->ifi_link_state) {
+			case LINK_STATE_UP:
+				netinfo->status[i] = 1;
+				break;
+			case LINK_STATE_DOWN:
+				netinfo->status[i] = 7;
+				break;
+			default:
+			case LINK_STATE_UNKNOWN:
+				netinfo->status[i] = 4;
+				break;
+			}
 		else
-			netinfo->status[i] = ifd->ifi_link_state == LINK_STATE_UP ? 1 : 2;
+			netinfo->status[i] = 2; /* Down */
 
 		switch (ifd->ifi_type) {
 		default:
