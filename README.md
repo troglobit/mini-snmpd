@@ -18,7 +18,7 @@ Supported features:
 * Community string authentication when using 2c or explicitely configured
 * Read-only access (writing is not supported)
 * Includes basic system info like CPU load, memory, disk and network interfaces
-* Does not need a configuation file
+* Does not need a configuration file, but one is supported
 * Supports UDP and TCP (thus supports SSH tunneling of SNMP connections)
 * Supports linux kernel versions 2.4 and 2.6
 * Supports FreeBSD (needs procfs mounted using "mount_linprocfs procfs /proc")
