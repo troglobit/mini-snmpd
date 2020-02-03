@@ -1,6 +1,7 @@
 /* Main program
  *
  * Copyright (C) 2008-2010  Robert Ernst <robert.ernst@linux-solutions.at>
+ * Copyright (C) 2015-2020  Joachim Nilsson <troglobit@gmail.com>
  *
  * This file may be distributed and/or modified under the terms of the
  * GNU General Public License version 2 as published by the Free Software
