@@ -25,13 +25,16 @@ AC_ARG_WITH([config],
 	[with_config=$withval], [with_config=no])
 
 AC_ARG_ENABLE(debug,
-   AS_HELP_STRING([--enable-debug], [Enable debug mode, also set CFLAGS="-g -O0", disabled by default.]))
+   AS_HELP_STRING([--enable-debug], [Enable developer debug mode, disabled by default]),
+   	[enable_debug=$enableval], [enable_debug=no])
 
 AC_ARG_ENABLE(demo,
-   AS_HELP_STRING([--enable-demo], [Enable demo mode, for budding devs only. Disabled by default.]))
+   AS_HELP_STRING([--enable-demo], [Enable demo mode, devs only, disabled by default]),
+   	[enable_demo=$enableval], [enable_demo=no])
 
 AC_ARG_ENABLE(ipv6,
-   AS_HELP_STRING([--disable-ipv6], [Disable IPv6 support, enabled by default.]))
+   AS_HELP_STRING([--disable-ipv6], [Disable IPv6 support, enabled by default]),
+   	[enable_ipv6=$enableval], [enable_ipv6=yes])
 
 ### Enable features ###########################################################################
 AS_IF([test "x$with_vendor" != "xno"],[
@@ -58,3 +61,27 @@ AS_IF([test "x$enable_ipv6" != "xno"],[
 
 ### Generate all files ########################################################################
 AC_OUTPUT
+
+cat <<EOF
+
+------------------ Summary ------------------
+ $PACKAGE_NAME version $PACKAGE_VERSION
+  Prefix............: $prefix
+  Sysconfdir........: $SYSCONFDIR
+  Runstatedir.......: $RUNSTATEDIR
+  C Compiler........: $CC $CFLAGS $CPPFLAGS $LDFLAGS $LIBS
+
+ Optional features:
+  vendor OID........: $vendor
+  ipv6..............: $enable_ipv6
+  mini-snmpd.conf...: $with_config
+  demo mode.........: $enable_demo
+
+------------- Compiler version --------------
+$($CC --version || true)
+---------------------------------------------
+
+Check the above options and compile with:
+ ${MAKE-make}
+
+EOF
