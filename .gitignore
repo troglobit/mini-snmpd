@@ -2,6 +2,7 @@
 *.o
 *~
 .deps/*
+aux/*
 Makefile
 Makefile.in
 aclocal.m4
