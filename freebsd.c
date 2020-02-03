@@ -185,7 +185,7 @@ void get_tcpinfo(tcpinfo_t *tcpinfo)
 	tcpinfo->tcpInSegs = tcps.tcps_rcvtotal;
 	tcpinfo->tcpOutSegs = tcps.tcps_sndtotal - tcps.tcps_sndrexmitpack;
 	tcpinfo->tcpRetransSegs = tcps.tcps_sndrexmitpack;
-	tcpinfo->tcpInErrs = tcps.tcps_rcvbadsum + tcps.tcps_rcvbadoff + tcps.tcps_rcvshort
+	tcpinfo->tcpInErrs = tcps.tcps_rcvbadsum + tcps.tcps_rcvbadoff + tcps.tcps_rcvshort;
 	tcpinfo->tcpOutRsts = tcps.tcps_sndctrl; /* Not just sent RSTs, includes SYN + FIN */
 }
 
