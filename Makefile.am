@@ -18,6 +18,10 @@ if HAVE_CONFUSE
 dist_sysconf_DATA     = mini-snmpd.conf
 endif
 
+if HAVE_SYSTEMD
+systemd_DATA          = mini-snmpd.service
+endif
+
 ## Generate MD5 checksum file
 MD5 = md5sum
 md5-dist:
@@ -53,3 +57,6 @@ release: distcheck release-hook md5-dist
 		printf "$$file    \tDistribution tarball\n";				\
 		printf "$$file.md5\t"; cat ../$$file.md5 | cut -f1 -d' ';		\
 	done
+
+# Workaround for systemd unit file duing distcheck
+DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd)

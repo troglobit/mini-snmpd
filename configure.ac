@@ -5,10 +5,11 @@ AM_SILENT_RULES([yes])
 
 AC_CONFIG_SRCDIR([mini-snmpd.c])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile mini-snmpd.service])
 
 AC_PROG_CC
 AC_PROG_INSTALL
+PKG_PROG_PKG_CONFIG
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS(alloca.h unistd.h stdint.h stdlib.h syslog.h signal.h getopt.h arpa/inet.h)
@@ -23,6 +24,10 @@ AC_ARG_WITH(vendor,
 AC_ARG_WITH([config],
         AS_HELP_STRING([--with-config], [Enable /etc/mini-snmpd.conf support using libConfuse]),
 	[with_config=$withval], [with_config=no])
+
+AC_ARG_WITH(systemd,
+     [AS_HELP_STRING([--with-systemd=DIR], [Directory for systemd service files])],,
+     [with_systemd=auto])
 
 AC_ARG_ENABLE(debug,
    AS_HELP_STRING([--enable-debug], [Enable developer debug mode, disabled by default]),
@@ -46,7 +51,6 @@ AC_DEFINE_UNQUOTED(VENDOR, ["$vendor"], [Vendor OID])
 
 AS_IF([test "x$with_config" != "xno"], [
 	AC_DEFINE([HAVE_LIBCONFUSE], [1], [Build with support for /etc/mini-snmpd.conf])
-	PKG_PROG_PKG_CONFIG
 	PKG_CHECK_MODULES([confuse], [libconfuse >= 2.7])])
 AM_CONDITIONAL([HAVE_CONFUSE], [test "x$with_config" != "xno"])
 
@@ -59,8 +63,40 @@ AS_IF([test "x$enable_demo" = "xyes"],[
 AS_IF([test "x$enable_ipv6" != "xno"],[
    AC_DEFINE(CONFIG_ENABLE_IPV6, 1, [Define to enable IPv6 support.])])
 
+# Check where to install the systemd .service file
+AS_IF([test "x$with_systemd" = "xyes" -o "x$with_systemd" = "xauto"], [
+     def_systemd=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
+     AS_IF([test "x$def_systemd" = "x"],
+         [AS_IF([test "x$with_systemd" = "xyes"],
+	     [AC_MSG_ERROR([systemd support requested but pkg-config unable to query systemd package])])
+	     with_systemd=no], [with_systemd="$def_systemd"])])
+AS_IF([test "x$with_systemd" != "xno"],
+     [AC_SUBST([systemddir], [$with_systemd])])
+AM_CONDITIONAL([HAVE_SYSTEMD], [test "x$with_systemd" != "xno"])
+
+# Expand $sbindir early, into $SBINDIR, for systemd unit file
+# NOTE: This does *not* take prefix/exec_prefix override at "make
+#       install" into account, unfortunately.
+test "x$prefix" = xNONE && prefix=
+test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+SBINDIR=`eval echo $sbindir`
+SBINDIR=`eval echo $SBINDIR`
+AC_SUBST(SBINDIR)
+
+# Workaround for as-of-yet unreleased runstatedir support, planned for
+# autoconf 2.70, which some major distros have backported.
+AS_IF([test -z "$runstatedir"], runstatedir="$localstatedir/run")
+AC_SUBST(runstatedir)
+
 ### Generate all files ########################################################################
 AC_OUTPUT
+
+# Expand directories for configuration summary, unexpanded defaults:
+# sysconfdir  => ${prefix}/etc
+# runstatedir => ${localstatedir}/run
+SYSCONFDIR=`eval echo $sysconfdir`
+RUNSTATEDIR=`eval echo $runstatedir`
+RUNSTATEDIR=`eval echo $RUNSTATEDIR`
 
 cat <<EOF
 
@@ -76,6 +112,7 @@ cat <<EOF
   ipv6..............: $enable_ipv6
   mini-snmpd.conf...: $with_config
   demo mode.........: $enable_demo
+  systemd...........: $with_systemd
 
 ------------- Compiler version --------------
 $($CC --version || true)

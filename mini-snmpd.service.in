@@ -1,0 +1,16 @@
+[Unit]
+Description=Small SNMP daemon
+Documentation=man:mini-snmpd
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+EnvironmentFile=-/etc/default/mini-snmpd
+Type=simple
+ExecStart=@SBINDIR@/mini-snmpd -ns $DAEMON_OPTS
+StandardOutput=null
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=snmpd.service

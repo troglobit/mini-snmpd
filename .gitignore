@@ -15,6 +15,7 @@ configure
 depcomp
 install-sh
 mini-snmpd
+mini-snmpd.service
 missing
 stamp-h1
 tags
