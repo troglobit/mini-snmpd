@@ -492,7 +492,7 @@ int main(int argc, char *argv[])
 	if (g_syslog)
 		openlog(g_prognm, LOG_CONS | LOG_PID, LOG_DAEMON);
 
-	logit(LOG_INFO, 0, PROGRAM_IDENT);
+	logit(LOG_NOTICE, 0, PROGRAM_IDENT " starting");
 
 	if (g_daemon) {
 		logit(LOG_DEBUG, 0, "Daemonizing ...");
@@ -762,7 +762,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* We were signaled, print a message and exit */
-	logit(LOG_INFO, 0, PROGRAM_IDENT);
+	logit(LOG_NOTICE, 0, PROGRAM_IDENT " stopping");
 	if (g_syslog)
 		closelog();
 
