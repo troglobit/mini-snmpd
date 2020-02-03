@@ -21,8 +21,8 @@ AC_ARG_WITH(vendor,
 	[vendor="$withval"], [vendor=".1.3.6.1.4.1"])
 
 AC_ARG_WITH([config],
-        AS_HELP_STRING([--without-config], [Disable /etc/mini-snmpd.conf support using libConfuse]),,
-	[with_config=yes])
+        AS_HELP_STRING([--with-config], [Enable /etc/mini-snmpd.conf support using libConfuse]),
+	[with_config=$withval], [with_config=no])
 
 AC_ARG_ENABLE(debug,
    AS_HELP_STRING([--enable-debug], [Enable debug mode, also set CFLAGS="-g -O0", disabled by default.]))
