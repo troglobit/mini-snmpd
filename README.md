@@ -2,7 +2,9 @@ Mini SNMP Daemon
 ================
 [![License Badge][]][License] [![Travis Status][]][Travis] [![Coverity Status][]][Coverity Scan]
 
-> The [latest release is always available from GitHub][releases]
+> The [latest release][releases] is always available from GitHub.
+> Download only versioned tarballs, `mini-snmpd-X.Y.tar.gz`.  See
+> below for instructions on how to build.
 
 Table of Contents
 -----------------
@@ -121,8 +123,8 @@ installs to `/usr` instead:
     make -j5
     sudo make install-strip
 
-> *Note: mini-snmpd-X.Y.tar.gz is not an actual release.  See the
-> [releases page on GitHub for the latest release][releases].*
+> **Note:** mini-snmpd-X.Y.tar.gz is not an actual release.  See the
+> [releases page on GitHub][releases] for the latest versioned release.
 
 
 Building from GIT
