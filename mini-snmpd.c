@@ -44,26 +44,26 @@ static int usage(int rc)
 	       "  -4, --use-ipv4         Use IPv4, default\n"
 	       "  -6, --use-ipv6         Use IPv6\n"
 #endif
+	       "  -a, --auth             Enable authentication, i.e. SNMP version 2c\n"
+	       "  -c, --community STR    Community string, default: public\n"
+	       "  -C, --contact STR      System contact, default: none\n"
+	       "  -d, --disks PATH       Disks to monitor, default: /\n"
+	       "  -D, --description STR  System description, default: none\n"
 #ifdef HAVE_LIBCONFUSE
 	       "  -f, --file FILE        Configuration file. Default: " CONFDIR "/%s.conf\n"
 #endif
-	       "  -p, --udp-port PORT    UDP port to bind to, default: 161\n"
-	       "  -P, --tcp-port PORT    TCP port to bind to, default: 161\n"
-	       "  -c, --community STR    Community string, default: public\n"
-	       "  -D, --description STR  System description, default: none\n"
-	       "  -V, --vendor OID       System vendor, default: none\n"
-	       "  -L, --location STR     System location, default: none\n"
-	       "  -C, --contact STR      System contact, default: none\n"
-	       "  -d, --disks PATH       Disks to monitor, default: /\n"
+	       "  -h, --help             This help text\n"
 	       "  -i, --interfaces IFACE Network interfaces to monitor, default: none\n"
 	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
-	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
-	       "  -a, --auth             Enable authentication, i.e. SNMP version 2c\n"
+	       "  -L, --location STR     System location, default: none\n"
 	       "  -n, --foreground       Run in foreground, do not detach from controlling terminal\n"
+	       "  -p, --udp-port PORT    UDP port to bind to, default: 161\n"
+	       "  -P, --tcp-port PORT    TCP port to bind to, default: 161\n"
 	       "  -s, --syslog           Use syslog for logging, even if running in the foreground\n"
+	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
 	       "  -u, --drop-privs USER  Drop priviliges after opening sockets to USER, default: no\n"
 	       "  -v, --verbose          Verbose messages\n"
-	       "  -h, --help             This help text\n"
+	       "  -V, --vendor OID       System vendor, default: none\n"
 	       "\n", g_prognm
 #ifdef HAVE_LIBCONFUSE
 	       , PACKAGE_NAME
@@ -304,7 +304,7 @@ static char *progname(char *arg0)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "p:P:c:D:V:L:C:d:i:t:ansuvh"
+	static const char short_options[] = "ac:C:d:D:hi:L:np:P:st:uvV:"
 #ifndef __FreeBSD__
 		"I:"
 #endif
@@ -317,31 +317,31 @@ int main(int argc, char *argv[])
 		;
 	static const struct option long_options[] = {
 #ifdef CONFIG_ENABLE_IPV6
-		{ "use-ipv4", 0, 0, '4' },
-		{ "use-ipv6", 0, 0, '6' },
+		{ "use-ipv4",    0, 0, '4' },
+		{ "use-ipv6",    0, 0, '6' },
 #endif
-#ifdef HAVE_LIBCONFUSE
-		{ "file",     1, 0, 'f' },
-#endif
-		{ "udp-port", 1, 0, 'p' },
-		{ "tcp-port", 1, 0, 'P' },
-		{ "community", 1, 0, 'c' },
+		{ "auth",        0, 0, 'a' },
+		{ "community",   1, 0, 'c' },
+		{ "contact",     1, 0, 'C' },
+		{ "disks",       1, 0, 'd' },
 		{ "description", 1, 0, 'D' },
-		{ "vendor", 1, 0, 'V' },
-		{ "location", 1, 0, 'L' },
-		{ "contact", 1, 0, 'C' },
-		{ "disks", 1, 0, 'd' },
-		{ "interfaces", 1, 0, 'i' },
-#ifndef __FreeBSD__
-		{ "listen", 1, 0, 'I' },
+#ifdef HAVE_LIBCONFUSE
+		{ "file",        1, 0, 'f' },
 #endif
-		{ "timeout", 1, 0, 't' },
-		{ "auth", 0, 0, 'a' },
-		{ "foreground", 0, 0, 'n' },
-		{ "drop-privs", 0, 0, 'u' },
-		{ "verbose", 0, 0, 'v' },
-		{ "syslog", 0, 0, 's' },
-		{ "help", 0, 0, 'h' },
+		{ "help",        0, 0, 'h' },
+		{ "interfaces",  1, 0, 'i' },
+#ifndef __FreeBSD__
+		{ "listen",      1, 0, 'I' },
+#endif
+		{ "location",    1, 0, 'L' },
+		{ "foreground",  0, 0, 'n' },
+		{ "udp-port",    1, 0, 'p' },
+		{ "tcp-port",    1, 0, 'P' },
+		{ "syslog",      0, 0, 's' },
+		{ "timeout",     1, 0, 't' },
+		{ "drop-privs",  0, 0, 'u' },
+		{ "verbose",     0, 0, 'v' },
+		{ "vendor",      1, 0, 'V' },
 		{ NULL, 0, 0, 0 }
 	};
 	int ticks, nfds, c, option_index = 1;
@@ -382,6 +382,25 @@ int main(int argc, char *argv[])
 			g_family = AF_INET6;
 			break;
 #endif
+		case 'a':
+			g_auth = 1;
+			break;
+
+		case 'c':
+			g_community = strdup(optarg);
+			break;
+
+		case 'C':
+			g_contact = strdup(optarg);
+			break;
+
+		case 'd':
+			g_disk_list_length = split(optarg, ",:;", g_disk_list, MAX_NR_DISKS);
+			break;
+
+		case 'D':
+			g_description = strdup(optarg);
+			break;
 #ifdef HAVE_LIBCONFUSE
 		case 'f':
 			config = optarg;
@@ -389,6 +408,22 @@ int main(int argc, char *argv[])
 #endif
 		case 'h':
 			return usage(0);
+
+		case 'i':
+			g_interface_list_length = split(optarg, ",;", g_interface_list, MAX_NR_INTERFACES);
+			break;
+#ifndef __FreeBSD__
+		case 'I':
+			g_bind_to_device = strdup(optarg);
+			break;
+#endif
+		case 'L':
+			g_location = strdup(optarg);
+			break;
+
+		case 'n':
+			g_daemon = 0;
+			break;
 
 		case 'p':
 			g_udp_port = atoi(optarg);
@@ -398,52 +433,12 @@ int main(int argc, char *argv[])
 			g_tcp_port = atoi(optarg);
 			break;
 
-		case 'c':
-			g_community = strdup(optarg);
-			break;
-
-		case 'D':
-			g_description = strdup(optarg);
-			break;
-
-		case 'V':
-			g_vendor = strdup(optarg);
-			break;
-
-		case 'L':
-			g_location = strdup(optarg);
-			break;
-
-		case 'C':
-			g_contact = strdup(optarg);
-			break;
-#ifndef __FreeBSD__
-		case 'I':
-			g_bind_to_device = strdup(optarg);
-			break;
-#endif
-		case 'd':
-			g_disk_list_length = split(optarg, ",:;", g_disk_list, MAX_NR_DISKS);
-			break;
-
-		case 'i':
-			g_interface_list_length = split(optarg, ",;", g_interface_list, MAX_NR_INTERFACES);
+		case 's':
+			g_syslog = 1;
 			break;
 
 		case 't':
 			g_timeout = atoi(optarg) * 100;
-			break;
-
-		case 'a':
-			g_auth = 1;
-			break;
-
-		case 'n':
-			g_daemon = 0;
-			break;
-
-		case 's':
-			g_syslog = 1;
 			break;
 
 		case 'u':
@@ -452,6 +447,10 @@ int main(int argc, char *argv[])
 
 		case 'v':
 			g_verbose = 1;
+			break;
+
+		case 'V':
+			g_vendor = strdup(optarg);
 			break;
 
 		default:
