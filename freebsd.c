@@ -264,81 +264,95 @@ void get_netinfo(netinfo_t *netinfo)
 		return;
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		struct if_data *ifd = ifa->ifa_data;
+		struct sockaddr_in *addr, *mask, *bcaddr;
+		struct sockaddr_dl *sdl;
+		struct if_data *ifd;
 		int i;
 
-		i = find_ifname(ifa->ifa_name);
-		if (i == -1 || ifa->ifa_addr->sa_family != AF_LINK)
+		if (!ifa->ifa_addr)
 			continue;
 
-		if (ifa->ifa_flags & IFF_UP)
-			switch (ifd->ifi_link_state) {
-			case LINK_STATE_UP:
-				netinfo->status[i] = 1;
-				break;
-			case LINK_STATE_DOWN:
-				netinfo->status[i] = 7;
-				break;
+		i = find_ifname(ifa->ifa_name);
+		if (i == -1)
+			continue;
+
+		switch (ifa->ifa_addr->sa_family) {
+		case AF_LINK:
+			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+			memcpy(netinfo->mac_addr[i], LLADDR(sdl), sizeof(netinfo->mac_addr[i]));
+
+			ifd = ifa->ifa_data;
+			if (!ifd)
+				continue;
+
+			if (ifa->ifa_flags & IFF_UP)
+				switch (ifd->ifi_link_state) {
+				case LINK_STATE_UP:
+					netinfo->status[i] = 1;
+					break;
+				case LINK_STATE_DOWN:
+					netinfo->status[i] = 7;
+					break;
+				default:
+				case LINK_STATE_UNKNOWN:
+					netinfo->status[i] = 4;
+					break;
+				}
+			else
+				netinfo->status[i] = 2; /* Down */
+
+			switch (ifd->ifi_type) {
 			default:
-			case LINK_STATE_UNKNOWN:
-				netinfo->status[i] = 4;
+			case IFT_ETHER:
+				netinfo->if_type[i] = 6; /* ethernetCsmacd(6) */
+				break;
+			case IFT_PPP:
+				netinfo->if_type[i] = 23; /* ppp(23) */
+				break;
+			case IFT_LOOP:
+				netinfo->if_type[i] = 24; /* softwareLoopback(24) */
+				break;
+			case IFT_SLIP:
+				netinfo->if_type[i] = 28; /* slip(28) */
 				break;
 			}
-		else
-			netinfo->status[i] = 2; /* Down */
 
-		switch (ifd->ifi_type) {
-		default:
-		case IFT_ETHER:
-			netinfo->if_type[i] = 6; /* ethernetCsmacd(6) */
+			netinfo->if_mtu[i]        = ifd->ifi_mtu;
+			netinfo->if_speed[i]      = ifd->ifi_baudrate;
+			netinfo->ifindex[i]       = if_nametoindex(ifa->ifa_name);
+			netinfo->lastchange[1]    = ifd->ifi_lastchange.tv_sec;
+			netinfo->rx_bytes[i]      = ifd->ifi_ibytes;
+			netinfo->rx_packets[i]    = ifd->ifi_ipackets;
+			netinfo->rx_mc_packets[i] = ifd->ifi_imcasts;
+			netinfo->rx_bc_packets[i] = 0;			/* XXX: Couldn't find at first glance */
+			netinfo->rx_errors[i]     = ifd->ifi_ierrors;
+			netinfo->rx_drops[i]      = ifd->ifi_iqdrops;
+			netinfo->tx_bytes[i]      = ifd->ifi_obytes;
+			netinfo->tx_packets[i]    = ifd->ifi_opackets;
+			netinfo->tx_mc_packets[i] = ifd->ifi_omcasts;
+			netinfo->tx_bc_packets[i] = 0;			/* XXX: Couldn't find at first glance */
+			netinfo->tx_errors[i]     = ifd->ifi_oerrors;
+			netinfo->tx_drops[i]      = ifd->ifi_collisions;
 			break;
-		case IFT_PPP:
-			netinfo->if_type[i] = 23; /* ppp(23) */
-			break;
-		case IFT_LOOP:
-			netinfo->if_type[i] = 24; /* softwareLoopback(24) */
-			break;
-		case IFT_SLIP:
-			netinfo->if_type[i] = 28; /* slip(28) */
-			break;
-		}
 
-		netinfo->if_mtu[i]        = ifd->ifi_mtu;
-		netinfo->if_speed[i]      = ifd->ifi_baudrate;
-		netinfo->ifindex[i]       = if_nametoindex(ifa->ifa_name);
-		netinfo->lastchange[1]    = ifd->ifi_lastchange.tv_sec;
-		netinfo->rx_bytes[i]      = ifd->ifi_ibytes;
-		netinfo->rx_packets[i]    = ifd->ifi_ipackets;
-		netinfo->rx_mc_packets[i] = ifd->ifi_imcasts;
-		netinfo->rx_bc_packets[i] = 0;			/* XXX: Couldn't find at first glance */
-		netinfo->rx_errors[i]     = ifd->ifi_ierrors;
-		netinfo->rx_drops[i]      = ifd->ifi_iqdrops;
-		netinfo->tx_bytes[i]      = ifd->ifi_obytes;
-		netinfo->tx_packets[i]    = ifd->ifi_opackets;
-		netinfo->tx_mc_packets[i] = ifd->ifi_omcasts;
-		netinfo->tx_bc_packets[i] = 0;			/* XXX: Couldn't find at first glance */
-		netinfo->tx_errors[i]     = ifd->ifi_oerrors;
-		netinfo->tx_drops[i]      = ifd->ifi_collisions;
+		case AF_INET:
+			if (!ifa->ifa_addr || !ifa->ifa_netmask)
+				continue;
 
-		if (ifa->ifa_addr && ifa->ifa_netmask && ifa->ifa_addr->sa_family == AF_INET) {
-			unsigned int addr, mask, bcaddr;
-
-			addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
-			mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
-
-			if (!netinfo->in_addr[i]) {
-				netinfo->in_addr[i] = addr;
-				netinfo->in_mask[i] = mask;
+			addr = (struct sockaddr_in *)ifa->ifa_addr;
+			mask = (struct sockaddr_in *)ifa->ifa_netmask;
+			if (addr) {
+				netinfo->in_addr[i] = ntohl(addr->sin_addr.s_addr);
+				netinfo->in_mask[i] = ntohl(mask->sin_addr.s_addr);
 			}
 
-			if (ifa->ifa_broadaddr) {
-				bcaddr = ((struct sockaddr_in *)ifa->ifa_broadaddr)->sin_addr.s_addr;
-				netinfo->in_bcaddr[i] = bcaddr;
-				netinfo->in_bcent[i]  = bcaddr ? 1 : 0;
+			bcaddr = (struct sockaddr_in *)ifa->ifa_broadaddr;
+			if (bcaddr && (ifa->ifa_flags & IFF_BROADCAST)) {
+				netinfo->in_bcaddr[i] = ntohl(bcaddr->sin_addr.s_addr);
+				netinfo->in_bcent[i]  = netinfo->in_bcaddr[i] ? 1 : 0;
 			}
+			break;
 		}
-
-		memcpy(&netinfo->mac_addr[i][0], LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 6);
 	}
 
 	freeifaddrs(ifap);
