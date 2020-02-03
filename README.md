@@ -2,8 +2,7 @@ Mini SNMP Daemon
 ================
 [![License Badge][]][License] [![Travis Status][]][Travis] [![Coverity Status][]][Coverity Scan]
 
-The latest release is always available from GitHub at  
-> https://github.com/troglobit/mini-snmpd/releases
+> The [latest release is always available from GitHub][releases]
 
 Table of Contents
 -----------------
@@ -123,7 +122,7 @@ installs to `/usr` instead:
     sudo make install-strip
 
 > *Note: mini-snmpd-X.Y.tar.gz is not an actual release.  See the
-> releases page on GitHub for the latest release.*
+> [releases page on GitHub for the latest release][releases].*
 
 
 Building from GIT
@@ -172,6 +171,7 @@ and pull request functions to report bugs or contribute new features.
 [Robert Ernst]:    <mailto:robert.ernst@aon.at>
 [net-snmp]:        https://www.net-snmp.org/
 [buildsystem]:     https://airs.com/ian/configure/
+[releases]:        https://github.com/troglobit/mini-snmpd/releases
 [License]:         https://en.wikipedia.org/wiki/GPL_license
 [License Badge]:   https://img.shields.io/badge/License-GPL%20v2-blue.svg
 [Travis]:          https://travis-ci.org/troglobit/mini-snmpd
