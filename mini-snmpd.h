@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "compat.h"
 
 /*
  * Project dependent defines
@@ -95,24 +96,7 @@
 #define SNMP_STATUS_NOT_WRITABLE                        17
 #define SNMP_STATUS_INCONSISTENT_NAME                   18
 
-/*
- * For -v and syslog starting/stopping messages
- */
-
 #define PROGRAM_IDENT PACKAGE_NAME " v" PACKAGE_VERSION
-
-/*
- * Macros
- */
-
-#ifndef UNUSED
-#define UNUSED(x) x __attribute__((unused))
-#endif
-
-/* From The Practice of Programming, by Kernighan and Pike */
-#ifndef NELEMS
-#define NELEMS(array) (sizeof(array) / sizeof(array[0]))
-#endif
 
 #ifndef CONFIG_ENABLE_IPV6
 #define my_sockaddr_t           sockaddr_in
@@ -332,7 +316,6 @@ extern int       g_tcp_sockfd;
 
 extern value_t   g_mib[MAX_NR_VALUES];
 extern size_t    g_mib_length;
-
 
 /*
  * Functions

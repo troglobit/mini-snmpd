@@ -53,7 +53,7 @@ static int usage(int rc)
 	       "  -d, --disks PATH       Disks to monitor, default: /\n"
 	       "  -D, --description STR  System description, default: none\n"
 #ifdef HAVE_LIBCONFUSE
-	       "  -f, --file FILE        Configuration file. Default: " CONFDIR "/%s.conf\n"
+	       "  -f, --file FILE        Configuration file. Default: " SYSCONFDIR "/%s.conf\n"
 #endif
 	       "  -h, --help             This help text\n"
 	       "  -i, --interfaces IFACE Network interfaces to monitor, default: none\n"
@@ -504,7 +504,7 @@ int main(int argc, char *argv[])
 
 #ifdef HAVE_LIBCONFUSE
 	if (!config) {
-		snprintf(path, sizeof(path), "%s/%s.conf", CONFDIR, PACKAGE_NAME);
+		snprintf(path, sizeof(path), "%s/%s.conf", SYSCONFDIR, PACKAGE_NAME);
 		config = path;
 	} else if (access(config, F_OK)) {
 		logit(LOG_ERR, errno, "Failed reading config file '%s'", config);
@@ -673,6 +673,12 @@ int main(int argc, char *argv[])
 
 		logit(LOG_INFO, 0, "Successfully dropped privileges to %s:%s", g_user, g_user);
 	}
+
+	/*
+	 * Tell system we're up and running by creating /run/mini-snmpd.pid
+	 */
+	if (pidfile(NULL))
+		logit(LOG_ERR, errno, "Failed creating PID file");
 
 	/* Handle incoming connect requests and incoming data */
 	while (!g_quit) {

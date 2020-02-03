@@ -1,7 +1,7 @@
 AC_INIT([mini-snmpd], [1.5-pre], [https://github.com/troglobit/mini-snmpd/issues],,
 	[https://troglobit.com/projects/inadyn/])
 AC_CONFIG_AUX_DIR(aux)
-AM_INIT_AUTOMAKE([1.11 foreign])
+AM_INIT_AUTOMAKE([1.11 foreign subdir-objects])
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_SRCDIR([mini-snmpd.c])
@@ -10,8 +10,18 @@ AC_CONFIG_FILES([Makefile mini-snmpd.service])
 
 AC_PROG_CC
 AC_PROG_INSTALL
+
+# Check for required packages: libconfuse, systemd
 PKG_PROG_PKG_CONFIG
 
+# Check for usually missing API's, which we can replace
+AC_REPLACE_FUNCS([pidfile utimensat])
+AC_CONFIG_LIBOBJ_DIR([lib])
+
+# Check for other library functions
+AC_CHECK_FUNCS([getprogname])
+
+# Check for header files, e.g. alloca.h doesn't exist on FreeBSD
 AC_HEADER_STDC
 AC_CHECK_HEADERS(alloca.h unistd.h stdint.h stdlib.h syslog.h signal.h getopt.h arpa/inet.h)
 AC_CHECK_HEADERS(sys/socket.h sys/time.h time.h sys/types.h net/if.h netinet/in.h)

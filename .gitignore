@@ -1,7 +1,9 @@
 *.map
 *.o
 *~
+.dirstamp
 .deps/*
+lib/.deps/*
 aux/*
 Makefile
 Makefile.in
