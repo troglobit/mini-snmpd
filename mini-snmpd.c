@@ -92,7 +92,7 @@ static void handle_udp_client(void)
 	rv = recvfrom(g_udp_sockfd, g_udp_client.packet, sizeof(g_udp_client.packet),
 		      0, (struct sockaddr *)&sockaddr, &socklen);
 	if (rv == -1) {
-		logit(LOG_WARNING, "Failed receiving UDP request on port %d: %m\n", g_udp_port);
+		logit(LOG_WARNING, "Failed receiving UDP request on port %d: %m", g_udp_port);
 		return;
 	}
 
@@ -109,11 +109,11 @@ static void handle_udp_client(void)
 	/* Call the protocol handler which will prepare the response packet */
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (snmp(&g_udp_client) == -1) {
-		logit(LOG_WARNING, "%s %s:%d: %m\n", req_msg, straddr, sockaddr.my_sin_port);
+		logit(LOG_WARNING, "%s %s:%d: %m", req_msg, straddr, sockaddr.my_sin_port);
 		return;
 	}
 	if (g_udp_client.size == 0) {
-		logit(LOG_WARNING, "%s %s:%d: ignored\n", req_msg, straddr, sockaddr.my_sin_port);
+		logit(LOG_WARNING, "%s %s:%d: ignored", req_msg, straddr, sockaddr.my_sin_port);
 		return;
 	}
 	g_udp_client.outgoing = 1;
@@ -123,9 +123,9 @@ static void handle_udp_client(void)
 		MSG_DONTWAIT, (struct sockaddr *)&sockaddr, socklen);
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (rv == -1)
-		logit(LOG_WARNING, "%s %s:%d: %m\n", snd_msg, straddr, sockaddr.my_sin_port);
+		logit(LOG_WARNING, "%s %s:%d: %m", snd_msg, straddr, sockaddr.my_sin_port);
 	else if ((size_t)rv != g_udp_client.size)
-		logit(LOG_WARNING, "%s %s:%d: only %zd of %zu bytes sent\n", snd_msg, straddr, sockaddr.my_sin_port, rv, g_udp_client.size);
+		logit(LOG_WARNING, "%s %s:%d: only %zd of %zu bytes sent", snd_msg, straddr, sockaddr.my_sin_port, rv, g_udp_client.size);
 
 #ifdef DEBUG
 	dump_packet(&g_udp_client);
@@ -146,11 +146,11 @@ static void handle_tcp_connect(void)
 	socklen = sizeof(sockaddr);
 	rv = accept(g_tcp_sockfd, (struct sockaddr *)&sockaddr, &socklen);
 	if (rv == -1) {
-		logit(LOG_ERR, "%s: %m\n", msg);
+		logit(LOG_ERR, "%s: %m", msg);
 		return;
 	}
 	if (rv >= FD_SETSIZE) {
-		logit(LOG_ERR, "%s: FD set overflow\n", msg);
+		logit(LOG_ERR, "%s: FD set overflow", msg);
 		close(rv);
 		return;
 	}
@@ -166,8 +166,8 @@ static void handle_tcp_connect(void)
 		tmp_sockaddr.my_sin_addr = client->addr;
 		tmp_sockaddr.my_sin_port = client->port;
 		inet_ntop(my_af_inet, &tmp_sockaddr.my_sin_addr, straddr, sizeof(straddr));
-		logit(LOG_WARNING, "Maximum number of %d clients reached, kicking out %s:%d\n",
-			MAX_NR_CLIENTS, straddr, tmp_sockaddr.my_sin_port);
+		logit(LOG_WARNING, "Maximum number of %d clients reached, kicking out %s:%d",
+		      MAX_NR_CLIENTS, straddr, tmp_sockaddr.my_sin_port);
 		close(client->sockfd);
 	} else {
 		client = allocate(sizeof(client_t));
@@ -180,8 +180,8 @@ static void handle_tcp_connect(void)
 
 	/* Now fill out the client control structure values */
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
-	logit(LOG_DEBUG, "Connected TCP client %s:%d\n",
-		straddr, sockaddr.my_sin_port);
+	logit(LOG_DEBUG, "Connected TCP client %s:%d",
+	      straddr, sockaddr.my_sin_port);
 	client->timestamp = time(NULL);
 	client->sockfd = rv;
 	client->addr = sockaddr.my_sin_addr;
@@ -203,13 +203,13 @@ static void handle_tcp_client_write(client_t *client)
 	rv = send(client->sockfd, client->packet, client->size, 0);
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (rv == -1) {
-		logit(LOG_WARNING, "%s %s:%d: %m\n", msg, straddr, sockaddr.my_sin_port);
+		logit(LOG_WARNING, "%s %s:%d: %m", msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	}
 	if ((size_t)rv != client->size) {
-		logit(LOG_WARNING, "%s %s:%d: only %zd of %zu bytes written\n",
+		logit(LOG_WARNING, "%s %s:%d: only %zd of %zu bytes written",
 			msg, straddr, sockaddr.my_sin_port, rv, client->size);
 		close(client->sockfd);
 		client->sockfd = -1;
@@ -238,13 +238,13 @@ static void handle_tcp_client_read(client_t *client)
 	rv = read(client->sockfd, client->packet + client->size, sizeof(client->packet) - client->size);
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (rv == -1) {
-		logit(LOG_WARNING, "%s %s:%d: %m\n", req_msg, straddr, sockaddr.my_sin_port);
+		logit(LOG_WARNING, "%s %s:%d: %m", req_msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	}
 	if (rv == 0) {
-		logit(LOG_DEBUG, "TCP client %s:%d disconnected\n",
+		logit(LOG_DEBUG, "TCP client %s:%d disconnected",
 			straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
@@ -256,7 +256,7 @@ static void handle_tcp_client_read(client_t *client)
 	/* Check whether the packet was fully received and handle packet if yes */
 	rv = snmp_packet_complete(client);
 	if (rv == -1) {
-		logit(LOG_WARNING, "%s %s:%d: %m\n", req_msg, straddr, sockaddr.my_sin_port);
+		logit(LOG_WARNING, "%s %s:%d: %m", req_msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -272,13 +272,13 @@ static void handle_tcp_client_read(client_t *client)
 
 	/* Call the protocol handler which will prepare the response packet */
 	if (snmp(client) == -1) {
-		logit(LOG_WARNING, "%s %s:%d: %m\n", req_msg, straddr, sockaddr.my_sin_port);
+		logit(LOG_WARNING, "%s %s:%d: %m", req_msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
 	}
 	if (client->size == 0) {
-		logit(LOG_WARNING, "%s %s:%d: ignored\n", req_msg, straddr, sockaddr.my_sin_port);
+		logit(LOG_WARNING, "%s %s:%d: ignored", req_msg, straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -465,7 +465,7 @@ int main(int argc, char *argv[])
 		snprintf(path, sizeof(path), "%s/%s.conf", CONFDIR, PACKAGE_NAME);
 		config = path;
 	} else if (access(config, F_OK)) {
-		logit(LOG_ERR, "Failed reading config file '%s'\n", config);
+		logit(LOG_ERR, "Failed reading config file '%s'", config);
 		return 1;
 	}
 
@@ -506,7 +506,7 @@ int main(int argc, char *argv[])
 	/* Open the server's UDP port and prepare it for listening */
 	g_udp_sockfd = socket((g_family == AF_INET) ? PF_INET : PF_INET6, SOCK_DGRAM, 0);
 	if (g_udp_sockfd == -1) {
-		logit(LOG_ERR, "could not create UDP socket: %m\n");
+		logit(LOG_ERR, "could not create UDP socket: %m");
 		exit(EXIT_SYSCALL);
 	}
 
@@ -524,7 +524,7 @@ int main(int argc, char *argv[])
 #endif
 	}
 	if (bind(g_udp_sockfd, (struct sockaddr *)&sockaddr, socklen) == -1) {
-		logit(LOG_ERR, "could not bind UDP socket to port %d: %m\n", g_udp_port);
+		logit(LOG_ERR, "could not bind UDP socket to port %d: %m", g_udp_port);
 		exit(EXIT_SYSCALL);
 	}
 
@@ -532,7 +532,7 @@ int main(int argc, char *argv[])
 	if (g_bind_to_device) {
 		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof(ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
 		if (setsockopt(g_udp_sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifreq, sizeof(ifreq)) == -1) {
-			logit(LOG_WARNING, "could not bind UDP socket to device %s: %m\n", g_bind_to_device);
+			logit(LOG_WARNING, "could not bind UDP socket to device %s: %m", g_bind_to_device);
 			exit(EXIT_SYSCALL);
 		}
 	}
@@ -541,7 +541,7 @@ int main(int argc, char *argv[])
 	/* Open the server's TCP port and prepare it for listening */
 	g_tcp_sockfd = socket((g_family == AF_INET) ? PF_INET : PF_INET6, SOCK_STREAM, 0);
 	if (g_tcp_sockfd == -1) {
-		logit(LOG_ERR, "could not create TCP socket: %m\n");
+		logit(LOG_ERR, "could not create TCP socket: %m");
 		exit(EXIT_SYSCALL);
 	}
 
@@ -549,7 +549,7 @@ int main(int argc, char *argv[])
 	if (g_bind_to_device) {
 		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof(ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
 		if (setsockopt(g_tcp_sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifreq, sizeof(ifreq)) == -1) {
-			logit(LOG_WARNING, "could not bind TCP socket to device %s: %m\n", g_bind_to_device);
+			logit(LOG_WARNING, "could not bind TCP socket to device %s: %m", g_bind_to_device);
 			exit(EXIT_SYSCALL);
 		}
 	}
@@ -557,7 +557,7 @@ int main(int argc, char *argv[])
 
 	c = 1;
 	if (setsockopt(g_tcp_sockfd, SOL_SOCKET, SO_REUSEADDR, &c, sizeof(c)) == -1) {
-		logit(LOG_WARNING, "could not set SO_REUSEADDR on TCP socket: %m\n");
+		logit(LOG_WARNING, "could not set SO_REUSEADDR on TCP socket: %m");
 		exit(EXIT_SYSCALL);
 	}
 
@@ -575,21 +575,21 @@ int main(int argc, char *argv[])
 #endif
 	}
 	if (bind(g_tcp_sockfd, (struct sockaddr *)&sockaddr, socklen) == -1) {
-		logit(LOG_ERR, "could not bind TCP socket to port %d: %m\n", g_tcp_port);
+		logit(LOG_ERR, "could not bind TCP socket to port %d: %m", g_tcp_port);
 		exit(EXIT_SYSCALL);
 	}
 
 	if (listen(g_tcp_sockfd, 128) == -1) {
-		logit(LOG_ERR, "could not prepare TCP socket for listening: %m\n");
+		logit(LOG_ERR, "could not prepare TCP socket for listening: %m");
 		exit(EXIT_SYSCALL);
 	}
 
 	/* Print a starting message (so the user knows the args were ok) */
 	if (g_bind_to_device) {
-		logit(LOG_INFO, "Listening on port %d/udp and %d/tcp on interface %s\n",
-			g_udp_port, g_tcp_port, g_bind_to_device);
+		logit(LOG_INFO, "Listening on port %d/udp and %d/tcp on interface %s",
+		      g_udp_port, g_tcp_port, g_bind_to_device);
 	} else {
-		logit(LOG_INFO, "Listening on port %d/udp and %d/tcp\n", g_udp_port, g_tcp_port);
+		logit(LOG_INFO, "Listening on port %d/udp and %d/tcp", g_udp_port, g_tcp_port);
 	}
 
 	if (g_user && geteuid() == 0) {
@@ -653,14 +653,14 @@ int main(int argc, char *argv[])
 			if (g_quit)
 				break;
 
-			logit(LOG_ERR, "could not select from sockets: %m\n");
+			logit(LOG_ERR, "could not select from sockets: %m");
 			exit(EXIT_SYSCALL);
 		}
 
 		/* Determine whether to update the MIB and the next ticks to sleep */
 		ticks = ticks_since(&tv_last, &tv_now);
 		if (ticks < 0 || ticks >= g_timeout) {
-			logit(LOG_DEBUG, "updating the MIB (full)\n");
+			logit(LOG_DEBUG, "updating the MIB (full)");
 			if (mib_update(1) == -1)
 				exit(EXIT_SYSCALL);
 
@@ -668,7 +668,7 @@ int main(int argc, char *argv[])
 			tv_sleep.tv_sec = g_timeout / 100;
 			tv_sleep.tv_usec = (g_timeout % 100) * 10000;
 		} else {
-			logit(LOG_DEBUG, "updating the MIB (partial)\n");
+			logit(LOG_DEBUG, "updating the MIB (partial)");
 			if (mib_update(0) == -1)
 				exit(EXIT_SYSCALL);
 
@@ -718,7 +718,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* We were killed, print a message and exit */
-	logit(LOG_INFO, "stopped\n");
+	logit(LOG_INFO, "stopped");
 	if (g_syslog)
 		closelog();
 

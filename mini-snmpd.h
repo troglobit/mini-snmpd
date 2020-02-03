@@ -106,14 +106,14 @@
 #define NELEMS(array) (sizeof(array) / sizeof(array[0]))
 #endif
 
-#define logit(level, format...)					\
-	do {							\
-		if (g_verbose || (level != LOG_DEBUG)) {	\
-			if (g_syslog)				\
-				syslog(level, format);		\
-			else					\
-				fprintf(stderr, format);	\
-		}						\
+#define logit(prio, fmt, args...)					\
+	do {								\
+		if (g_verbose || (prio != LOG_DEBUG)) {			\
+			if (g_syslog)					\
+				syslog(prio, fmt, ##args);		\
+			else						\
+				fprintf(stderr, fmt "\n", ##args);	\
+		}							\
 	} while (0)
 
 #ifndef CONFIG_ENABLE_IPV6

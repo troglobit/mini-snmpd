@@ -80,11 +80,11 @@ int read_config(char *file)
 	rc = cfg_parse(cfg, file);
 	switch (rc) {
 	case CFG_FILE_ERROR:
-		logit(LOG_ERR, "Cannot read configuration file %s\n", file);
+		logit(LOG_ERR, "Cannot read configuration file %s", file);
 		goto error;
 
 	case CFG_PARSE_ERROR:
-		logit(LOG_ERR, "Parse error in %s\n", file);
+		logit(LOG_ERR, "Parse error in %s", file);
 		goto error;
 
 	case CFG_SUCCESS:

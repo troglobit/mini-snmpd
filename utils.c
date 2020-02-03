@@ -33,7 +33,7 @@ void *allocate(size_t len)
 	char *buf = malloc(len);
 
 	if (!buf) {
-		logit(LOG_DEBUG, "Failed allocating memory: %m\n");
+		logit(LOG_DEBUG, "Failed allocating memory: %m");
 		return NULL;
 	}
 
@@ -120,14 +120,14 @@ int read_file(const char *filename, char *buf, size_t size)
 
 	fp = fopen(filename, "r");
 	if (!fp) {
-		logit(LOG_WARNING, "Failed opening %s: %m\n", filename);
+		logit(LOG_WARNING, "Failed opening %s: %m", filename);
 		return -1;
 	}
 
 	len = fread(buf, 1, size - 1, fp);
 	ret = fclose(fp);
 	if (len == 0 || ret == -1) {
-		logit(LOG_WARNING, "Failed reading %s: %m\n", filename);
+		logit(LOG_WARNING, "Failed reading %s: %m", filename);
 		return -1;
 	}
 
@@ -209,18 +209,18 @@ int ticks_since(const struct timeval *tv_last, struct timeval *tv_now)
 	float ticks;
 
 	if (gettimeofday(tv_now, NULL) == -1) {
-		logit(LOG_WARNING, "could not get ticks: %m\n");
+		logit(LOG_WARNING, "could not get ticks: %m");
 		return -1;
 	}
 
 	if (tv_now->tv_sec < tv_last->tv_sec || (tv_now->tv_sec == tv_last->tv_sec && tv_now->tv_usec < tv_last->tv_usec)) {
-		logit(LOG_WARNING, "could not get ticks: time running backwards\n");
+		logit(LOG_WARNING, "could not get ticks: time running backwards");
 		return -1;
 	}
 
 	ticks = (float)(tv_now->tv_sec - 1 - tv_last->tv_sec) * 100.0 + (float)((tv_now->tv_usec + 1000000 - tv_last->tv_usec) / 10000);
 #ifdef DEBUG
-	logit(LOG_DEBUG, "seconds since last update: %.2f\n", ticks / 100);
+	logit(LOG_DEBUG, "seconds since last update: %.2f", ticks / 100);
 #endif
 	if (ticks < INT_MIN)
 		return INT_MIN;
@@ -249,10 +249,10 @@ void dump_packet(const client_t *client)
 	}
 
 	inet_ntop(my_af_inet, &client_addr, straddr, sizeof(straddr));
-	logit(LOG_DEBUG, "%s %u bytes %s %s:%d (%s)\n",
-		client->outgoing ? "transmitted" : "received", (int) client->size,
-		client->outgoing ? "to" : "from", straddr,
-		ntohs(client->port), buf);
+	logit(LOG_DEBUG, "%s %u bytes %s %s:%d (%s)",
+	      client->outgoing ? "transmitted" : "received", (int) client->size,
+	      client->outgoing ? "to" : "from", straddr,
+	      ntohs(client->port), buf);
 
 	free(buf);
 }
@@ -269,8 +269,8 @@ void dump_mib(const value_t *value, int size)
 		if (snmp_element_as_string(&value[i].data, buf, BUFSIZ) == -1)
 			strncpy(buf, "?", BUFSIZ);
 
-		logit(LOG_DEBUG, "mib entry[%d]: oid='%s', max_length=%zu, data='%s'\n",
-			i, oid_ntoa(&value[i].oid), value[i].data.max_length, buf);
+		logit(LOG_DEBUG, "mib entry[%d]: oid='%s', max_length=%zu, data='%s'",
+		      i, oid_ntoa(&value[i].oid), value[i].data.max_length, buf);
 	}
 
 	free(buf);
@@ -284,13 +284,13 @@ void dump_response(const response_t *response)
 	if (!buf)
 		return;
 
-	logit(LOG_DEBUG, "response: status=%d, index=%d, nr_entries=%zu\n",
-		response->error_status, response->error_index, response->value_list_length);
+	logit(LOG_DEBUG, "response: status=%d, index=%d, nr_entries=%zu",
+	      response->error_status, response->error_index, response->value_list_length);
 	for (i = 0; i < response->value_list_length; i++) {
 		if (snmp_element_as_string(&response->value_list[i].data, buf, MAX_PACKET_SIZE) == -1)
 			strncpy(buf, "?", MAX_PACKET_SIZE);
 
-		logit(LOG_DEBUG, "response: entry[%zu]='%s','%s'\n", i, oid_ntoa(&response->value_list[i].oid), buf);
+		logit(LOG_DEBUG, "response: entry[%zu]='%s','%s'", i, oid_ntoa(&response->value_list[i].oid), buf);
 	}
 
 	free(buf);
