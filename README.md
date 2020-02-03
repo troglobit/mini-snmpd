@@ -37,11 +37,12 @@ Supported features:
 * Includes basic system info like CPU load, memory, disk and network interfaces
 * Does not need a configuration file, but one is supported
 * Supports UDP and TCP (thus supports SSH tunneling of SNMP connections)
-* Supports linux kernel versions 2.4 and 2.6
+* Supports Linux kernel versions 2.4 and 2.6
 * Supports FreeBSD (needs procfs mounted using "mount_linprocfs procfs /proc")
 
-`mini-snmpd` has only been tested on x86 and ARM platforms using
-net-snmp as client, so big endian may not work.
+`mini-snmpd` has been tested on x86 and ARM platforms in Ubuntu Linux,
+Alpine Linux, and FreeBSD, using net-snmp and SnmpB as clients.  Big
+endian may not work.
 
 - For info about licensing, see the file [COPYING][license]
 - For info about using the program, see the file [mini-snmpd.8][man]
