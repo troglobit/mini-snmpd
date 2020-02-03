@@ -1,4 +1,4 @@
-AC_INIT([mini-snmpd], [1.5-pre], [https://github.com/troglobit/mini-snmpd/issues],,
+AC_INIT([mini-snmpd], [1.5], [https://github.com/troglobit/mini-snmpd/issues],,
 	[https://troglobit.com/projects/inadyn/])
 AC_CONFIG_AUX_DIR(aux)
 AM_INIT_AUTOMAKE([1.11 foreign subdir-objects])

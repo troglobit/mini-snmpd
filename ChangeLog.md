@@ -23,6 +23,9 @@ ifXTable with 64-bit counters.
 - Binary and man page renamed: `mini_snmpd` --> `mini-snmpd`
 - New command line option `-l LEVEL` replaces `--verbose`
 - New command line option `-v` to show program version
+- Create PID file when daemon is ready to receive signals
+- Add support for systemd unit file on Linux
+- Add support for /etc/mini-snmpd.conf, disabled by default
 
 ### Fixes
 - CVE-2020-6060: Fix stack overflow in client connection handler
