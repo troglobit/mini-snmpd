@@ -25,6 +25,7 @@
 .Op Fl s, -syslog
 .Op Fl t, -timeout Ar SEC
 .Op Fl u, -drop-privs Ar USER
+.Op Fl v, -version
 .Op Fl V, -vendor Ar OID
 .Sh DESCRIPTION
 .Nm
@@ -94,6 +95,8 @@ Timeout for updating the MIB variables, default is 1 second.
 Drop priviliges after opening sockets to
 .Ar USER ,
 default: no.
+.It Fl v, Fl -version
+Show program version and exit.
 .It Fl V, Fl -vendor Ar OID
 The OID of the device vendor, this MUST be changed to your own
 organization's OID.  Default is .1.3.6.1.4.1

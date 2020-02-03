@@ -95,6 +95,12 @@
 #define SNMP_STATUS_INCONSISTENT_NAME                   18
 
 /*
+ * For -v and syslog starting/stopping messages
+ */
+
+#define PROGRAM_IDENT PACKAGE_NAME " v" PACKAGE_VERSION
+
+/*
  * Macros
  */
 

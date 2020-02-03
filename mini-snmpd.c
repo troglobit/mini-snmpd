@@ -38,7 +38,6 @@
 
 #include "mini-snmpd.h"
 
-
 static int usage(int rc)
 {
 	printf("Usage: %s [options]\n"
@@ -66,6 +65,7 @@ static int usage(int rc)
 	       "  -s, --syslog           Use syslog for logging, even if running in the foreground\n"
 	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
 	       "  -u, --drop-privs USER  Drop priviliges after opening sockets to USER, default: no\n"
+	       "  -v, --version          Show program version and exit\n"
 	       "  -V, --vendor OID       System vendor, default: none\n"
 	       "\n", g_prognm
 #ifdef HAVE_LIBCONFUSE
@@ -328,7 +328,7 @@ static char *progname(char *arg0)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "ac:C:d:D:hi:l:L:np:P:st:u:V:"
+	static const char short_options[] = "ac:C:d:D:hi:l:L:np:P:st:u:vV:"
 #ifndef __FreeBSD__
 		"I:"
 #endif
@@ -365,6 +365,7 @@ int main(int argc, char *argv[])
 		{ "syslog",      0, 0, 's' },
 		{ "timeout",     1, 0, 't' },
 		{ "drop-privs",  1, 0, 'u' },
+		{ "version",     0, 0, 'v' },
 		{ "vendor",      1, 0, 'V' },
 		{ NULL, 0, 0, 0 }
 	};
@@ -474,6 +475,10 @@ int main(int argc, char *argv[])
 			g_user = optarg;
 			break;
 
+		case 'v':
+			printf("v" PACKAGE_VERSION "\n");
+			return 0;
+
 		case 'V':
 			g_vendor = strdup(optarg);
 			break;
@@ -486,7 +491,7 @@ int main(int argc, char *argv[])
 	if (g_syslog)
 		openlog(g_prognm, LOG_CONS | LOG_PID, LOG_DAEMON);
 
-	logit(LOG_INFO, 0, "%s v%s starting", g_prognm, VERSION);
+	logit(LOG_INFO, 0, PROGRAM_IDENT);
 
 	if (g_daemon) {
 		logit(LOG_DEBUG, 0, "Daemonizing ...");
@@ -756,7 +761,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* We were signaled, print a message and exit */
-	logit(LOG_INFO, 0, "%s v%s stopping", g_prognm, VERSION);
+	logit(LOG_INFO, 0, PROGRAM_IDENT);
 	if (g_syslog)
 		closelog();
 
