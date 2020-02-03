@@ -106,7 +106,7 @@ static int encode_byte_array(data_t *data, const char *string, size_t len)
 	}
 
 	if (len > 0xFFFF) {
-		logit(LOG_ERR, "Failed encoding: OCTET STRING overflow");
+		logit(LOG_ERR, 0, "Failed encoding: OCTET STRING overflow");
 		return -1;
 	}
 
@@ -179,7 +179,7 @@ static int encode_oid(data_t *data, const oid_t *oid)
 	}
 
 	if (len > 0xFFFF) {
-		logit(LOG_ERR, "Failed encoding '%s': OID overflow", oid_ntoa(oid));
+		logit(LOG_ERR, 0, "Failed encoding '%s': OID overflow", oid_ntoa(oid));
 		return -1;
 	}
 
@@ -288,7 +288,7 @@ static int mib_build_ip_entry(const oid_t *prefix, int type, const void *arg)
 
 	/* Create a new entry in the MIB table */
 	if (g_mib_length >= MAX_NR_VALUES) {
-		logit(LOG_ERR, "%s '%s': table overflow", msg, oid_ntoa(prefix));
+		logit(LOG_ERR, 0, "%s '%s': table overflow", msg, oid_ntoa(prefix));
 		return -1;
 	}
 
@@ -298,7 +298,7 @@ static int mib_build_ip_entry(const oid_t *prefix, int type, const void *arg)
 	ret  = encode_oid_len(&value->oid);
 	ret += data_alloc(&value->data, type);
 	if (ret) {
-		logit(LOG_ERR, "%s '%s': unsupported type %d", msg,
+		logit(LOG_ERR, 0, "%s '%s': unsupported type %d", msg,
 		      oid_ntoa(&value->oid), type);
 		return -1;
 	}
@@ -306,9 +306,9 @@ static int mib_build_ip_entry(const oid_t *prefix, int type, const void *arg)
 	ret = data_set(&value->data, type, arg);
 	if (ret) {
 		if (ret == 1)
-			logit(LOG_ERR, "%s '%s': unsupported type %d", msg2, oid_ntoa(&value->oid), type);
+			logit(LOG_ERR, 0, "%s '%s': unsupported type %d", msg2, oid_ntoa(&value->oid), type);
 		else if (ret == 2)
-			logit(LOG_ERR, "%s '%s': invalid default value", msg2, oid_ntoa(&value->oid));
+			logit(LOG_ERR, 0, "%s '%s': invalid default value", msg2, oid_ntoa(&value->oid));
 
 		return -1;
 	}
@@ -324,7 +324,7 @@ static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int ty
 
 	/* Create a new entry in the MIB table */
 	if (g_mib_length >= MAX_NR_VALUES) {
-		logit(LOG_ERR, "%s '%s.%d.%d': table overflow", msg, oid_ntoa(prefix), column, row);
+		logit(LOG_ERR, 0, "%s '%s.%d.%d': table overflow", msg, oid_ntoa(prefix), column, row);
 		return NULL;
 	}
 
@@ -333,14 +333,14 @@ static value_t *mib_alloc_entry(const oid_t *prefix, int column, int row, int ty
 
 	/* Create the OID from the prefix, the column and the row */
 	if (oid_build(&value->oid, prefix, column, row)) {
-		logit(LOG_ERR, "%s '%s.%d.%d': oid overflow", msg, oid_ntoa(prefix), column, row);
+		logit(LOG_ERR, 0, "%s '%s.%d.%d': oid overflow", msg, oid_ntoa(prefix), column, row);
 		return NULL;
 	}
 
 	ret  = encode_oid_len(&value->oid);
 	ret += data_alloc(&value->data, type);
 	if (ret) {
-		logit(LOG_ERR, "%s '%s.%d.%d': unsupported type %d", msg,
+		logit(LOG_ERR, 0, "%s '%s.%d.%d': unsupported type %d", msg,
 		      oid_ntoa(&value->oid), column, row, type);
 		return NULL;
 	}
@@ -369,9 +369,9 @@ static int mib_data_set(const oid_t *oid, data_t *data, int column, int row, int
 	ret = data_set(data, type, arg);
 	if (ret) {
 		if (ret == 1)
-			logit(LOG_ERR, "%s '%s.%d.%d': unsupported type %d", msg, oid_ntoa(oid), column, row, type);
+			logit(LOG_ERR, 0, "%s '%s.%d.%d': unsupported type %d", msg, oid_ntoa(oid), column, row, type);
 		else if (ret == 2)
-			logit(LOG_ERR, "%s '%s.%d.%d': invalid default value", msg, oid_ntoa(oid), column, row);
+			logit(LOG_ERR, 0, "%s '%s.%d.%d': invalid default value", msg, oid_ntoa(oid), column, row);
 
 		return -1;
 	}
@@ -387,7 +387,7 @@ static int mib_byte_array_set(const oid_t *oid, data_t *data, int column, int ro
 	ret = encode_byte_array(data, arg, len);
 	if (ret) {
 		if (ret == 2)
-			logit(LOG_ERR, "%s '%s.%d.%d': invalid default value", msg, oid_ntoa(oid), column, row);
+			logit(LOG_ERR, 0, "%s '%s.%d.%d': invalid default value", msg, oid_ntoa(oid), column, row);
 		return -1;
 	}
 
@@ -435,7 +435,7 @@ static int encode_oid_len(oid_t *oid)
 	}
 
 	if (len > 0xFFFF) {
-		logit(LOG_ERR, "Failed encoding '%s': OID overflow", oid_ntoa(oid));
+		logit(LOG_ERR, 0, "Failed encoding '%s': OID overflow", oid_ntoa(oid));
 		oid->encoded_length = -1;
 		return -1;
 	}
@@ -654,14 +654,14 @@ static value_t *mib_value_find(const oid_t *prefix, int column, int row, size_t 
 
 	/* Create the OID from the prefix, the column and the row */
 	if (oid_build(&oid, prefix, column, row)) {
-		logit(LOG_ERR, "%s '%s.%d.%d': OID overflow", msg, oid_ntoa(prefix), column, row);
+		logit(LOG_ERR, 0, "%s '%s.%d.%d': OID overflow", msg, oid_ntoa(prefix), column, row);
 		return NULL;
 	}
 
 	/* Search the MIB for the given OID beginning at the given position */
 	value = mib_find(&oid, pos);
 	if (!value)
-		logit(LOG_ERR, "%s '%s.%d.%d': OID not found", msg, oid_ntoa(prefix), column, row);
+		logit(LOG_ERR, 0, "%s '%s.%d.%d': OID not found", msg, oid_ntoa(prefix), column, row);
 
 	return value;
 }

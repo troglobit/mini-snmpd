@@ -16,6 +16,7 @@
 #define MINI_SNMPD_H_
 
 #include "config.h"
+#include <errno.h>
 #include <stdint.h>
 #include <syslog.h>
 #include <signal.h>
@@ -105,16 +106,6 @@
 #ifndef NELEMS
 #define NELEMS(array) (sizeof(array) / sizeof(array[0]))
 #endif
-
-#define logit(prio, fmt, args...)					\
-	do {								\
-		if (g_verbose || (prio != LOG_DEBUG)) {			\
-			if (g_syslog)					\
-				syslog(prio, fmt, ##args);		\
-			else						\
-				fprintf(stderr, fmt "\n", ##args);	\
-		}							\
-	} while (0)
 
 #ifndef CONFIG_ENABLE_IPV6
 #define my_sockaddr_t           sockaddr_in
@@ -381,6 +372,7 @@ void         get_netinfo        (netinfo_t *netinfo);
 #ifdef CONFIG_ENABLE_DEMO
 void         get_demoinfo       (demoinfo_t *demoinfo);
 #endif
+int          logit              (int priority, int syserr, const char *fmt, ...);
 
 int snmp_packet_complete   (const client_t *client);
 int snmp                   (      client_t *client);

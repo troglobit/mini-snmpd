@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <alloca.h>
 #include <limits.h>
 #include <syslog.h>
 #include <string.h>
@@ -33,7 +34,7 @@ void *allocate(size_t len)
 	char *buf = malloc(len);
 
 	if (!buf) {
-		logit(LOG_DEBUG, "Failed allocating memory: %m");
+		logit(LOG_DEBUG, errno, "Failed allocating memory");
 		return NULL;
 	}
 
@@ -120,14 +121,14 @@ int read_file(const char *filename, char *buf, size_t size)
 
 	fp = fopen(filename, "r");
 	if (!fp) {
-		logit(LOG_WARNING, "Failed opening %s: %m", filename);
+		logit(LOG_WARNING, errno, "Failed opening %s", filename);
 		return -1;
 	}
 
 	len = fread(buf, 1, size - 1, fp);
 	ret = fclose(fp);
 	if (len == 0 || ret == -1) {
-		logit(LOG_WARNING, "Failed reading %s: %m", filename);
+		logit(LOG_WARNING, errno, "Failed reading %s", filename);
 		return -1;
 	}
 
@@ -209,18 +210,18 @@ int ticks_since(const struct timeval *tv_last, struct timeval *tv_now)
 	float ticks;
 
 	if (gettimeofday(tv_now, NULL) == -1) {
-		logit(LOG_WARNING, "could not get ticks: %m");
+		logit(LOG_WARNING, errno, "could not get ticks");
 		return -1;
 	}
 
 	if (tv_now->tv_sec < tv_last->tv_sec || (tv_now->tv_sec == tv_last->tv_sec && tv_now->tv_usec < tv_last->tv_usec)) {
-		logit(LOG_WARNING, "could not get ticks: time running backwards");
+		logit(LOG_WARNING, 0, "could not get ticks: time running backwards");
 		return -1;
 	}
 
 	ticks = (float)(tv_now->tv_sec - 1 - tv_last->tv_sec) * 100.0 + (float)((tv_now->tv_usec + 1000000 - tv_last->tv_usec) / 10000);
 #ifdef DEBUG
-	logit(LOG_DEBUG, "seconds since last update: %.2f", ticks / 100);
+	logit(LOG_DEBUG, 0, "seconds since last update: %.2f", ticks / 100);
 #endif
 	if (ticks < INT_MIN)
 		return INT_MIN;
@@ -249,7 +250,7 @@ void dump_packet(const client_t *client)
 	}
 
 	inet_ntop(my_af_inet, &client_addr, straddr, sizeof(straddr));
-	logit(LOG_DEBUG, "%s %u bytes %s %s:%d (%s)",
+	logit(LOG_DEBUG, 0, "%s %u bytes %s %s:%d (%s)",
 	      client->outgoing ? "transmitted" : "received", (int) client->size,
 	      client->outgoing ? "to" : "from", straddr,
 	      ntohs(client->port), buf);
@@ -269,7 +270,7 @@ void dump_mib(const value_t *value, int size)
 		if (snmp_element_as_string(&value[i].data, buf, BUFSIZ) == -1)
 			strncpy(buf, "?", BUFSIZ);
 
-		logit(LOG_DEBUG, "mib entry[%d]: oid='%s', max_length=%zu, data='%s'",
+		logit(LOG_DEBUG, 0, "mib entry[%d]: oid='%s', max_length=%zu, data='%s'",
 		      i, oid_ntoa(&value[i].oid), value[i].data.max_length, buf);
 	}
 
@@ -284,13 +285,14 @@ void dump_response(const response_t *response)
 	if (!buf)
 		return;
 
-	logit(LOG_DEBUG, "response: status=%d, index=%d, nr_entries=%zu",
+	logit(LOG_DEBUG, 0, "response: status=%d, index=%d, nr_entries=%zu",
 	      response->error_status, response->error_index, response->value_list_length);
 	for (i = 0; i < response->value_list_length; i++) {
 		if (snmp_element_as_string(&response->value_list[i].data, buf, MAX_PACKET_SIZE) == -1)
 			strncpy(buf, "?", MAX_PACKET_SIZE);
 
-		logit(LOG_DEBUG, "response: entry[%zu]='%s','%s'", i, oid_ntoa(&response->value_list[i].oid), buf);
+		logit(LOG_DEBUG, 0, "response: entry[%zu]='%s','%s'",
+		      i, oid_ntoa(&response->value_list[i].oid), buf);
 	}
 
 	free(buf);
@@ -422,6 +424,44 @@ void get_demoinfo(demoinfo_t *demoinfo)
 	demoinfo->random_value_2 = rand();
 }
 #endif
+
+int logit(int priority, int syserr, const char *fmt, ...)
+{
+	va_list ap;
+	char *buf;
+	int len, i;
+
+	if (!g_verbose && LOG_PRI(priority) >= LOG_INFO)
+		return 0;
+
+	va_start(ap, fmt);
+	len = vsnprintf(NULL, 0, fmt, ap);
+	va_end(ap);
+	if (len < 0)
+		return -1;
+
+	/* length of ": error-message" */
+	len += 3 + (syserr > 0 ? strlen(strerror(syserr)) : 0);
+	buf = alloca(len);
+	if (!buf)
+		return -1;
+
+	va_start(ap, fmt);
+	i = vsnprintf(buf, len, fmt, ap);
+	va_end(ap);
+	if (i < 0)
+		return -1;
+
+	if (syserr > 0)
+		i += snprintf(&buf[i], len - i, ": %s", strerror(syserr));
+
+	if (g_syslog)
+		syslog(priority, "%s", buf);
+	else
+		i = fprintf(stderr, "%s\n", buf);
+
+	return i;
+}
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */

@@ -1,8 +1,3 @@
-* Before next release
-
-- Replace all GNU-isms: %m, __progname, etc.
-- Merge ifXTable support from NDM Systems, issue #3
-
 * Merge length calculation and encoding in mib.c and protocol.c
 
 Some length calculation and encoding code exists in both mib.c and

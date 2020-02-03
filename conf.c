@@ -20,7 +20,7 @@ static void conf_errfunc(cfg_t *cfg, const char *format, va_list args)
 		snprintf(fmt, sizeof(fmt), "%s\n", format);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 
-	logit(LOG_ERR, "%s", buf);
+	logit(LOG_ERR, 0, "%s", buf);
 }
 
 static char *get_string(cfg_t *cfg, const char *key)
@@ -70,7 +70,7 @@ int read_config(char *file)
 
 	cfg = cfg_init(opts, CFGF_NONE);
 	if (!cfg) {
-		syslog(LOG_ERR, "Failed initializing configuration file parser: %s", strerror(errno));
+		logit(LOG_ERR, errno, "Failed initializing configuration file parser");
 		return 1;
 	}
 
@@ -80,11 +80,11 @@ int read_config(char *file)
 	rc = cfg_parse(cfg, file);
 	switch (rc) {
 	case CFG_FILE_ERROR:
-		logit(LOG_ERR, "Cannot read configuration file %s", file);
+		logit(LOG_ERR, 0, "Cannot read configuration file %s", file);
 		goto error;
 
 	case CFG_PARSE_ERROR:
-		logit(LOG_ERR, "Parse error in %s", file);
+		logit(LOG_ERR, 0, "Parse error in %s", file);
 		goto error;
 
 	case CFG_SUCCESS:
