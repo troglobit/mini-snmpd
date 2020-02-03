@@ -304,7 +304,7 @@ static char *progname(char *arg0)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "ac:C:d:D:hi:L:np:P:st:uvV:"
+	static const char short_options[] = "ac:C:d:D:hi:L:np:P:st:u:vV:"
 #ifndef __FreeBSD__
 		"I:"
 #endif
@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
 		{ "tcp-port",    1, 0, 'P' },
 		{ "syslog",      0, 0, 's' },
 		{ "timeout",     1, 0, 't' },
-		{ "drop-privs",  0, 0, 'u' },
+		{ "drop-privs",  1, 0, 'u' },
 		{ "verbose",     0, 0, 'v' },
 		{ "vendor",      1, 0, 'V' },
 		{ NULL, 0, 0, 0 }
