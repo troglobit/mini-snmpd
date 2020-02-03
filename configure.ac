@@ -9,7 +9,6 @@ AC_CONFIG_FILES([Makefile])
 
 AC_PROG_CC
 AC_PROG_INSTALL
-PKG_PROG_PKG_CONFIG
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS(alloca.h unistd.h stdint.h stdlib.h syslog.h signal.h getopt.h arpa/inet.h)
@@ -44,6 +43,7 @@ AC_DEFINE_UNQUOTED(VENDOR, ["$vendor"], [Vendor OID])
 
 AS_IF([test "x$with_config" != "xno"], [
 	AC_DEFINE([HAVE_LIBCONFUSE], [1], [Build with support for /etc/mini-snmpd.conf])
+	PKG_PROG_PKG_CONFIG
 	PKG_CHECK_MODULES([confuse], [libconfuse >= 2.7])])
 AM_CONDITIONAL([HAVE_CONFUSE], [test "x$with_config" != "xno"])
 
