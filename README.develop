@@ -58,7 +58,7 @@ If the function you use to determine the new MIB values is operating system
 dependent, you should add your code to both linux.c and/or freebsd.c instead
 of utils.c (which should only be used for os-independent functions).
 
-For debugging output, use the lprintf() macro instead of hardcoding printf() or
+For debugging output, use the logit() macro instead of hardcoding printf() or
 syslog() calls.
 
 

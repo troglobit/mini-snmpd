@@ -44,7 +44,7 @@
 	if ((resp)->value_list_length < MAX_NR_VALUES)			\
 		SNMP_VERSION_2_ERROR((resp), (req), (index), err); 	\
 									\
-	lprintf(LOG_ERR, "%s", msg);					\
+	logit(LOG_ERR, "%s", msg);					\
 	return -1;							\
 }
 
@@ -59,7 +59,7 @@ static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int
 	size_t length_of_len;
 
 	if (*pos >= size) {
-		lprintf(LOG_DEBUG, "underflow for element type\n");
+		logit(LOG_DEBUG, "underflow for element type\n");
 		errno = EINVAL;
 		return -1;
 	}
@@ -91,13 +91,13 @@ static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int
 			break;
 
 		default:
-			lprintf(LOG_DEBUG, "unsupported element type %02X\n", packet[*pos]);
+			logit(LOG_DEBUG, "unsupported element type %02X\n", packet[*pos]);
 			errno = EINVAL;
 			return -1;
 	}
 
 	if (*pos >= size) {
-		lprintf(LOG_DEBUG, "underflow for element length\n");
+		logit(LOG_DEBUG, "underflow for element length\n");
 		errno = EINVAL;
 		return -1;
 	}
@@ -109,7 +109,7 @@ static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int
 	} else {
 		length_of_len = packet[*pos] & 0x7F;
 		if (length_of_len > 2) {
-			lprintf(LOG_DEBUG, "overflow for element length\n");
+			logit(LOG_DEBUG, "overflow for element length\n");
 			errno = EINVAL;
 			return -1;
 		}
@@ -118,7 +118,7 @@ static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int
 		*len = 0;
 		while (length_of_len--) {
 			if (*pos >= size) {
-				lprintf(LOG_DEBUG, "underflow for element length\n");
+				logit(LOG_DEBUG, "underflow for element length\n");
 				errno = EINVAL;
 				return -1;
 			}
@@ -137,7 +137,7 @@ static int decode_int(const unsigned char *packet, size_t size, size_t *pos, siz
 	unsigned int tmp;
 
 	if (len > size || *pos >= (size - len + 1)) {
-		lprintf(LOG_DEBUG, "underflow for integer\n");
+		logit(LOG_DEBUG, "underflow for integer\n");
 		errno = EINVAL;
 		return -1;
 	}
@@ -156,7 +156,7 @@ static int decode_int(const unsigned char *packet, size_t size, size_t *pos, siz
 static int decode_cnt(const unsigned char *packet, size_t size, size_t *pos, size_t len, uint32_t *value)
 {
 	if (len > size || *pos >= (size - len + 1)) {
-		lprintf(LOG_DEBUG, "underflow for unsigned\n");
+		logit(LOG_DEBUG, "underflow for unsigned\n");
 		errno = EINVAL;
 		return -1;
 	}
@@ -174,7 +174,7 @@ static int decode_cnt(const unsigned char *packet, size_t size, size_t *pos, siz
 static int decode_str(const unsigned char *packet, size_t size, size_t *pos, size_t len, char *str, size_t str_len)
 {
 	if (*pos >= (size - len + 1)) {
-		lprintf(LOG_DEBUG, "underflow for string\n");
+		logit(LOG_DEBUG, "underflow for string\n");
 		errno = EINVAL;
 		return -1;
 	}
@@ -189,14 +189,14 @@ static int decode_str(const unsigned char *packet, size_t size, size_t *pos, siz
 static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, size_t len, oid_t *value)
 {
 	if (*pos >= (size - len + 1)) {
-		lprintf(LOG_DEBUG, "underflow for oid\n");
+		logit(LOG_DEBUG, "underflow for oid\n");
 		errno = EINVAL;
 		return -1;
 	}
 
 	value->encoded_length = len;
 	if (len > 0xFFFF) {
-		lprintf(LOG_ERR, "could not decode: internal error\n");
+		logit(LOG_ERR, "could not decode: internal error\n");
 		return -1;
 	}
 
@@ -209,13 +209,13 @@ static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, siz
 
 	value->subid_list_length = 0;
 	if (!len) {
-		lprintf(LOG_DEBUG, "underflow for OID startbyte\n");
+		logit(LOG_DEBUG, "underflow for OID startbyte\n");
 		errno = EINVAL;
 		return -1;
 	}
 
 	if (packet[*pos] & 0x80) {
-		lprintf(LOG_DEBUG, "unsupported OID startbyte %02X\n", packet[*pos]);
+		logit(LOG_DEBUG, "unsupported OID startbyte %02X\n", packet[*pos]);
 		errno = EINVAL;
 		return -1;
 	}
@@ -227,7 +227,7 @@ static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, siz
 
 	while (len) {
 		if (value->subid_list_length >= MAX_NR_SUBIDS) {
-			lprintf(LOG_DEBUG, "overflow for OID byte\n");
+			logit(LOG_DEBUG, "overflow for OID byte\n");
 			errno = EFAULT;
 			return -1;
 		}
@@ -238,7 +238,7 @@ static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, siz
 				= (value->subid_list[value->subid_list_length] << 7) + (packet[*pos] & 0x7F);
 			if (packet[*pos] & 0x80) {
 				if (!len) {
-					lprintf(LOG_DEBUG, "underflow for OID byte\n");
+					logit(LOG_DEBUG, "underflow for OID byte\n");
 					errno = EINVAL;
 					return -1;
 				}
@@ -258,7 +258,7 @@ static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, siz
 static int decode_ptr(const unsigned char UNUSED(*packet), size_t size, size_t *pos, int len)
 {
 	if (*pos >= (size - len + 1)) {
-		lprintf(LOG_DEBUG, "underflow for ptr\n");
+		logit(LOG_DEBUG, "underflow for ptr\n");
 		errno = EINVAL;
 		return -1;
 	}
@@ -284,7 +284,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "%s type %02X length %zu\n", header_msg, type, len);
+		logit(LOG_DEBUG, "%s type %02X length %zu\n", header_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -294,7 +294,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len != 1) {
-		lprintf(LOG_DEBUG, "Unexpected %s type %02X length %zu\n", version_msg, type, len);
+		logit(LOG_DEBUG, "Unexpected %s type %02X length %zu\n", version_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -303,7 +303,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (request->version != SNMP_VERSION_1 && request->version != SNMP_VERSION_2C) {
-		lprintf(LOG_DEBUG, "Unsupported %s %d\n", version_msg, request->version);
+		logit(LOG_DEBUG, "Unsupported %s %d\n", version_msg, request->version);
 		errno = EINVAL;
 		return -1;
 	}
@@ -313,7 +313,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_OCTET_STRING || len >= sizeof(request->community)) {
-		lprintf(LOG_DEBUG, "Unexpected %s type %02X length %zu\n", commun_msg, type, len);
+		logit(LOG_DEBUG, "Unexpected %s type %02X length %zu\n", commun_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -322,7 +322,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (strlen(request->community) < 1) {
-		lprintf(LOG_DEBUG, "unsupported %s '%s'\n", commun_msg, request->community);
+		logit(LOG_DEBUG, "unsupported %s '%s'\n", commun_msg, request->community);
 		errno = EINVAL;
 		return -1;
 	}
@@ -332,7 +332,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "%s type type %02X length %zu\n", request_msg, type, len);
+		logit(LOG_DEBUG, "%s type type %02X length %zu\n", request_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -343,7 +343,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "%s id type %02X length %zu\n", request_msg, type, len);
+		logit(LOG_DEBUG, "%s id type %02X length %zu\n", request_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -356,7 +356,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "%s state type %02X length %zu\n", error_msg, type, len);
+		logit(LOG_DEBUG, "%s state type %02X length %zu\n", error_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -369,7 +369,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_INTEGER || len < 1) {
-		lprintf(LOG_DEBUG, "%s index type %02X length %zu\n", error_msg, type, len);
+		logit(LOG_DEBUG, "%s index type %02X length %zu\n", error_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -382,7 +382,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len != (client->size - pos)) {
-		lprintf(LOG_DEBUG, "%s type %02X length %zu\n", varbind_msg, type, len);
+		logit(LOG_DEBUG, "%s type %02X length %zu\n", varbind_msg, type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -392,7 +392,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 	while (pos < client->size) {
 		/* If there is not enough room in the OID list, bail out now */
 		if (request->oid_list_length >= MAX_NR_OIDS) {
-			lprintf(LOG_DEBUG, "Overflow in OID list\n");
+			logit(LOG_DEBUG, "Overflow in OID list\n");
 			errno = EFAULT;
 			return -1;
 		}
@@ -402,7 +402,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if (type != BER_TYPE_SEQUENCE || len < 1) {
-			lprintf(LOG_DEBUG, "%s type %02X length %zu\n", varbind_msg, type, len);
+			logit(LOG_DEBUG, "%s type %02X length %zu\n", varbind_msg, type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -412,7 +412,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if (type != BER_TYPE_OID || len < 1) {
-			lprintf(LOG_DEBUG, "%s OID type %02X length %zu\n", varbind_msg, type, len);
+			logit(LOG_DEBUG, "%s OID type %02X length %zu\n", varbind_msg, type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -425,7 +425,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 			return -1;
 
 		if ((type == BER_TYPE_NULL && len) || (type != BER_TYPE_NULL && !len)) {
-			lprintf(LOG_DEBUG, "%s value type %02X length %zu\n", varbind_msg, type, len);
+			logit(LOG_DEBUG, "%s value type %02X length %zu\n", varbind_msg, type, len);
 			errno = EINVAL;
 			return -1;
 		}
@@ -564,7 +564,7 @@ static int encode_snmp_oid(unsigned char *buf, const oid_t *oid)
 
 	*buf++ = BER_TYPE_OID;
 	if (len > 0xFFFF) {
-		lprintf(LOG_ERR, "could not encode '%s': OID overflow\n", oid_ntoa(oid));
+		logit(LOG_ERR, "could not encode '%s': OID overflow\n", oid_ntoa(oid));
 		return -1;
 	}
 
@@ -605,7 +605,7 @@ static int encode_snmp_oid(unsigned char *buf, const oid_t *oid)
 
 static int log_encoding_error(const char *what, const char *why)
 {
-	lprintf(LOG_ERR, "Failed encoding %s: %s\n", what, why);
+	logit(LOG_ERR, "Failed encoding %s: %s\n", what, why);
 	return -1;
 }
 
@@ -774,7 +774,7 @@ static int handle_snmp_get(request_t *request, response_t *response, client_t *U
 			continue;
 		}
 
-		lprintf(LOG_ERR, "%s", msg);
+		logit(LOG_ERR, "%s", msg);
 		return -1;
 	}
 
@@ -803,7 +803,7 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 			continue;
 		}
 
-		lprintf(LOG_ERR, "%s", msg);
+		logit(LOG_ERR, "%s", msg);
 		return -1;
 	}
 
@@ -841,7 +841,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 			continue;
 		}
 
-		lprintf(LOG_ERR, "%s", msg);
+		logit(LOG_ERR, "%s", msg);
 		return -1;
 	}
 
@@ -871,7 +871,7 @@ static int handle_snmp_getbulk(request_t *request, response_t *response, client_
 				continue;
 			}
 
-			lprintf(LOG_ERR, "%s", msg);
+			logit(LOG_ERR, "%s", msg);
 			return -1;
 		}
 
@@ -901,7 +901,7 @@ int snmp_packet_complete(const client_t *client)
 		return -1;
 
 	if (type != BER_TYPE_SEQUENCE || len < 1 || len > (client->size - pos)) {
-		lprintf(LOG_DEBUG, "Unexpected SNMP header type %02X length %zu\n", type, len);
+		logit(LOG_DEBUG, "Unexpected SNMP header type %02X length %zu\n", type, len);
 		errno = EINVAL;
 		return -1;
 	}
@@ -962,7 +962,7 @@ int snmp(client_t *client)
 			break;
 
 		default:
-			lprintf(LOG_ERR, "UNHANDLED REQUEST TYPE %d\n", request.type);
+			logit(LOG_ERR, "UNHANDLED REQUEST TYPE %d\n", request.type);
 			client->size = 0;
 			return 0;
 	}

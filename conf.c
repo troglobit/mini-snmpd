@@ -20,7 +20,7 @@ static void conf_errfunc(cfg_t *cfg, const char *format, va_list args)
 		snprintf(fmt, sizeof(fmt), "%s\n", format);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 
-	lprintf(LOG_ERR, "%s", buf);
+	logit(LOG_ERR, "%s", buf);
 }
 
 static char *get_string(cfg_t *cfg, const char *key)
@@ -80,11 +80,11 @@ int read_config(char *file)
 	rc = cfg_parse(cfg, file);
 	switch (rc) {
 	case CFG_FILE_ERROR:
-		lprintf(LOG_ERR, "Cannot read configuration file %s\n", file);
+		logit(LOG_ERR, "Cannot read configuration file %s\n", file);
 		goto error;
 
 	case CFG_PARSE_ERROR:
-		lprintf(LOG_ERR, "Parse error in %s\n", file);
+		logit(LOG_ERR, "Parse error in %s\n", file);
 		goto error;
 
 	case CFG_SUCCESS:

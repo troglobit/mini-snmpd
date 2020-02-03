@@ -106,7 +106,7 @@
 #define NELEMS(array) (sizeof(array) / sizeof(array[0]))
 #endif
 
-#define lprintf(level, format...)				\
+#define logit(level, format...)					\
 	do {							\
 		if (g_verbose || (level != LOG_DEBUG)) {	\
 			if (g_syslog)				\
