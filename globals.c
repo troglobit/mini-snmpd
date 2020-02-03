@@ -32,20 +32,20 @@ int       g_syslog  = 0;
 int       g_level   = LOG_NOTICE;
 volatile sig_atomic_t g_quit = 0;
 
-char     *g_prognm         = NULL;
-char     *g_community      = NULL;
-char     *g_vendor         = NULL;
-char     *g_description    = NULL;
-char     *g_location       = NULL;
-char     *g_contact        = NULL;
-char     *g_bind_to_device = NULL;
-char     *g_user           = NULL;
+char     *g_prognm;
+char     *g_community;
+char     *g_vendor;
+char     *g_description;
+char     *g_location;
+char     *g_contact;
+char     *g_bind_to_device;
+char     *g_user;
 
 char     *g_disk_list[MAX_NR_DISKS] = { "/" };
 size_t    g_disk_list_length        = 1;
 
 char     *g_interface_list[MAX_NR_INTERFACES];
-size_t    g_interface_list_length = 0;
+size_t    g_interface_list_length;
 
 in_port_t g_udp_port = 161;
 in_port_t g_tcp_port = 161;
@@ -53,12 +53,12 @@ in_port_t g_tcp_port = 161;
 int       g_udp_sockfd = -1;
 int       g_tcp_sockfd = -1;
 
-client_t  g_udp_client = { 0, };
+client_t  g_udp_client;
 client_t *g_tcp_client_list[MAX_NR_CLIENTS];
-size_t    g_tcp_client_list_length = 0;
+size_t    g_tcp_client_list_length;
 
 value_t   g_mib[MAX_NR_VALUES];
-size_t    g_mib_length = 0;
+size_t    g_mib_length;
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */
