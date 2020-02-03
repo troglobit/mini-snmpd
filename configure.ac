@@ -12,8 +12,8 @@ AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(unistd.h stdint.h stdlib.h syslog.h signal.h getopt.h arpa/inet.h sys/socket.h)
-AC_CHECK_HEADERS(sys/time.h time.h sys/types.h net/if.h netinet/in.h)
+AC_CHECK_HEADERS(alloca.h unistd.h stdint.h stdlib.h syslog.h signal.h getopt.h arpa/inet.h)
+AC_CHECK_HEADERS(sys/socket.h sys/time.h time.h sys/types.h net/if.h netinet/in.h)
 AC_CHECK_FUNCS(strstr strtod strtoul strtok getopt)
 
 ### Check for configured features #############################################################

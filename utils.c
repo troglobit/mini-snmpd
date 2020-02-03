@@ -18,7 +18,9 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
+#endif
 #include <limits.h>
 #include <syslog.h>
 #include <string.h>
