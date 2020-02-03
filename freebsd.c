@@ -34,6 +34,7 @@
 #include <net/if_var.h>
 #include <net/if_types.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_var.h>
@@ -152,6 +153,19 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	cpuinfo->idle   = cp_info[CP_IDLE];
 	cpuinfo->irqs   = cp_info[CP_INTR];
 	cpuinfo->cntxts = 0;	/* TODO */
+}
+
+void get_ipinfo(ipinfo_t *ipinfo)
+{
+	memset(ipinfo, 0, sizeof(ipinfo_t));
+
+	len = sizeof(ipinfo->ipForwarding);
+	sysctlbyname("net.inet.ip.forwarding", &ipinfo->ipForwarding, &len, NULL, 0);
+
+	len = sizeof(ipinfo->ipDefaultTTL);
+	sysctlbyname("net.inet.ip.forwarding", &ipinfo->ipDefaultTTL, &len, NULL, 0);
+
+	ipinfo->ipReasmTimeout = IPFRAGTTL;
 }
 
 void get_tcpinfo(tcpinfo_t *tcpinfo)
