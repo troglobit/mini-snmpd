@@ -18,7 +18,7 @@
 .Op Fl i, -interfaces Ar IFNAME
 .Op Fl I, -listen Ar IFNAME
 .Op Fl l, -loglevel Ar LEVEL
-.Op Fl L, -location Ar LOC
+.Op Fl L, -location Ar STR
 .Op Fl n, -foreground
 .Op Fl p, -udp-port Ar PORT
 .Op Fl P, -tcp-port Ar PORT
@@ -81,7 +81,7 @@ colon!
 Network interface to bind to, default is listen on all interfaces.
 .It Fl l, Fl -loglevel Ar LEVEL
 Set log level: none, err, info, notice, debug. Default: notice.
-.It Fl L, Fl -location Ar LOC
+.It Fl L, Fl -location Ar STR
 The location of the device, default is empty.
 .It Fl n, -foreground
 Run in foreground, do not detach from controlling terminal.
