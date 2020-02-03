@@ -516,6 +516,7 @@ int main(int argc, char *argv[])
 	sigemptyset (&sig.sa_mask);
 	sig.sa_flags = SA_RESTART;
 	sigaction(SIGTERM, &sig, NULL);
+	sigaction(SIGINT, &sig, NULL);
 	sigaction(SIGHUP, &sig, NULL);
 
 #ifdef DEBUG
