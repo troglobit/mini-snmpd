@@ -295,7 +295,7 @@ extern int       g_timeout;
 extern int       g_auth;
 extern int       g_daemon;
 extern int       g_syslog;
-extern int       g_verbose;
+extern int       g_level;
 extern volatile sig_atomic_t g_quit;
 
 extern char     *g_prognm;

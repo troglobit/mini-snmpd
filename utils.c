@@ -431,7 +431,7 @@ int logit(int priority, int syserr, const char *fmt, ...)
 	char *buf;
 	int len, i;
 
-	if (!g_verbose && LOG_PRI(priority) >= LOG_INFO)
+	if (LOG_PRI(priority) > g_level)
 		return 0;
 
 	va_start(ap, fmt);

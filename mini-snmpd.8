@@ -17,6 +17,7 @@
 .Op Fl h, -help
 .Op Fl i, -interfaces Ar IFNAME
 .Op Fl I, -listen Ar IFNAME
+.Op Fl l, -loglevel Ar LEVEL
 .Op Fl L, -location Ar LOC
 .Op Fl n, -foreground
 .Op Fl p, -udp-port Ar PORT
@@ -24,7 +25,6 @@
 .Op Fl s, -syslog
 .Op Fl t, -timeout Ar SEC
 .Op Fl u, -drop-privs Ar USER
-.Op Fl v, -verbose
 .Op Fl V, -vendor Ar OID
 .Sh DESCRIPTION
 .Nm
@@ -76,6 +76,8 @@ Separate multiple interface names with comma or semicolon,
 colon!
 .It Fl I, Fl -listen Ar IFNAME
 Network interface to bind to, default is listen on all interfaces.
+.It Fl l, Fl -loglevel Ar LEVEL
+Set log level: none, err, info, notice, debug. Default: notice.
 .It Fl L, Fl -location Ar LOC
 The location of the device, default is empty.
 .It Fl n, -foreground
@@ -92,8 +94,6 @@ Timeout for updating the MIB variables, default is 1 second.
 Drop priviliges after opening sockets to
 .Ar USER ,
 default: no.
-.It Fl v, -verbose
-Verbose log messages to syslog/stderr, default is off.
 .It Fl V, Fl -vendor Ar OID
 The OID of the device vendor, this MUST be changed to your own
 organization's OID.  Default is .1.3.6.1.4.1

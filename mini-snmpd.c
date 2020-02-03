@@ -16,6 +16,7 @@
 #define _GNU_SOURCE
 
 #include <string.h>
+#include <sys/param.h>		/* MIN()/MAX() */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -26,6 +27,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
+#define SYSLOG_NAMES		/* Expose syslog.h:prioritynames[] */
+#include <syslog.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -55,6 +58,7 @@ static int usage(int rc)
 	       "  -h, --help             This help text\n"
 	       "  -i, --interfaces IFACE Network interfaces to monitor, default: none\n"
 	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
+	       "  -l, --loglevel LEVEL   Set log level: none, err, info, notice*, debug\n"
 	       "  -L, --location STR     System location, default: none\n"
 	       "  -n, --foreground       Run in foreground, do not detach from controlling terminal\n"
 	       "  -p, --udp-port PORT    UDP port to bind to, default: 161\n"
@@ -62,7 +66,6 @@ static int usage(int rc)
 	       "  -s, --syslog           Use syslog for logging, even if running in the foreground\n"
 	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
 	       "  -u, --drop-privs USER  Drop priviliges after opening sockets to USER, default: no\n"
-	       "  -v, --verbose          Verbose messages\n"
 	       "  -V, --vendor OID       System vendor, default: none\n"
 	       "\n", g_prognm
 #ifdef HAVE_LIBCONFUSE
@@ -289,6 +292,27 @@ static void handle_tcp_client_read(client_t *client)
 	client->outgoing = 1;
 }
 
+static int log_level(char *arg)
+{
+	int i, rc;
+
+	for (i = 0; prioritynames[i].c_name; i++) {
+		size_t min = MIN(strlen(prioritynames[i].c_name), strlen(arg));
+
+		if (!strncasecmp(prioritynames[i].c_name, arg, min)) {
+			g_level = prioritynames[i].c_val;
+			return 0;
+		}
+	}
+
+	rc = atoi(arg);
+	if (-1 == rc)
+		return rc;
+
+	g_level = rc;
+	return 0;
+}
+
 static char *progname(char *arg0)
 {
        char *nm;
@@ -304,7 +328,7 @@ static char *progname(char *arg0)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "ac:C:d:D:hi:L:np:P:st:u:vV:"
+	static const char short_options[] = "ac:C:d:D:hi:l:L:np:P:st:u:V:"
 #ifndef __FreeBSD__
 		"I:"
 #endif
@@ -333,6 +357,7 @@ int main(int argc, char *argv[])
 #ifndef __FreeBSD__
 		{ "listen",      1, 0, 'I' },
 #endif
+		{ "loglevel",    1, 0, 'l' },
 		{ "location",    1, 0, 'L' },
 		{ "foreground",  0, 0, 'n' },
 		{ "udp-port",    1, 0, 'p' },
@@ -340,7 +365,6 @@ int main(int argc, char *argv[])
 		{ "syslog",      0, 0, 's' },
 		{ "timeout",     1, 0, 't' },
 		{ "drop-privs",  1, 0, 'u' },
-		{ "verbose",     0, 0, 'v' },
 		{ "vendor",      1, 0, 'V' },
 		{ NULL, 0, 0, 0 }
 	};
@@ -417,6 +441,11 @@ int main(int argc, char *argv[])
 			g_bind_to_device = strdup(optarg);
 			break;
 #endif
+		case 'l':
+			if (log_level(optarg))
+				return usage(1);
+			break;
+
 		case 'L':
 			g_location = strdup(optarg);
 			break;
@@ -443,10 +472,6 @@ int main(int argc, char *argv[])
 
 		case 'u':
 			g_user = optarg;
-			break;
-
-		case 'v':
-			g_verbose = 1;
 			break;
 
 		case 'V':

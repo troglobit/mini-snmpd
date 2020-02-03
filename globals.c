@@ -28,7 +28,7 @@ int       g_timeout = 100;
 int       g_auth    = 0;
 int       g_daemon  = 1;
 int       g_syslog  = 0;
-int       g_verbose = 0;
+int       g_level   = LOG_NOTICE;
 volatile sig_atomic_t g_quit = 0;
 
 char     *g_prognm         = NULL;
