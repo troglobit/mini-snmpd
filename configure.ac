@@ -9,6 +9,7 @@ AC_CONFIG_FILES([Makefile])
 
 AC_PROG_CC
 AC_PROG_INSTALL
+PKG_PROG_PKG_CONFIG
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h stdint.h stdlib.h syslog.h signal.h getopt.h arpa/inet.h sys/socket.h)
