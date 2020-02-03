@@ -374,7 +374,9 @@ int main(int argc, char *argv[])
 	size_t i;
 	fd_set rfds, wfds;
 	struct sigaction sig;
+#ifndef __FreeBSD__
 	struct ifreq ifreq;
+#endif
 	struct timeval tv_last;
 	struct timeval tv_now;
 	struct timeval tv_sleep;
