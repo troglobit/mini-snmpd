@@ -2,6 +2,22 @@ Mini SNMP Daemon
 ================
 [![License Badge][]][License] [![Travis Status][]][Travis] [![Coverity Status][]][Coverity Scan]
 
+The latest release is always available from GitHub at  
+> https://github.com/troglobit/mini-snmpd/releases
+
+Table of Contents
+-----------------
+
+* [Introduction](#introduction)
+* [Examples](#examples)
+* [Build & Install](#build--install)
+* [Building from GIT](#building-from-git)
+* [Origin & References](#origin--references)
+
+
+Introduction
+------------
+
 The Mini SNMP daemon is a minimal implementation of an SNMP daemon.  It
 is primarily targeted at embedded systems with limited disk and memory
 resources.  All configuration can be done using command line arguments,
@@ -100,11 +116,14 @@ The [GNU Configure & Build][buildsystem] system use `/usr/local` as the
 default install prefix.  Usually this is sufficient, the below example
 installs to `/usr` instead:
 
-    tar xf mini-snmpd-1.4.tar.xz
-	cd mini-snmpd-1.4/
+    tar xf mini-snmpd-X.Y.tar.xz
+	cd mini-snmpd-X.Y/
     ./configure --prefix=/usr
     make -j5
     sudo make install-strip
+
+> *Note: mini-snmpd-X.Y.tar.gz is not an actual release.  See the
+> releases page on GitHub for the latest release.*
 
 
 Building from GIT
@@ -152,6 +171,7 @@ and pull request functions to report bugs or contribute new features.
 [Joachim Nilsson]: http://troglobit.com
 [Robert Ernst]:    <mailto:robert.ernst@aon.at>
 [net-snmp]:        http://www.net-snmp.org/
+[buildsystem]:     https://airs.com/ian/configure/
 [License]:         https://en.wikipedia.org/wiki/GPL_license
 [License Badge]:   https://img.shields.io/badge/License-GPL%20v2-blue.svg
 [Travis]:          https://travis-ci.org/troglobit/mini-snmpd
