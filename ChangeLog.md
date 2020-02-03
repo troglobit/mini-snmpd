@@ -4,13 +4,14 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
-[v1.5][] -- 2020-02-02
+[v1.5][] -- 2020-02-03
 ----------------------
 
 Major feature release.  Support for TCP-MIB, UDP-MIB, IP-MIB,
 ifXTable with 64-bit counters.
 
-Most of the new features are courtesy of [NDM Systems][].
+- Majority of new features from [NDM Systems][]
+- CVE fixes from [Cisco Talos Intelligence Group][talos]
 
 ### Changes
 - Add support for ifXTable (64-bit counters), from NDM Systems
@@ -19,12 +20,16 @@ Most of the new features are courtesy of [NDM Systems][].
 - Add support for IP-MIB, from NDM Systems
 - Add support for ifType
 - Add support for ifMtu
+- Binary and man page renamed: `mini_snmpd` --> `mini-snmpd`
+- New command line option `-l LEVEL` replaces `--verbose`
+- New command line option `-v` to show program version
 
 ### Fixes
 - CVE-2020-6060: Fix stack overflow in client connection handler
 - CVE-2020-6059: Fix out-of-bounds read in parsing of SNMP packet
 - CVE-2020-6058: Fix out-of-bounds read in parsing of SNMP packet
 - Let `-s` flag control use of syslog, when running in foreground
+- Removed all (known) GNU:isms; i.e., `__progname` and `%m`
 
 
 [v1.4][] -- 2017-06-26
@@ -176,5 +181,6 @@ getbulk are supported on UDP and TCP connections.
 [home]:        https://github.com/troglobit/mini-snmpd
 [palacios]:    https://github.com/javiplx
 [NDM Systems]: https://github.com/ndmsystems
+[talos]:       https://twitter.com/talossecurity
 [troglobit]:   https://github.com/troglobit
 [vodz-fork]:   http://www.simtreas.ru/~dzo/busybox-vodz.html
