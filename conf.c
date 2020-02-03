@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include "mini_snmpd.h"
+#include "mini-snmpd.h"
 
 static cfg_t *cfg = NULL;
 

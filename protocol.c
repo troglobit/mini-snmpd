@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "mini_snmpd.h"
+#include "mini-snmpd.h"
 
 #define SNMP_VERSION_1_ERROR(resp, code, index) {			\
 	(resp)->error_status = code;					\

@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "mini_snmpd.h"
+#include "mini-snmpd.h"
 
 unsigned int get_process_uptime(void)
 {

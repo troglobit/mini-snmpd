@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <time.h>
 
-#include "mini_snmpd.h"
+#include "mini-snmpd.h"
 
 /*
  * Module variables
@@ -740,7 +740,7 @@ static int update_c64(const oid_t *oid, int col, int row, size_t *pos, long long
  * and OID.
  *
  * Note that the maximum number of MIB variables is restricted by the length of
- * the MIB array, (see mini_snmpd.h for the value of MAX_NR_VALUES).
+ * the MIB array, (see mini-snmpd.h for the value of MAX_NR_VALUES).
  */
 
 int mib_build(void)

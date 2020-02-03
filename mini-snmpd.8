@@ -1,11 +1,11 @@
 .Dd Feb 2, 2020
-.Dt MINI_SNMPD 8 SMM
+.Dt MINI-SNMPD 8 SMM
 .Os
 .Sh NAME
-.Nm mini_snmpd
+.Nm mini-snmpd
 .Nd a minimal implementation of an SNMP daemon
 .Sh SYNOPSIS
-.Nm mini_snmpd
+.Nm mini-snmpd
 .Op Fl 4, -use-ipv4
 .Op Fl 6, -use-ipv6
 .Op Fl a, -auth
@@ -112,7 +112,7 @@ to exit gracefully
 Same as TERM
 .El
 .Sh EXAMPLE
-mini_snmpd -a -c secret -D "My device" -d /cf -i lo,eth0
+mini-snmpd -a -c secret -D "My device" -d /cf -i lo,eth0
 .Pp
 This command starts the program at the default port, using the community
 string "secret", the system description "My device" and provides disk

@@ -14,8 +14,7 @@ config.status
 configure
 depcomp
 install-sh
-mini_snmpd
-mini_snmpd.tar.gz
+mini-snmpd
 missing
 stamp-h1
 tags

@@ -1,5 +1,5 @@
 The Mini SNMP daemon does not support passing through SNMP requests to other
-processes or loading plugins. Thus, if you want to extend mini_snmpd by your
+processes or loading plugins. Thus, if you want to extend mini-snmpd by your
 own MIB variables, you need to do the following:
 
 
@@ -17,7 +17,7 @@ The vendor is set in the Makefile (the "VENDOR=" make variable).
 
 2.) Write the MIB file
 
-This is not needed for mini_snmpd, but you should be prepared to deliver the
+This is not needed for mini-snmpd, but you should be prepared to deliver the
 MIB description in text form to your users for convenience. Examples of MIBs
 can be found in the net-snmp package.
 

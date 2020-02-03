@@ -2,7 +2,7 @@ AC_INIT([mini-snmpd], [1.5-pre], [https://github.com/troglobit/mini-snmpd/issues
 AM_INIT_AUTOMAKE([1.11 foreign])
 AM_SILENT_RULES([yes])
 
-AC_CONFIG_SRCDIR([mini_snmpd.c])
+AC_CONFIG_SRCDIR([mini-snmpd.c])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])
 

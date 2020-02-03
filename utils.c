@@ -26,7 +26,7 @@
 #include <ctype.h>
 #include <time.h>
 
-#include "mini_snmpd.h"
+#include "mini-snmpd.h"
 
 void *allocate(size_t len)
 {

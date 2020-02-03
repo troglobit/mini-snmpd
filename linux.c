@@ -36,7 +36,7 @@
 #include <time.h>
 #include <math.h>
 
-#include "mini_snmpd.h"
+#include "mini-snmpd.h"
 
 
 /* We need the uptime in 1/100 seconds, so we can't use sysinfo() */

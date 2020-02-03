@@ -33,14 +33,14 @@
 #include <pwd.h>
 #include <grp.h>
 
-#include "mini_snmpd.h"
+#include "mini-snmpd.h"
 
 
 static void print_help(void)
 {
 	printf("Mini snmpd v" VERSION " -- Minimal SNMP daemon for UNIX systems\n"
 	       "\n"
-	       "Usage: mini_snmpd [options]\n"
+	       "Usage: mini-snmpd [options]\n"
 	       "\n"
 #ifdef CONFIG_ENABLE_IPV6
 	       "  -4, --use-ipv4         Use IPv4, default\n"

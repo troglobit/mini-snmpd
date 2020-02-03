@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include "mini_snmpd.h"
+#include "mini-snmpd.h"
 
 const struct in_addr inaddr_any = { INADDR_ANY };
 
