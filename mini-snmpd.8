@@ -115,6 +115,21 @@ to exit gracefully
 .It HUP
 Same as TERM
 .El
+.Sh FILES
+.Bl -tag -width /var/run/mini-snmpd.pid -compact
+.It Pa /etc/mini-snmpd.conf
+configuration file. See
+.Xr mini-snmpd.conf 5
+for more information.
+.It Pa /etc/default/mini-snmpd
+Sourced by systemd unit file,
+.Sy $DAEMON_OPTS
+is supported
+.It Pa /var/run/mini-snmpd.pid
+default process ID file
+.El
+.Sh SEE ALSO
+.Xr mini-snmpd.conf 5
 .Sh EXAMPLE
 mini-snmpd -a -c secret -D "My device" -d /cf -i lo,eth0
 .Pp
