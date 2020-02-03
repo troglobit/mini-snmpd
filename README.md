@@ -156,7 +156,7 @@ systems, unless you know what you are doing!
 Origin & References
 -------------------
 
-[mini-snmpd][github] on is an effort by [Joachim Nilsson][] to create a
+[mini-snmpd][github] is an effort by [Joachim Nilsson][] to create a
 focal point for patches and development of the original [mini_snmpd][1]
 project by [Robert Ernst][], since the original site now has gone dark.
 
