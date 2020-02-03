@@ -70,6 +70,8 @@ The description of the device, default is empty.
 .It Fl f, -file Ar FILE
 Configuration file, default:
 .Pa /etc/mini-snmpd.conf
+.It Fl h, -help
+Show summary of command line options and exit.
 .It Fl i, Fl -interface Ar IFNAME[,IFNAME]
 List of network interfaces to monitor for IF-MIB, default is none.
 Separate multiple interface names with comma or semicolon,
@@ -100,7 +102,6 @@ Show program version and exit.
 .It Fl V, Fl -vendor Ar OID
 The OID of the device vendor, this MUST be changed to your own
 organization's OID.  Default is .1.3.6.1.4.1
-.It Fl h, -help
 .El
 .Sh SIGNALS
 .Nm
