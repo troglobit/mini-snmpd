@@ -157,6 +157,8 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 
 void get_ipinfo(ipinfo_t *ipinfo)
 {
+	size_t len;
+
 	memset(ipinfo, 0, sizeof(ipinfo_t));
 
 	len = sizeof(ipinfo->ipForwarding);
