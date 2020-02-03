@@ -31,7 +31,10 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_var.h>
+#include <net/if_types.h>
 #include <netinet/in.h>
+#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_timer.h>
@@ -129,6 +132,7 @@ void get_meminfo(meminfo_t *meminfo)
 	meminfo->free    = vmt.t_free * pagesize / 1024;
 	meminfo->shared  = vmt.t_vmshr;  /* avmshr or vmrshr */
 	meminfo->buffers = 0;		 /* Not on FreeBSD? */
+	len = sizeof(cache_cnt);
 	sysctlbyname("vm.stats.vm.v_cache_count", &cache_cnt, &len, NULL, 0);
 	meminfo->cached  = (unsigned int)cache_cnt * pagesize / 1024;
 }
@@ -168,7 +172,7 @@ void get_tcpinfo(tcpinfo_t *tcpinfo)
 	if (sysctlbyname("net.inet.tcp.stats", &tcps, &len, NULL, 0) == -1)
 		return;
 
-	if (sizeof(udps) != len)
+	if (sizeof(tcps) != len)
 		return;
 
 	tcpinfo->tcpRtoAlgorithm = 4; /* Van Jacobson */
