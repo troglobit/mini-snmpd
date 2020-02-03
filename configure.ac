@@ -1,4 +1,5 @@
-AC_INIT([mini-snmpd], [1.5-pre], [https://github.com/troglobit/mini-snmpd/issues])
+AC_INIT([mini-snmpd], [1.5-pre], [https://github.com/troglobit/mini-snmpd/issues],,
+	[https://troglobit.com/projects/inadyn/])
 AM_INIT_AUTOMAKE([1.11 foreign])
 AM_SILENT_RULES([yes])
 

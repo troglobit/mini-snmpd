@@ -299,8 +299,6 @@ typedef struct demoinfo_s {
 
 extern const struct in_addr inaddr_any;
 
-extern char   *__progname;
-
 extern int       g_family;
 extern int       g_timeout;
 extern int       g_auth;
@@ -309,6 +307,7 @@ extern int       g_syslog;
 extern int       g_verbose;
 extern volatile sig_atomic_t g_quit;
 
+extern char     *g_prognm;
 extern char     *g_community;
 extern char     *g_description;
 extern char     *g_vendor;

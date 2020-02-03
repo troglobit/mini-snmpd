@@ -31,6 +31,7 @@ int       g_syslog  = 0;
 int       g_verbose = 0;
 volatile sig_atomic_t g_quit = 0;
 
+char     *g_prognm         = NULL;
 char     *g_community      = NULL;
 char     *g_vendor         = NULL;
 char     *g_description    = NULL;

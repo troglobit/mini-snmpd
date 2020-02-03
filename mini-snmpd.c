@@ -38,9 +38,7 @@
 
 static int usage(int rc)
 {
-	printf("Mini snmpd v" VERSION " -- Minimal SNMP daemon for UNIX systems\n"
-	       "\n"
-	       "Usage: mini-snmpd [options]\n"
+	printf("Usage: %s [options]\n"
 	       "\n"
 #ifdef CONFIG_ENABLE_IPV6
 	       "  -4, --use-ipv4         Use IPv4, default\n"
@@ -66,11 +64,15 @@ static int usage(int rc)
 	       "  -u, --drop-privs USER  Drop priviliges after opening sockets to USER, default: no\n"
 	       "  -v, --verbose          Verbose messages\n"
 	       "  -h, --help             This help text\n"
-	       "\n"
+	       "\n", g_prognm
 #ifdef HAVE_LIBCONFUSE
 	       , PACKAGE_NAME
 #endif
 		);
+	printf("Bug report address: %s\n", PACKAGE_BUGREPORT);
+#ifdef PACKAGE_URL
+	printf("Project homepage: %s\n", PACKAGE_URL);
+#endif
 
 	return rc;
 }
@@ -289,6 +291,18 @@ static void handle_tcp_client_read(client_t *client)
 	client->outgoing = 1;
 }
 
+static char *progname(char *arg0)
+{
+       char *nm;
+
+       nm = strrchr(arg0, '/');
+       if (nm)
+	       nm++;
+       else
+	       nm = arg0;
+
+       return nm;
+}
 
 int main(int argc, char *argv[])
 {
@@ -352,12 +366,7 @@ int main(int argc, char *argv[])
 	char *config = NULL;
 #endif
 
-	/* Prevent TERM and HUP signals from interrupting system calls */
-	sig.sa_handler = handle_signal;
-	sigemptyset (&sig.sa_mask);
-	sig.sa_flags = SA_RESTART;
-	sigaction(SIGTERM, &sig, NULL);
-	sigaction(SIGHUP, &sig, NULL);
+	g_prognm = progname(argv[0]);
 
 	/* Parse commandline options */
 	while (1) {
@@ -461,7 +470,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (g_syslog)
-		openlog(__progname, LOG_CONS | LOG_PID, LOG_DAEMON);
+		openlog(g_prognm, LOG_CONS | LOG_PID, LOG_DAEMON);
 
 #ifdef HAVE_LIBCONFUSE
 	if (!config) {
@@ -501,6 +510,13 @@ int main(int argc, char *argv[])
 		exit(EXIT_SYSCALL);
 	if (mib_update(1) == -1)
 		exit(EXIT_SYSCALL);
+
+	/* Prevent TERM and HUP signals from interrupting system calls */
+	sig.sa_handler = handle_signal;
+	sigemptyset (&sig.sa_mask);
+	sig.sa_flags = SA_RESTART;
+	sigaction(SIGTERM, &sig, NULL);
+	sigaction(SIGHUP, &sig, NULL);
 
 #ifdef DEBUG
 	dump_mib(g_mib, g_mib_length);
