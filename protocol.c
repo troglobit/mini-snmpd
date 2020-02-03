@@ -66,34 +66,34 @@ static int decode_len(const unsigned char *packet, size_t size, size_t *pos, int
 
 	/* Fetch the ASN.1 element type (only subset of universal tags supported) */
 	switch (packet[*pos]) {
-		case BER_TYPE_BOOLEAN:
-		case BER_TYPE_INTEGER:
-		case BER_TYPE_BIT_STRING:
-		case BER_TYPE_OCTET_STRING:
-		case BER_TYPE_NULL:
-		case BER_TYPE_OID:
-		case BER_TYPE_SEQUENCE:
-		case BER_TYPE_COUNTER:
-		case BER_TYPE_GAUGE:
-		case BER_TYPE_TIME_TICKS:
-		case BER_TYPE_NO_SUCH_OBJECT:
-		case BER_TYPE_NO_SUCH_INSTANCE:
-		case BER_TYPE_END_OF_MIB_VIEW:
-		case BER_TYPE_SNMP_GET:
-		case BER_TYPE_SNMP_GETNEXT:
-		case BER_TYPE_SNMP_RESPONSE:
-		case BER_TYPE_SNMP_SET:
-		case BER_TYPE_SNMP_GETBULK:
-		case BER_TYPE_SNMP_INFORM:
-		case BER_TYPE_SNMP_TRAP:
-			*type = packet[*pos];
-			*pos = *pos + 1;
-			break;
+	case BER_TYPE_BOOLEAN:
+	case BER_TYPE_INTEGER:
+	case BER_TYPE_BIT_STRING:
+	case BER_TYPE_OCTET_STRING:
+	case BER_TYPE_NULL:
+	case BER_TYPE_OID:
+	case BER_TYPE_SEQUENCE:
+	case BER_TYPE_COUNTER:
+	case BER_TYPE_GAUGE:
+	case BER_TYPE_TIME_TICKS:
+	case BER_TYPE_NO_SUCH_OBJECT:
+	case BER_TYPE_NO_SUCH_INSTANCE:
+	case BER_TYPE_END_OF_MIB_VIEW:
+	case BER_TYPE_SNMP_GET:
+	case BER_TYPE_SNMP_GETNEXT:
+	case BER_TYPE_SNMP_RESPONSE:
+	case BER_TYPE_SNMP_SET:
+	case BER_TYPE_SNMP_GETBULK:
+	case BER_TYPE_SNMP_INFORM:
+	case BER_TYPE_SNMP_TRAP:
+		*type = packet[*pos];
+		*pos = *pos + 1;
+		break;
 
-		default:
-			logit(LOG_DEBUG, "unsupported element type %02X", packet[*pos]);
-			errno = EINVAL;
-			return -1;
+	default:
+		logit(LOG_DEBUG, "unsupported element type %02X", packet[*pos]);
+		errno = EINVAL;
+		return -1;
 	}
 
 	if (*pos >= size) {
@@ -941,30 +941,30 @@ int snmp(client_t *client)
 
 	/* Now handle the SNMP requests depending on their type */
 	switch (request.type) {
-		case BER_TYPE_SNMP_GET:
-			if (handle_snmp_get(&request, &response, client) == -1)
-				return -1;
-			break;
+	case BER_TYPE_SNMP_GET:
+		if (handle_snmp_get(&request, &response, client) == -1)
+			return -1;
+		break;
 
-		case BER_TYPE_SNMP_GETNEXT:
-			if (handle_snmp_getnext(&request, &response, client) == -1)
-				return -1;
-			break;
+	case BER_TYPE_SNMP_GETNEXT:
+		if (handle_snmp_getnext(&request, &response, client) == -1)
+			return -1;
+		break;
 
-		case BER_TYPE_SNMP_SET:
-			if (handle_snmp_set(&request, &response, client) == -1)
-				return -1;
-			break;
+	case BER_TYPE_SNMP_SET:
+		if (handle_snmp_set(&request, &response, client) == -1)
+			return -1;
+		break;
 
-		case BER_TYPE_SNMP_GETBULK:
-			if (handle_snmp_getbulk(&request, &response, client) == -1)
-				return -1;
-			break;
+	case BER_TYPE_SNMP_GETBULK:
+		if (handle_snmp_getbulk(&request, &response, client) == -1)
+			return -1;
+		break;
 
-		default:
-			logit(LOG_ERR, "UNHANDLED REQUEST TYPE %d", request.type);
-			client->size = 0;
-			return 0;
+	default:
+		logit(LOG_ERR, "UNHANDLED REQUEST TYPE %d", request.type);
+		client->size = 0;
+		return 0;
 	}
 
 done:
@@ -989,51 +989,51 @@ int snmp_element_as_string(const data_t *data, char *buf, size_t size)
 
 	/* Depending on type and length, decode the data */
 	switch (type) {
-		case BER_TYPE_INTEGER:
-			if (decode_int(data->buffer, data->encoded_length, &pos, len, &val) == -1)
-				return -1;
-			snprintf(buf, size, "%d", val);
-			break;
+	case BER_TYPE_INTEGER:
+		if (decode_int(data->buffer, data->encoded_length, &pos, len, &val) == -1)
+			return -1;
+		snprintf(buf, size, "%d", val);
+		break;
 
-		case BER_TYPE_OCTET_STRING:
-			snprintf(buf, size, "%.*s", (int)len, &data->buffer[pos]);
-			break;
+	case BER_TYPE_OCTET_STRING:
+		snprintf(buf, size, "%.*s", (int)len, &data->buffer[pos]);
+		break;
 
-		case BER_TYPE_OID:
-			if (decode_oid(data->buffer, data->encoded_length, &pos, len, &oid) == -1)
-				return -1;
-			snprintf(buf, size, "%s", oid_ntoa(&oid));
-			break;
+	case BER_TYPE_OID:
+		if (decode_oid(data->buffer, data->encoded_length, &pos, len, &oid) == -1)
+			return -1;
+		snprintf(buf, size, "%s", oid_ntoa(&oid));
+		break;
 
-		case BER_TYPE_COUNTER:
-		case BER_TYPE_GAUGE:
-		case BER_TYPE_TIME_TICKS:
-			if (decode_cnt(data->buffer, data->encoded_length, &pos, len, &cnt) == -1)
-				return -1;
-			snprintf(buf, size, "%u", cnt);
-			break;
+	case BER_TYPE_COUNTER:
+	case BER_TYPE_GAUGE:
+	case BER_TYPE_TIME_TICKS:
+		if (decode_cnt(data->buffer, data->encoded_length, &pos, len, &cnt) == -1)
+			return -1;
+		snprintf(buf, size, "%u", cnt);
+		break;
 
-		case BER_TYPE_NO_SUCH_OBJECT:
-			snprintf(buf, size, "noSuchObject");
-			break;
+	case BER_TYPE_NO_SUCH_OBJECT:
+		snprintf(buf, size, "noSuchObject");
+		break;
 
-		case BER_TYPE_NO_SUCH_INSTANCE:
-			snprintf(buf, size, "noSuchInstance");
-			break;
+	case BER_TYPE_NO_SUCH_INSTANCE:
+		snprintf(buf, size, "noSuchInstance");
+		break;
 
-		case BER_TYPE_END_OF_MIB_VIEW:
-			snprintf(buf, size, "endOfMibView");
-			break;
+	case BER_TYPE_END_OF_MIB_VIEW:
+		snprintf(buf, size, "endOfMibView");
+		break;
 
-		default:
-			for (i = 0; i < len && i < ((size - 1) / 3); i++)
-				snprintf(buf + 3 * i, 4, "%02X ", data->buffer[pos + i]);
+	default:
+		for (i = 0; i < len && i < ((size - 1) / 3); i++)
+			snprintf(buf + 3 * i, 4, "%02X ", data->buffer[pos + i]);
 
-			if (len > 0)
-				buf[len * 3 - 1] = '\0';
-			else
-				buf[0] = '\0';
-			break;
+		if (len > 0)
+			buf[len * 3 - 1] = '\0';
+		else
+			buf[0] = '\0';
+		break;
 	}
 
 	return 0;

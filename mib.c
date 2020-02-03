@@ -410,7 +410,7 @@ static int oid_build(oid_t *oid, const oid_t *prefix, int column, int row)
 	oid->subid_list[oid->subid_list_length++] = row;
 
 	return 0;
- }
+}
 
 /*
  * Calculate the encoded length of the created OID (note: first the length
@@ -460,52 +460,52 @@ static int encode_oid_len(oid_t *oid)
 static int data_alloc(data_t *data, int type)
 {
 	switch (type) {
-		case BER_TYPE_INTEGER:
-			data->max_length = sizeof(int) + 2;
-			data->encoded_length = 0;
-			data->buffer = allocate(data->max_length);
-			break;
+	case BER_TYPE_INTEGER:
+		data->max_length = sizeof(int) + 2;
+		data->encoded_length = 0;
+		data->buffer = allocate(data->max_length);
+		break;
 
-		case BER_TYPE_IP_ADDRESS:
-			data->max_length = sizeof(uint32_t) + 2;
-			data->encoded_length = 0;
-			data->buffer = allocate(data->max_length);
-			break;
+	case BER_TYPE_IP_ADDRESS:
+		data->max_length = sizeof(uint32_t) + 2;
+		data->encoded_length = 0;
+		data->buffer = allocate(data->max_length);
+		break;
 
-		case BER_TYPE_OCTET_STRING:
-			data->max_length = 4;
-			data->encoded_length = 0;
-			data->buffer = allocate(data->max_length);
-			break;
+	case BER_TYPE_OCTET_STRING:
+		data->max_length = 4;
+		data->encoded_length = 0;
+		data->buffer = allocate(data->max_length);
+		break;
 
-		case BER_TYPE_OID:
-			data->max_length = MAX_NR_SUBIDS * 5 + 4;
-			data->encoded_length = 0;
-			data->buffer = allocate(data->max_length);
-			break;
+	case BER_TYPE_OID:
+		data->max_length = MAX_NR_SUBIDS * 5 + 4;
+		data->encoded_length = 0;
+		data->buffer = allocate(data->max_length);
+		break;
 
-		case BER_TYPE_COUNTER64:
-			data->max_length = sizeof(uint64_t) + 2;
-			data->encoded_length = 0;
-			data->buffer = allocate(data->max_length);
-			break;
+	case BER_TYPE_COUNTER64:
+		data->max_length = sizeof(uint64_t) + 2;
+		data->encoded_length = 0;
+		data->buffer = allocate(data->max_length);
+		break;
 
-		case BER_TYPE_COUNTER:
-		case BER_TYPE_GAUGE:
-		case BER_TYPE_TIME_TICKS:
-			data->max_length = sizeof(unsigned int) + 3;
-			data->encoded_length = 0;
-			data->buffer = allocate(data->max_length);
-			break;
+	case BER_TYPE_COUNTER:
+	case BER_TYPE_GAUGE:
+	case BER_TYPE_TIME_TICKS:
+		data->max_length = sizeof(unsigned int) + 3;
+		data->encoded_length = 0;
+		data->buffer = allocate(data->max_length);
+		break;
 
-		case BER_TYPE_NULL:
-			data->max_length = 0 + 3;
-			data->encoded_length = 0;
-			data->buffer = allocate(data->max_length);
-			break;
+	case BER_TYPE_NULL:
+		data->max_length = 0 + 3;
+		data->encoded_length = 0;
+		data->buffer = allocate(data->max_length);
+		break;
 
-		default:
-			return -1;
+	default:
+		return -1;
 	}
 
 	if (!data->buffer)
@@ -531,31 +531,31 @@ static int data_set(data_t *data, int type, const void *arg)
 	memset(data->buffer, 0, data->max_length);
 
 	switch (type) {
-		case BER_TYPE_INTEGER:
-			return encode_integer(data, (intptr_t)arg);
+	case BER_TYPE_INTEGER:
+		return encode_integer(data, (intptr_t)arg);
 
-		case BER_TYPE_IP_ADDRESS:
-			return encode_ipaddress(data, (uintptr_t)arg);
+	case BER_TYPE_IP_ADDRESS:
+		return encode_ipaddress(data, (uintptr_t)arg);
 
-		case BER_TYPE_OCTET_STRING:
-			return encode_string(data, (const char *)arg);
+	case BER_TYPE_OCTET_STRING:
+		return encode_string(data, (const char *)arg);
 
-		case BER_TYPE_OID:
-			return encode_oid(data, oid_aton((const char *)arg));
+	case BER_TYPE_OID:
+		return encode_oid(data, oid_aton((const char *)arg));
 
-		case BER_TYPE_COUNTER64:
-			return encode_unsigned64(data, type, *((uint64_t *)arg));
+	case BER_TYPE_COUNTER64:
+		return encode_unsigned64(data, type, *((uint64_t *)arg));
 
-		case BER_TYPE_COUNTER:
-		case BER_TYPE_GAUGE:
-		case BER_TYPE_TIME_TICKS:
-			return encode_unsigned(data, type, (uintptr_t)arg);
+	case BER_TYPE_COUNTER:
+	case BER_TYPE_GAUGE:
+	case BER_TYPE_TIME_TICKS:
+		return encode_unsigned(data, type, (uintptr_t)arg);
 
-		case BER_TYPE_NULL:
-			return 0;
+	case BER_TYPE_NULL:
+		return 0;
 
-		default:
-			break;	/* Fall through */
+	default:
+		break;	/* Fall through */
 	}
 
 	return 1;
@@ -771,7 +771,7 @@ int mib_build(void)
 	 */
 	if (mib_build_entry(&m_system_oid, 1, 0, BER_TYPE_OCTET_STRING, g_description) == -1 ||
 	    mib_build_entry(&m_system_oid, 2, 0, BER_TYPE_OID,          g_vendor)      == -1 ||
-	   !mib_alloc_entry(&m_system_oid, 3, 0, BER_TYPE_TIME_TICKS)                        ||
+	    !mib_alloc_entry(&m_system_oid, 3, 0, BER_TYPE_TIME_TICKS)                        ||
 	    mib_build_entry(&m_system_oid, 4, 0, BER_TYPE_OCTET_STRING, g_contact)     == -1 ||
 	    mib_build_entry(&m_system_oid, 5, 0, BER_TYPE_OCTET_STRING, hostname)      == -1 ||
 	    mib_build_entry(&m_system_oid, 6, 0, BER_TYPE_OCTET_STRING, g_location)    == -1 ||

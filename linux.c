@@ -115,19 +115,19 @@ void get_ipinfo(ipinfo_t *ipinfo)
 	long long garbage;
 	field_t fields[] = {
 		{ "Ip", 13,
-			{ &ipinfo->ipForwarding,
-			  &ipinfo->ipDefaultTTL,
-			  &garbage,
-			  &garbage,
-			  &garbage,
-			  &garbage,
-			  &garbage,
-			  &garbage,
-			  &garbage,
-			  &garbage,
-			  &garbage,
-			  &garbage,
-			  &ipinfo->ipReasmTimeout } },
+		  { &ipinfo->ipForwarding,
+		    &ipinfo->ipDefaultTTL,
+		    &garbage,
+		    &garbage,
+		    &garbage,
+		    &garbage,
+		    &garbage,
+		    &garbage,
+		    &garbage,
+		    &garbage,
+		    &garbage,
+		    &garbage,
+		    &ipinfo->ipReasmTimeout } },
 	};
 
 	memset(ipinfo, 0, sizeof(ipinfo_t));
@@ -243,17 +243,17 @@ void get_netinfo(netinfo_t *netinfo)
 			break;
 
 		case AF_PACKET:
-			if (ifa->ifa_flags & IFF_UP)
-				netinfo->status[i] = (ifa->ifa_flags & IFF_RUNNING) ? 1 : 7;
-			else
-				netinfo->status[i] = 2;
-
 			if (ifa->ifa_flags & IFF_POINTOPOINT)
 				netinfo->if_type[i] = 23; /* ppp(23) */
 			else if (ifa->ifa_flags & IFF_LOOPBACK)
 				netinfo->if_type[i] = 24; /* softwareLoopback(24) */
 			else
 				netinfo->if_type[i] = 6; /* ethernetCsmacd(6) */
+
+			if (ifa->ifa_flags & IFF_UP)
+				netinfo->status[i] = (ifa->ifa_flags & IFF_RUNNING) ? 1 : 7;
+			else
+				netinfo->status[i] = 2;
 
 			sll = (struct sockaddr_ll *)ifa->ifa_addr;
 			memcpy(netinfo->mac_addr[i], sll->sll_addr, sizeof(netinfo->mac_addr[i]));

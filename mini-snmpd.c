@@ -122,7 +122,7 @@ static void handle_udp_client(void)
 
 	/* Send the whole UDP packet to the socket at once */
 	rv = sendto(g_udp_sockfd, g_udp_client.packet, g_udp_client.size,
-		MSG_DONTWAIT, (struct sockaddr *)&sockaddr, socklen);
+		    MSG_DONTWAIT, (struct sockaddr *)&sockaddr, socklen);
 	inet_ntop(my_af_inet, &sockaddr.my_sin_addr, straddr, sizeof(straddr));
 	if (rv == -1)
 		logit(LOG_WARNING, "%s %s:%d: %m", snd_msg, straddr, sockaddr.my_sin_port);
@@ -212,7 +212,7 @@ static void handle_tcp_client_write(client_t *client)
 	}
 	if ((size_t)rv != client->size) {
 		logit(LOG_WARNING, "%s %s:%d: only %zd of %zu bytes written",
-			msg, straddr, sockaddr.my_sin_port, rv, client->size);
+		      msg, straddr, sockaddr.my_sin_port, rv, client->size);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -247,7 +247,7 @@ static void handle_tcp_client_read(client_t *client)
 	}
 	if (rv == 0) {
 		logit(LOG_DEBUG, "TCP client %s:%d disconnected",
-			straddr, sockaddr.my_sin_port);
+		      straddr, sockaddr.my_sin_port);
 		close(client->sockfd);
 		client->sockfd = -1;
 		return;
@@ -367,88 +367,88 @@ int main(int argc, char *argv[])
 
 		switch (c) {
 #ifdef CONFIG_ENABLE_IPV6
-			case '4':
-				g_family = AF_INET;
-				break;
+		case '4':
+			g_family = AF_INET;
+			break;
 
-			case '6':
-				g_family = AF_INET6;
-				break;
+		case '6':
+			g_family = AF_INET6;
+			break;
 #endif
 #ifdef HAVE_LIBCONFUSE
-			case 'f':
-				config = optarg;
-				break;
+		case 'f':
+			config = optarg;
+			break;
 #endif
-			case 'h':
-				return usage(0);
+		case 'h':
+			return usage(0);
 
-			case 'p':
-				g_udp_port = atoi(optarg);
-				break;
+		case 'p':
+			g_udp_port = atoi(optarg);
+			break;
 
-			case 'P':
-				g_tcp_port = atoi(optarg);
-				break;
+		case 'P':
+			g_tcp_port = atoi(optarg);
+			break;
 
-			case 'c':
-				g_community = strdup(optarg);
-				break;
+		case 'c':
+			g_community = strdup(optarg);
+			break;
 
-			case 'D':
-				g_description = strdup(optarg);
-				break;
+		case 'D':
+			g_description = strdup(optarg);
+			break;
 
-			case 'V':
-				g_vendor = strdup(optarg);
-				break;
+		case 'V':
+			g_vendor = strdup(optarg);
+			break;
 
-			case 'L':
-				g_location = strdup(optarg);
-				break;
+		case 'L':
+			g_location = strdup(optarg);
+			break;
 
-			case 'C':
-				g_contact = strdup(optarg);
-				break;
+		case 'C':
+			g_contact = strdup(optarg);
+			break;
 #ifndef __FreeBSD__
-			case 'I':
-				g_bind_to_device = strdup(optarg);
-				break;
+		case 'I':
+			g_bind_to_device = strdup(optarg);
+			break;
 #endif
-			case 'd':
-				g_disk_list_length = split(optarg, ",:;", g_disk_list, MAX_NR_DISKS);
-				break;
+		case 'd':
+			g_disk_list_length = split(optarg, ",:;", g_disk_list, MAX_NR_DISKS);
+			break;
 
-			case 'i':
-				g_interface_list_length = split(optarg, ",;", g_interface_list, MAX_NR_INTERFACES);
-				break;
+		case 'i':
+			g_interface_list_length = split(optarg, ",;", g_interface_list, MAX_NR_INTERFACES);
+			break;
 
-			case 't':
-				g_timeout = atoi(optarg) * 100;
-				break;
+		case 't':
+			g_timeout = atoi(optarg) * 100;
+			break;
 
-			case 'a':
-				g_auth = 1;
-				break;
+		case 'a':
+			g_auth = 1;
+			break;
 
-			case 'n':
-				g_daemon = 0;
-				break;
+		case 'n':
+			g_daemon = 0;
+			break;
 
-			case 's':
-				g_syslog = 1;
-				break;
+		case 's':
+			g_syslog = 1;
+			break;
 
-			case 'u':
-				g_user = optarg;
-				break;
+		case 'u':
+			g_user = optarg;
+			break;
 
-			case 'v':
-				g_verbose = 1;
-				break;
+		case 'v':
+			g_verbose = 1;
+			break;
 
-			default:
-				return usage(EXIT_ARGS);
+		default:
+			return usage(EXIT_ARGS);
 		}
 	}
 
@@ -604,7 +604,7 @@ int main(int argc, char *argv[])
 		pwd = getpwnam(g_user);
 		if (pwd == NULL) {
 			logit(LOG_ERR, "Unable to get UID for user \"%s\": %s",
-				g_user, strerror(errno));
+			      g_user, strerror(errno));
 			exit(EXIT_SYSCALL);
 		}
 
@@ -613,24 +613,24 @@ int main(int argc, char *argv[])
 		grp = getgrnam(g_user);
 		if (grp == NULL) {
 			logit(LOG_ERR, "Unable to get GID for group \"%s\": %s",
-				g_user, strerror(errno));
+			      g_user, strerror(errno));
 			exit(EXIT_SYSCALL);
 		}
 
 		if (setgid(grp->gr_gid) == -1) {
 			logit(LOG_ERR, "Unable to set new group \"%s\": %s",
-				g_user, strerror(errno));
+			      g_user, strerror(errno));
 			exit(EXIT_SYSCALL);
 		}
 
 		if (setuid(pwd->pw_uid) == -1) {
 			logit(LOG_ERR, "Unable to set new user \"%s\": %s",
-				g_user, strerror(errno));
+			      g_user, strerror(errno));
 			exit(EXIT_SYSCALL);
 		}
 
 		logit(LOG_INFO, "Successfully dropped privileges to %s:%s",
-			g_user, g_user);
+		      g_user, g_user);
 	}
 
 	/* Handle incoming connect requests and incoming data */
