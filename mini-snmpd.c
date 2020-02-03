@@ -36,7 +36,7 @@
 #include "mini-snmpd.h"
 
 
-static void print_help(void)
+static int usage(int rc)
 {
 	printf("Mini snmpd v" VERSION " -- Minimal SNMP daemon for UNIX systems\n"
 	       "\n"
@@ -71,6 +71,8 @@ static void print_help(void)
 	       , PACKAGE_NAME
 #endif
 		);
+
+	return rc;
 }
 
 static void handle_signal(int UNUSED(signo))
@@ -378,6 +380,8 @@ int main(int argc, char *argv[])
 				config = optarg;
 				break;
 #endif
+			case 'h':
+				return usage(0);
 
 			case 'p':
 				g_udp_port = atoi(optarg);
@@ -444,8 +448,7 @@ int main(int argc, char *argv[])
 				break;
 
 			default:
-				print_help();
-				exit(EXIT_ARGS);
+				return usage(EXIT_ARGS);
 		}
 	}
 
