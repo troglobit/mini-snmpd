@@ -165,7 +165,7 @@ void get_ipinfo(ipinfo_t *ipinfo)
 	sysctlbyname("net.inet.ip.forwarding", &ipinfo->ipForwarding, &len, NULL, 0);
 
 	len = sizeof(ipinfo->ipDefaultTTL);
-	sysctlbyname("net.inet.ip.forwarding", &ipinfo->ipDefaultTTL, &len, NULL, 0);
+	sysctlbyname("net.inet.ip.ttl", &ipinfo->ipDefaultTTL, &len, NULL, 0);
 
 	ipinfo->ipReasmTimeout = IPFRAGTTL;
 }
