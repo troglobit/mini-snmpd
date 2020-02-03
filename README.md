@@ -163,14 +163,14 @@ The new project is [maintained at GitHub][github]. Use its issue tracker
 and pull request functions to report bugs or contribute new features.
 
 [1]:               http://members.aon.at/linuxfreak/linux/mini_snmpd.html
-[man]:             http://ftp.troglobit.com/mini-snmpd/mini-snmpd.html
+[man]:             https://man.troglobit.com/man8/mini_snmpd.8.html
 [github]:          https://github.com/troglobit/mini-snmpd
 [license]:         https://github.com/troglobit/mini-snmpd/blob/master/COPYING
 [contrib]:         https://github.com/troglobit/mini-snmpd/blob/master/README.develop
 [build]:           https://github.com/troglobit/mini-snmpd/blob/master/Makefile
-[Joachim Nilsson]: http://troglobit.com
+[Joachim Nilsson]: https://troglobit.com
 [Robert Ernst]:    <mailto:robert.ernst@aon.at>
-[net-snmp]:        http://www.net-snmp.org/
+[net-snmp]:        https://www.net-snmp.org/
 [buildsystem]:     https://airs.com/ian/configure/
 [License]:         https://en.wikipedia.org/wiki/GPL_license
 [License Badge]:   https://img.shields.io/badge/License-GPL%20v2-blue.svg
