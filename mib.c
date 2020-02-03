@@ -561,22 +561,51 @@ static int data_set(data_t *data, int type, const void *arg)
 	return 1;
 }
 
+struct in_sort {
+	int pos;
+	unsigned int addr;
+} sorted_interface_list[MAX_NR_INTERFACES];
+
+int in_cmp(const void *p1, const void *p2)
+{
+	struct in_sort *a = (struct in_sort *)p1;
+	struct in_sort *b = (struct in_sort *)p2;
+
+	return (int)(a->addr - b->addr);
+}
+
+void sort_addr(netinfo_t *netinfo)
+{
+	size_t i;
+
+	for (i = 0; i < g_interface_list_length; i++) {
+		sorted_interface_list[i].pos  = i;
+		sorted_interface_list[i].addr = netinfo->in_addr[i];
+	}
+
+	qsort(sorted_interface_list, g_interface_list_length, sizeof(struct in_sort), in_cmp);
+}
+
 static int build_ip_mib(oid_t *oid, int type, unsigned int in_addr[], unsigned int value[])
 {
 	size_t i;
 
 	for (i = 0; i < g_interface_list_length; i++) {
 		unsigned int ip;
+		int pos;
 		int j;
 
-		if (!in_addr[i])
+		/* Find position in in_addr[] and value[] */
+		pos = sorted_interface_list[i].pos;
+
+		if (!in_addr[pos])
 			continue;
 
-		ip = htonl(in_addr[i]);
+		ip = htonl(in_addr[pos]);
 		for (j = 0; j < 4; ++j)
 			oid->subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
 
-		if (mib_build_ip_entry(oid, type, (const void *)(intptr_t)value[i]) == -1)
+		if (mib_build_ip_entry(oid, type, (const void *)(intptr_t)value[pos]) == -1)
 			return -1;
 	}
 
@@ -835,6 +864,8 @@ int mib_build(void)
 		oid_t m_ip_adentryifidx_oid  = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 2, 0, 0, 0, 0 },  14, 15  };
 		oid_t m_ip_adentrymask_oid   = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 3, 0, 0, 0, 0 },  14, 15  };
 		oid_t m_ip_adentrybcaddr_oid = { { 1, 3, 6, 1, 2, 1, 4, 20, 1, 4, 0, 0, 0, 0 },  14, 15  };
+
+		sort_addr(&netinfo);
 
 		build_ip_mib(&m_ip_adentryaddr_oid,   BER_TYPE_IP_ADDRESS, netinfo.in_addr, netinfo.in_addr);
 		build_ip_mib(&m_ip_adentryifidx_oid,  BER_TYPE_INTEGER,    netinfo.in_addr, netinfo.ifindex);
