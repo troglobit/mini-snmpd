@@ -221,6 +221,7 @@ typedef struct netinfo_s {
 	unsigned int ifindex[MAX_NR_INTERFACES];
 	unsigned int status[MAX_NR_INTERFACES];
 	unsigned int lastchange[MAX_NR_INTERFACES];
+	unsigned int stats[MAX_NR_INTERFACES];		/* Sentinel for backends */
 	long long rx_bytes[MAX_NR_INTERFACES];
 	long long rx_mc_packets[MAX_NR_INTERFACES];
 	long long rx_bc_packets[MAX_NR_INTERFACES];
