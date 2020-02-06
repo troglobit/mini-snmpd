@@ -90,7 +90,7 @@ static void handle_udp_client(void)
 {
 	const char *req_msg = "Failed UDP request from";
 	const char *snd_msg = "Failed UDP response to";
-	struct my_sockaddr_t sockaddr;
+	my_sockaddr_t sockaddr;
 	my_socklen_t socklen;
 	ssize_t rv;
 	char straddr[my_inet_addrstrlen] = { 0 };
@@ -145,8 +145,8 @@ static void handle_udp_client(void)
 static void handle_tcp_connect(void)
 {
 	const char *msg = "Could not accept TCP connection";
-	struct my_sockaddr_t tmp_sockaddr;
-	struct my_sockaddr_t sockaddr;
+	my_sockaddr_t tmp_sockaddr;
+	my_sockaddr_t sockaddr;
 	my_socklen_t socklen;
 	client_t *client;
 	char straddr[my_inet_addrstrlen] = "";
@@ -206,7 +206,7 @@ static void handle_tcp_client_write(client_t *client)
 	const char *msg = "Failed TCP response to";
 	ssize_t rv;
 	char straddr[my_inet_addrstrlen] = "";
-	struct my_sockaddr_t sockaddr;
+	my_sockaddr_t sockaddr;
 
 	/* Send the packet atomically and close socket if that did not work */
 	sockaddr.my_sin_addr = client->addr;
@@ -241,7 +241,7 @@ static void handle_tcp_client_read(client_t *client)
 	const char *req_msg = "Failed TCP request from";
 	int rv;
 	char straddr[my_inet_addrstrlen] = "";
-	struct my_sockaddr_t sockaddr;
+	my_sockaddr_t sockaddr;
 
 	/* Read from the socket what arrived and put it into the buffer */
 	sockaddr.my_sin_addr = client->addr;

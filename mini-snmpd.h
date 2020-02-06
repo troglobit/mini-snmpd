@@ -99,27 +99,27 @@
 #define PROGRAM_IDENT PACKAGE_NAME " v" PACKAGE_VERSION
 
 #ifndef CONFIG_ENABLE_IPV6
-#define my_sockaddr_t           sockaddr_in
+#define my_sockaddr_t           struct sockaddr_in
 #define my_socklen_t            socklen_t
 #define my_sin_addr             sin_addr
 #define my_sin_port             sin_port
 #define my_sin_family           sin_family
 #define my_af_inet              AF_INET
 #define my_pf_inet              PF_INET
-#define my_in_addr_t            in_addr
+#define my_in_addr_t            struct in_addr
 #define my_in_port_t            in_port_t
 #define my_inet_addrstrlen      INET_ADDRSTRLEN
 
 #else /* IPv6 */
 
-#define my_sockaddr_t           sockaddr_in6
+#define my_sockaddr_t           struct sockaddr_in6
 #define my_socklen_t            socklen_t
 #define my_sin_addr             sin6_addr
 #define my_sin_port             sin6_port
 #define my_sin_family           sin6_family
 #define my_af_inet              AF_INET6
 #define my_pf_inet              PF_INET6
-#define my_in_addr_t            in6_addr
+#define my_in_addr_t            struct in6_addr
 #define my_in_port_t            in_port_t
 #define my_inet_addrstrlen      INET6_ADDRSTRLEN
 #endif/* CONFIG_ENABLE_IPV6 */
@@ -132,7 +132,7 @@
 typedef struct client_s {
 	time_t              timestamp;
 	int                 sockfd;
-	struct my_in_addr_t addr;
+	my_in_addr_t        addr;
 	my_in_port_t        port;
 	unsigned char       packet[MAX_PACKET_SIZE];
 	size_t              size;

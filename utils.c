@@ -240,7 +240,7 @@ void dump_packet(const client_t *client)
 	size_t i, len = 0;
 	char *buf = allocate(BUFSIZ);
 	char straddr[my_inet_addrstrlen];
-	struct my_in_addr_t client_addr;
+	my_in_addr_t client_addr;
 
 	if (!buf)
 		return;
