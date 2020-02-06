@@ -220,13 +220,11 @@ void get_netinfo(netinfo_t *netinfo)
 		if (i == -1)
 			continue;
 
-		logit(LOG_ERR, 0, "Interface %s is interesting! :-)", ifa->ifa_name);
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET:
 			if (!ifa->ifa_addr || !ifa->ifa_netmask)
 				continue;
 
-			logit(LOG_ERR, 0, "Interface %s has a addr + netmask ...", ifa->ifa_name);
 			addr = (struct sockaddr_in *)ifa->ifa_addr;
 			mask = (struct sockaddr_in *)ifa->ifa_netmask;
 			if (addr) {
@@ -250,7 +248,6 @@ void get_netinfo(netinfo_t *netinfo)
 		}
 
 		if (!netinfo->stats[i]) {
-			logit(LOG_ERR, 0, "Interface %s has an stats ...", ifa->ifa_name);
 			if (ifa->ifa_flags & IFF_POINTOPOINT)
 				netinfo->if_type[i] = 23; /* ppp(23) */
 			else if (ifa->ifa_flags & IFF_LOOPBACK)
