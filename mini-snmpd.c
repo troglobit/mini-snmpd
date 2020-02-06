@@ -415,11 +415,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'c':
-			g_community = strdup(optarg);
+			g_community = optarg;
 			break;
 
 		case 'C':
-			g_contact = strdup(optarg);
+			g_contact = optarg;
 			break;
 
 		case 'd':
@@ -427,7 +427,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'D':
-			g_description = strdup(optarg);
+			g_description = optarg;
 			break;
 #ifdef HAVE_LIBCONFUSE
 		case 'f':
@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'L':
-			g_location = strdup(optarg);
+			g_location = optarg;
 			break;
 
 		case 'n':
@@ -483,7 +483,7 @@ int main(int argc, char *argv[])
 			return 0;
 
 		case 'V':
-			g_vendor = strdup(optarg);
+			g_vendor = optarg;
 			break;
 
 		default:
@@ -518,15 +518,15 @@ int main(int argc, char *argv[])
 #endif
 
 	if (!g_community)
-		g_community = strdup("public");
+		g_community = "public";
 	if (!g_vendor)
-		g_vendor = strdup(VENDOR);
+		g_vendor = VENDOR;
 	if (!g_description)
-		g_description = strdup("");
+		g_description = "";
 	if (!g_location)
-		g_location = strdup("");
+		g_location = "";
 	if (!g_contact)
-		g_contact = strdup("");
+		g_contact = "";
 
 	/* Store the starting time since we need it for MIB updates */
 	if (gettimeofday(&tv_last, NULL) == -1) {
