@@ -292,6 +292,7 @@ void get_netinfo(netinfo_t *netinfo)
 	}
 
 	parse_file("/proc/net/dev", fields, NELEMS(fields), 0);
+	freeifaddrs(ifap);
 }
 
 #endif /* __linux__ */
