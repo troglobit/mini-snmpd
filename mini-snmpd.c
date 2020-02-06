@@ -90,10 +90,12 @@ static void handle_udp_client(void)
 {
 	const char *req_msg = "Failed UDP request from";
 	const char *snd_msg = "Failed UDP response to";
-	ssize_t rv;
-	char straddr[my_inet_addrstrlen] = "";
-	my_socklen_t socklen;
 	struct my_sockaddr_t sockaddr;
+	my_socklen_t socklen;
+	ssize_t rv;
+	char straddr[my_inet_addrstrlen] = { 0 };
+
+	memset(&sockaddr, 0, sizeof(sockaddr));
 
 	/* Read the whole UDP packet from the socket at once */
 	socklen = sizeof(sockaddr);
@@ -142,13 +144,16 @@ static void handle_udp_client(void)
 
 static void handle_tcp_connect(void)
 {
-	int rv;
 	const char *msg = "Could not accept TCP connection";
-	char straddr[my_inet_addrstrlen] = "";
-	client_t *client;
-	my_socklen_t socklen;
 	struct my_sockaddr_t tmp_sockaddr;
 	struct my_sockaddr_t sockaddr;
+	my_socklen_t socklen;
+	client_t *client;
+	char straddr[my_inet_addrstrlen] = "";
+	int rv;
+
+	memset(&tmp_sockaddr, 0, sizeof(tmp_sockaddr));
+	memset(&sockaddr, 0, sizeof(sockaddr));
 
 	/* Accept the new connection (remember the client's IP address and port) */
 	socklen = sizeof(sockaddr);
