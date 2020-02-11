@@ -476,7 +476,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 't':
-			g_timeout = atoi(optarg) * 100;
+			g_timeout = atoi(optarg);
 			break;
 
 		case 'u':
@@ -532,6 +532,8 @@ int main(int argc, char *argv[])
 		g_location = "";
 	if (!g_contact)
 		g_contact = "";
+
+	g_timeout *= 100;
 
 	/* Store the starting time since we need it for MIB updates */
 	if (gettimeofday(&tv_last, NULL) == -1) {
