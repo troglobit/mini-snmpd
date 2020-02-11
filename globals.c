@@ -25,7 +25,7 @@
 const struct in_addr inaddr_any = { INADDR_ANY };
 
 int       g_family  = AF_INET;
-int       g_timeout = 100;
+int       g_timeout = 1;
 int       g_auth    = 0;
 int       g_daemon  = 1;
 int       g_syslog  = 0;
