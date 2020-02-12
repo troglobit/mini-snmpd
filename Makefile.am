@@ -1,7 +1,6 @@
 EXEC                  = mini-snmpd
 EXTRA_DIST            = configure README.md COPYING ChangeLog.md TODO
 doc_DATA              = README.md COPYING
-DISTCLEANFILES        = *~ *.bak *.map .*.d *.d DEADJOE semantic.cache *.gdb *.elf core core.*
 dist_man8_MANS        = $(EXEC).8
 sbin_PROGRAMS         = $(EXEC)
 AM_CPPFLAGS           = -DSYSCONFDIR=\"@sysconfdir@\" -DRUNSTATEDIR=\"@runstatedir@\"
@@ -63,4 +62,4 @@ release: distcheck release-hook md5-dist
 
 # Workaround for systemd unit file duing distcheck
 DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd)
-DISTCLEANFILES = lib/.libs/*
+DISTCLEANFILES = lib/.libs/* *~ *.bak *.map .*.d *.d DEADJOE semantic.cache *.gdb *.elf core core.*
