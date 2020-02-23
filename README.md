@@ -22,8 +22,8 @@ Introduction
 The Mini SNMP daemon is a minimal implementation of an SNMP daemon.  It
 is primarily targeted at embedded systems with limited disk and memory
 resources.  All configuration can be done using command line arguments,
-but it also supports a minimal `.conf` file.  It supports basic CPU,
-memory, disk, and network interface statistics.
+or using the optional `/etc/mini-snmp.conf` file.  It supports basic
+CPU, memory, disk, and network interface statistics.
 
 `mini-snmpd` is not as flexibible as, and does not support the same
 features as, the de-facto standard [net-snmp][], but this also means
@@ -31,13 +31,13 @@ it does not have the same footprint and overhead.
 
 Supported features:
 
-* SNMP version 1 and 2c (v3 is on the TODO list)
+* SNMP version 1 and 2c
 * Community string authentication when using 2c or explicitely configured
 * Read-only access (writing is not supported)
 * Includes basic system info like CPU load, memory, disk and network interfaces
 * Does not need a configuration file, but one is supported
 * Supports UDP and TCP (thus supports SSH tunneling of SNMP connections)
-* Supports Linux kernel versions 2.4 and 2.6
+* Supports Linux kernel versions 2.4, 2.6, and later
 * Supports FreeBSD (needs procfs mounted using "mount_linprocfs procfs /proc")
 
 `mini-snmpd` has been tested on x86 and ARM platforms in Ubuntu Linux,
