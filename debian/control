@@ -1,0 +1,33 @@
+Source: mini-snmpd
+Section: net
+Priority: optional
+Maintainer: Joachim Nilsson <troglobit@gmail.com>
+Build-Depends: debhelper (>= 10), libconfuse-dev, pkg-config, systemd
+Standards-Version: 4.3.0
+Homepage: https://troglobit.com/mini-snmpd.html
+Vcs-Git: git://github.com/troglobit/mini-snmpd.git
+Vcs-Browser: https://github.com/troglobit/mini-snmpd
+
+Package: mini-snmpd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: snmpd
+Description: Small SNMP daemon
+ The Mini SNMP daemon is a minimal implementation of an SNMP daemon.  It
+ is primarily targeted at embedded systems with limited disk and memory
+ resources.  All configuration can be done using command line arguments,
+ or via the optional /etc/mini-snmpd.conf file.  It supports basic CPU,
+ memory, disk, and network interface statistics.
+ .
+ mini-snmpd is not as flexibible as, and does not support the same
+ features as, the de-facto standard net-snmp, but this also means it
+ does not have the same footprint and overhead.
+ .
+ Supported features:
+ .
+   * SNMP version 1 and 2c
+   * Community string authentication when using 2c or explicitely configured
+   * Read-only access (writing is not supported)
+   * Basic system info like CPU load, memory, disk and network interfaces
+   * Does not need a configuration file, but one is supported
+   * Supports UDP and TCP (thus supports SSH tunneling of SNMP connections)

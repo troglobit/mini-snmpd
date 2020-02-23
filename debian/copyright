@@ -1,0 +1,13 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: mini-snmpd - Small SNMP daemon
+Upstream-Contact: Joachim Nilsson <troglobit@gmail.com>
+Source: http://github.com/troglobit/mini-snmpd
+
+Files: *
+Copyright: 2008-2010 Robert Ernst <robert.ernst@linux-solutions.at>
+	   2015-2020 Joachim Nilsson <troglobit@gmail.com>
+License: GPL-2+
+
+Files: debian/*
+Copyright: 2020 Joachim Nilsson <troglobit@gmail.com>
+License: GPL-2+

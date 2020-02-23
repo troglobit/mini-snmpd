@@ -1,0 +1,2 @@
+# Use this to set command line options, or edit /etc/mini-snmpd.conf
+#DAEMON_OPTS="-a -i enp0s25 -i wlp3s0"

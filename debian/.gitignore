@@ -1,0 +1,8 @@
+*~
+*.log
+*.debhelper
+*.substvars
+autoreconf.*
+mini-snmpd/*
+files
+debhelper-build-stamp

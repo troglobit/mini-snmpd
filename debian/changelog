@@ -1,0 +1,5 @@
+mini-snmpd (1.6) stable; urgency=medium
+
+  * Initial packaging.
+
+ -- Joachim Nilsson <troglobit@gmail.com>  Sun, 23 Feb 2020 08:06:59 +0100
