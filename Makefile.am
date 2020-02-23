@@ -1,5 +1,5 @@
 EXEC                  = mini-snmpd
-EXTRA_DIST            = configure README.md COPYING ChangeLog.md TODO
+EXTRA_DIST            = README.md COPYING ChangeLog.md
 doc_DATA              = README.md COPYING
 dist_man8_MANS        = $(EXEC).8
 sbin_PROGRAMS         = $(EXEC)
