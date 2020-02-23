@@ -4,6 +4,20 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
+[v1.6][] -- 2020-02-23
+----------------------
+
+Bug fix release.
+
+### Changes
+- Added debian/ packaging, available from https://deb.troglobit.com
+
+### Fixes
+- Fix #16: regression in ifTable for point-to-point interfaces
+- Fix #17: major memory leak in Linux backend
+- Fix #18: consistent timeout handling in .conf file and command line
+
+
 [v1.5][] -- 2020-02-03
 ----------------------
 
@@ -173,7 +187,8 @@ This is the first feature-complete version.  SNMP get, getnext, and
 getbulk are supported on UDP and TCP connections.
 
 
-[UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v1.5...HEAD
+[UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v1.6...HEAD
+[v1.6]:        https://github.com/troglobit/mini-snmpd/compare/v1.5...v1.6
 [v1.5]:        https://github.com/troglobit/mini-snmpd/compare/v1.4...v1.5
 [v1.4]:        https://github.com/troglobit/mini-snmpd/compare/v1.3...v1.4
 [v1.3]:        https://github.com/troglobit/mini-snmpd/compare/v1.2b...v1.3
