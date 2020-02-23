@@ -33,7 +33,7 @@ md5-dist:
 
 ## Check if tagged in git
 release-hook:
-	if [ ! `git tag | grep $(PACKAGE_VERSION)` ]; then				\
+	@if [ ! `git tag | grep $(PACKAGE_VERSION)` ]; then				\
 		echo;									\
 		printf "\e[1m\e[41mCannot find release tag $(PACKAGE_VERSION)\e[0m\n";	\
 		printf "\e[1m\e[5mDo release anyway?\e[0m "; read yorn;			\
@@ -49,15 +49,22 @@ release-hook:
 		echo;									\
 	fi
 
+# lintian --profile debian -i -I --show-overrides ../$PKG.changes
+package build-deb:
+	@dpkg-buildpackage -uc -us -B
+
 ## Target to run when building a release
-release: distcheck release-hook md5-dist
+release: release-hook distcheck package md5-dist
 	@mv $(DIST_ARCHIVES) ../
 	@echo
 	@echo "Resulting release files:"
-	@echo "================================================================"
-	@for file in $(DIST_ARCHIVES); do						\
-		printf "$$file    \tDistribution tarball\n";				\
-		printf "$$file.md5\t"; cat ../$$file.md5 | cut -f1 -d' ';		\
+	@echo "================================================================="
+	@for file in $(DIST_ARCHIVES); do					\
+		printf "%-32s Distribution tarball\n" $$file;			\
+		printf "%-32s " $$file.md5; cat ../$$file.md5 | cut -f1 -d' ';	\
+	done
+	@for file in `cd ..; ls $(PACKAGE)_$(VERSION)*`; do			\
+		printf "%-32s Debian/Ubuntu package\n" $$file;			\
 	done
 
 # Workaround for systemd unit file duing distcheck
