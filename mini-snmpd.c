@@ -65,7 +65,7 @@ static int usage(int rc)
 	       "  -P, --tcp-port PORT    TCP port to bind to, default: 161\n"
 	       "  -s, --syslog           Use syslog for logging, even if running in the foreground\n"
 	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
-	       "  -u, --drop-privs USER  Drop priviliges after opening sockets to USER, default: no\n"
+	       "  -u, --drop-privs USER  Drop privileges after opening sockets to USER, default: no\n"
 	       "  -v, --version          Show program version and exit\n"
 	       "  -V, --vendor OID       System vendor, default: none\n"
 	       "\n", g_prognm

@@ -32,7 +32,7 @@ it does not have the same footprint and overhead.
 Supported features:
 
 * SNMP version 1 and 2c
-* Community string authentication when using 2c or explicitely configured
+* Community string authentication when using 2c or explicitly configured
 * Read-only access (writing is not supported)
 * Includes basic system info like CPU load, memory, disk and network interfaces
 * Does not need a configuration file, but one is supported

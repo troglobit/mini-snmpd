@@ -26,7 +26,7 @@ Description: Small SNMP daemon
  Supported features:
  .
    * SNMP version 1 and 2c
-   * Community string authentication when using 2c or explicitely configured
+   * Community string authentication when using 2c or explicitly configured
    * Read-only access (writing is not supported)
    * Basic system info like CPU load, memory, disk and network interfaces
    * Does not need a configuration file, but one is supported
