@@ -1,5 +1,5 @@
-AC_INIT([mini-snmpd], [1.5], [https://github.com/troglobit/mini-snmpd/issues],,
-	[https://troglobit.com/projects/inadyn/])
+AC_INIT([mini-snmpd], [1.6], [https://github.com/troglobit/mini-snmpd/issues],,
+	[https://troglobit.com/projects/mini-snmpd/])
 AC_CONFIG_AUX_DIR(aux)
 AM_INIT_AUTOMAKE([1.11 foreign subdir-objects])
 AM_SILENT_RULES([yes])
