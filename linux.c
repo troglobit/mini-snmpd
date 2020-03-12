@@ -18,7 +18,6 @@
 #include <netpacket/packet.h>
 #include <sys/sysinfo.h>
 #include <sys/socket.h>
-#include <linux/if_link.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/time.h>
