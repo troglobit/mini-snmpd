@@ -77,7 +77,7 @@ int read_config(char *file)
 		CFG_STR ("vendor", VENDOR, CFGF_NONE),
 		CFG_STR_LIST("disk-table", "/", CFGF_NONE),
 		CFG_STR_LIST("iface-table", NULL, CFGF_NONE),
-		CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
+		CFG_ETHTOOL_SEC
 		CFG_END()
 	};
 

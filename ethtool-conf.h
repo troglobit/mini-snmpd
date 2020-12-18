@@ -17,8 +17,19 @@
 #define ETHTOOL_CONF_H_
 
 #include <confuse.h>
+#include "config.h"
+
+#ifdef CONFIG_ENABLE_ETHTOOL
 
 extern cfg_opt_t ethtool_opts[];
 void ethtool_xlate_cfg(cfg_t *cfg);
+#define CFG_ETHTOOL_SEC		CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
+
+#else
+
+#define ethtool_xlate_cfg(cfg) do {} while (0)
+#define CFG_ETHTOOL_SEC
+
+#endif
 
 #endif

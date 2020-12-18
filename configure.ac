@@ -52,6 +52,10 @@ AC_ARG_ENABLE(ipv6,
    AS_HELP_STRING([--disable-ipv6], [Disable IPv6 support, enabled by default]),
    	[enable_ipv6=$enableval], [enable_ipv6=yes])
 
+AC_ARG_ENABLE(ethtool,
+   AS_HELP_STRING([--enable-ethtool], [Enable ethtool interface stats, disabled by default]),
+   	[enable_ethtool=$enableval], [enable_ethtool=no])
+
 ### Enable features ###########################################################################
 AS_IF([test "x$with_vendor" != "xno"],[
 	AS_IF([test "x$vendor" = "xyes"],[
@@ -73,6 +77,9 @@ AS_IF([test "x$enable_demo" = "xyes"],[
 
 AS_IF([test "x$enable_ipv6" != "xno"],[
    AC_DEFINE(CONFIG_ENABLE_IPV6, 1, [Define to enable IPv6 support.])])
+
+AS_IF([test "x$enable_ethtool" != "xno"],[
+   AC_DEFINE(CONFIG_ENABLE_ETHTOOL, 1, [Define to enable ethtool stats.])])
 
 # Check where to install the systemd .service file
 AS_IF([test "x$with_systemd" = "xyes" -o "x$with_systemd" = "xauto"], [
@@ -124,6 +131,7 @@ cat <<EOF
   mini-snmpd.conf...: $with_config
   demo mode.........: $enable_demo
   systemd...........: $with_systemd
+  ethtool stats.....: $enable_ethtool
 
 ------------- Compiler version --------------
 $($CC --version || true)

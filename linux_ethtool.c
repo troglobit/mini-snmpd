@@ -31,6 +31,8 @@
 #include "ethtool-conf.h"
 #include "mini-snmpd.h"
 
+#ifdef CONFIG_ENABLE_ETHTOOL
+
 typedef unsigned long long u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
@@ -290,6 +292,7 @@ int ethtool_gstats(int intf, netinfo_t *netinfo, field_t *field)
 	return 0;
 }
 
+#endif
 #endif
 
 /* vim: ts=4 sts=4 sw=4 nowrap
