@@ -17,6 +17,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include "ethtool-conf.h"
 #include "mini-snmpd.h"
 
 static cfg_t *cfg = NULL;
@@ -76,6 +77,7 @@ int read_config(char *file)
 		CFG_STR ("vendor", VENDOR, CFGF_NONE),
 		CFG_STR_LIST("disk-table", "/", CFGF_NONE),
 		CFG_STR_LIST("iface-table", NULL, CFGF_NONE),
+		CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
 		CFG_END()
 	};
 
@@ -117,6 +119,8 @@ int read_config(char *file)
 	g_timeout     = cfg_getint(cfg, "timeout");
 
 	g_vendor      = get_string(cfg, "vendor");
+
+	ethtool_xlate_cfg(cfg);
 
 error:
 	cfg_free(cfg);
