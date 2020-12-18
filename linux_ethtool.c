@@ -15,6 +15,7 @@
 #ifdef __linux__
 
 #include <confuse.h>
+#include <fnmatch.h>
 #include <net/if.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -214,7 +215,7 @@ void ethtool_xlate_cfg(cfg_t *cfg)
 {
 	cfg_t *ethtool;
 	const char *iname;
-	unsigned int i;
+	unsigned int i, j;
 	int intf;
 
 	if (ethtool_init() < 0)
@@ -225,10 +226,16 @@ void ethtool_xlate_cfg(cfg_t *cfg)
 		iname = cfg_title(ethtool);
 		logit(LOG_INFO, 0, "Parsing ethtool section '%s'", iname);
 
-		// FIXME: wildcard match against interface list
+		/* exact match? */
 		intf = find_ifname((char *)iname);
 		if (intf >= 0)
 			ethtool_xlate_intf(ethtool, intf, iname);
+
+		/* or wildcard match? */
+		else if (strcspn(iname, "*?["))
+			for (j = 0; j < g_interface_list_length; j++)
+				if (!fnmatch(iname, g_interface_list[j], 0))
+					ethtool_xlate_intf(ethtool, j, g_interface_list[j]);
 	}
 }
 
