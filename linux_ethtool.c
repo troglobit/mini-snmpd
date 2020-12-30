@@ -95,22 +95,6 @@ and this added to the main parser
 
  */
 
-cfg_opt_t ethtool_opts[] = {
-	CFG_STR("rx_bytes", NULL, CFGF_NONE),
-	CFG_STR("rx_mc_packets", NULL, CFGF_NONE),
-	CFG_STR("rx_bc_packets", NULL, CFGF_NONE),
-	CFG_STR("rx_packets", NULL, CFGF_NONE),
-	CFG_STR("rx_errors", NULL, CFGF_NONE),
-	CFG_STR("rx_drops", NULL, CFGF_NONE),
-	CFG_STR("tx_bytes", NULL, CFGF_NONE),
-	CFG_STR("tx_mc_packets", NULL, CFGF_NONE),
-	CFG_STR("tx_bc_packets", NULL, CFGF_NONE),
-	CFG_STR("tx_packets", NULL, CFGF_NONE),
-	CFG_STR("tx_errors", NULL, CFGF_NONE),
-	CFG_STR("tx_drops", NULL, CFGF_NONE),
-	CFG_END()
-};
-
 static int ethtool_init()
 {
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -299,8 +283,8 @@ int ethtool_gstats(int intf, netinfo_t *netinfo, field_t *field)
 	return 0;
 }
 
-#endif
-#endif
+#endif /* CONFIG_ENABLE_ETHTOOL */
+#endif /* __linux__ */
 
 /* vim: ts=4 sts=4 sw=4 nowrap
  */
