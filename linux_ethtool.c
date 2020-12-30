@@ -52,48 +52,13 @@ static struct ethtool_s {
 	int tx_bytes;
 	int tx_mc_packets;
 	int tx_bc_packets;
-        int tx_packets;
+	int tx_packets;
 	int tx_errors;
 	int tx_drops;
 } ethtool[MAX_NR_INTERFACES];
 
 /* ethtool socket */
 static int fd = -1;
-
-/* libconfuse config file example
-
-ethtool lan1 {
-   rx_bytes      = ifInOctets
-   rx_packets    = ifInUcastPkts
-//   rx_errors     =
-   rx_drops      = dot1dTpPortInDiscards
-   rx_mc_packets = ifInMulticastPkts
-   tx_bytes      = ifOutOctets
-   tx_packets    = ifOutUcastPkts
-//   tx_errors     =
-   tx_drops      = ifOutDiscards
-   tx_mc_packets = ifOutMulticastPkts
-   rx_bc_packets = ifInBroadcastPkts
-   tx_bc_packets = ifOutBroadcastPkts
-}
-
-ethtool * {
-}
-
-with parser
-
-        cfg_opt_t ethtool_opts[] = {
-		CFG_STR("rx_bytes", NULL, CFGF_NONE),
-		CFG_STR("tx_bytes", NULL, CFGF_NONE),
-		CFG_END()
-	};
-
-
-and this added to the main parser
-
-	CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
-
- */
 
 static int ethtool_init()
 {
@@ -150,17 +115,18 @@ static int ethtool_match_string(const char *key, struct ethtool_gstrings *string
 
 	if (!key)
 		return -1;
-	for (i = 0; i < strings->len; i++)
+	for (i = 0; i < strings->len; i++) {
 		if (!strncmp(key, (char *)&strings->data[i * ETH_GSTRING_LEN], ETH_GSTRING_LEN)) {
 			logit(LOG_DEBUG, 0, "found '%s' match at index %u", key, i);
 			return i;
 		}
+	}
 	return -1;
 }
 
-#define ethtool_parse_opt(_name)						       	\
+#define ethtool_parse_opt(_name)													\
 	ethtool[intf]._name = ethtool_match_string(cfg_getstr(cfg, #_name), strings);	\
-	if (ethtool[intf]._name >= 0)					       		\
+	if (ethtool[intf]._name >= 0)										       		\
 		found = 1;
 
 static void ethtool_xlate_intf(cfg_t *cfg, int intf, const char *iname)
@@ -212,23 +178,27 @@ void ethtool_xlate_cfg(cfg_t *cfg)
 
 		/* exact match? */
 		intf = find_ifname((char *)iname);
-		if (intf >= 0)
+		if (intf >= 0) {
 			ethtool_xlate_intf(ethtool, intf, iname);
+			continue;
+		}
 
 		/* or wildcard match? */
-		else if (strcspn(iname, "*?["))
-			for (j = 0; j < g_interface_list_length; j++)
+		if (strcspn(iname, "*?[")) {
+			for (j = 0; j < g_interface_list_length; j++) {
 				if (!fnmatch(iname, g_interface_list[j], 0))
 					ethtool_xlate_intf(ethtool, j, g_interface_list[j]);
+			}
+		}
 	}
 }
 
-#define set_val(_fieldnum, _name)						\
+#define set_val(_fieldnum, _name)													\
 	if (ethtool[intf]._name >= 0 && ethtool[intf]._name < ethtool[intf].n_stats)	\
-		netinfo->_name[intf] = stats->data[ethtool[intf]._name];		\
-	else if (_fieldnum >= 0) {						\
-			fallback = 1;				       	\
-			field->value[_fieldnum] = &netinfo->_name[intf];		\
+		netinfo->_name[intf] = stats->data[ethtool[intf]._name];					\
+	else if (_fieldnum >= 0) {														\
+			fallback = 1;															\
+			field->value[_fieldnum] = &netinfo->_name[intf];						\
 	}
 
 int ethtool_gstats(int intf, netinfo_t *netinfo, field_t *field)
@@ -276,7 +246,7 @@ int ethtool_gstats(int intf, netinfo_t *netinfo, field_t *field)
 	/* we can avoid parsing values from the dev file if there is no fallback counter */
 	if (fallback) {
 		field->prefix = g_interface_list[intf];
-		field->len     = 12;
+		field->len    = 12;
 	}
 	free(stats);
 
