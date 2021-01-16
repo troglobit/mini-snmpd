@@ -375,6 +375,12 @@ int mib_update   (int full);
 value_t *mib_find     (const oid_t *oid, size_t *pos);
 value_t *mib_findnext (const oid_t *oid);
 
+#ifdef CONFIG_ENABLE_ETHTOOL
+int ethtool_gstats(int intf, netinfo_t *netinfo, field_t *field);
+#else
+#define ethtool_gstats(intf, netinfo, field) (-1)
+#endif
+
 #endif /* MINI_SNMPD_H_ */
 
 /* vim: ts=4 sts=4 sw=4 nowrap

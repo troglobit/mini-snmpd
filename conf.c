@@ -17,6 +17,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include "ethtool-conf.h"
 #include "mini-snmpd.h"
 
 static cfg_t *cfg = NULL;
@@ -66,6 +67,21 @@ static size_t get_list(cfg_t *cfg, const char *key, char **list, size_t len)
 int read_config(char *file)
 {
 	int rc = 0;
+	cfg_opt_t ethtool_opts[] = {
+		CFG_STR("rx_bytes", NULL, CFGF_NONE),
+		CFG_STR("rx_mc_packets", NULL, CFGF_NONE),
+		CFG_STR("rx_bc_packets", NULL, CFGF_NONE),
+		CFG_STR("rx_packets", NULL, CFGF_NONE),
+		CFG_STR("rx_errors", NULL, CFGF_NONE),
+		CFG_STR("rx_drops", NULL, CFGF_NONE),
+		CFG_STR("tx_bytes", NULL, CFGF_NONE),
+		CFG_STR("tx_mc_packets", NULL, CFGF_NONE),
+		CFG_STR("tx_bc_packets", NULL, CFGF_NONE),
+		CFG_STR("tx_packets", NULL, CFGF_NONE),
+		CFG_STR("tx_errors", NULL, CFGF_NONE),
+		CFG_STR("tx_drops", NULL, CFGF_NONE),
+		CFG_END()
+	};
 	cfg_opt_t opts[] = {
 		CFG_STR ("location", NULL, CFGF_NONE),
 		CFG_STR ("contact", NULL, CFGF_NONE),
@@ -76,6 +92,7 @@ int read_config(char *file)
 		CFG_STR ("vendor", VENDOR, CFGF_NONE),
 		CFG_STR_LIST("disk-table", "/", CFGF_NONE),
 		CFG_STR_LIST("iface-table", NULL, CFGF_NONE),
+		CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
 		CFG_END()
 	};
 
@@ -117,6 +134,8 @@ int read_config(char *file)
 	g_timeout     = cfg_getint(cfg, "timeout");
 
 	g_vendor      = get_string(cfg, "vendor");
+
+	ethtool_xlate_cfg(cfg);
 
 error:
 	cfg_free(cfg);

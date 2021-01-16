@@ -8,7 +8,7 @@ AM_CPPFLAGS           = -DSYSCONFDIR=\"@sysconfdir@\" -DRUNSTATEDIR=\"@runstated
 mini_snmpd_SOURCES    = mini-snmpd.c mini-snmpd.h linux.c freebsd.c mib.c	\
 			globals.c protocol.c utils.c compat.h
 if HAVE_CONFUSE
-mini_snmpd_SOURCES   += conf.c
+mini_snmpd_SOURCES   += conf.c linux_ethtool.c
 endif
 mini_snmpd_CPPFLAGS   = $(AM_CPPFLAGS)
 mini_snmpd_CFLAGS     = -W -Wall -Wextra -std=gnu99
