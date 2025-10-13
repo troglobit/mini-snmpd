@@ -1428,7 +1428,7 @@ static int mib_build_cell(void)
 
 	/* RSSI values */
 	for (i = 0; i < g_interface_list_length; i++) {
-		if (!g_ifaces_list[i].is_cellular)
+		if (!SLP(i).is_cellular)
 			continue;
 
 		if (mib_build_entry(&m_wan_3g_oid, 1, SLI(i), BER_TYPE_INTEGER, (const void *)(intptr_t)-254) == -1) {
@@ -1438,7 +1438,7 @@ static int mib_build_cell(void)
 
 	/* RSRP values */
 	for (i = 0; i < g_interface_list_length; i++) {
-		if (!g_ifaces_list[i].is_cellular)
+		if (!SLP(i).is_cellular)
 			continue;
 
 		if (mib_build_entry(&m_wan_cell_oid, 1, SLI(i), BER_TYPE_INTEGER, (const void *)(intptr_t)-254) == -1)
@@ -1447,7 +1447,7 @@ static int mib_build_cell(void)
 
 	/* RSRQ values */
 	for (i = 0; i < g_interface_list_length; i++) {
-		if (!g_ifaces_list[i].is_cellular)
+		if (!SLP(i).is_cellular)
 			continue;
 
 		if (mib_build_entry(&m_wan_cell_oid, 2, SLI(i), BER_TYPE_INTEGER, (const void *)(intptr_t)-254) == -1)
@@ -1456,7 +1456,7 @@ static int mib_build_cell(void)
 
 	/* SNR values */
 	for (i = 0; i < g_interface_list_length; i++) {
-		if (!g_ifaces_list[i].is_cellular)
+		if (!SLP(i).is_cellular)
 			continue;
 
 		if (mib_build_entry(&m_wan_cell_oid, 3, SLI(i), BER_TYPE_INTEGER, (const void *)(intptr_t)-254) == -1)
@@ -1465,7 +1465,7 @@ static int mib_build_cell(void)
 
 	/* SINR values */
 	for (i = 0; i < g_interface_list_length; i++) {
-		if (!g_ifaces_list[i].is_cellular)
+		if (!SLP(i).is_cellular)
 			continue;
 
 		if (mib_build_entry(&m_wan_cell_oid, 4, SLI(i), BER_TYPE_INTEGER, (const void *)(intptr_t)-254) == -1)
@@ -1848,67 +1848,67 @@ int mib_update(int full)
 			get_netinfo(&netinfo);
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 4, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.mtu[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 4, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.mtu[SLIP(i)]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 5, SLI(i), &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)netinfo.speed[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 5, SLI(i), &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)netinfo.speed[SLIP(i)]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 7, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.admin_status[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 7, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.admin_status[SLIP(i)]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 8, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.status[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 8, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)netinfo.status[SLIP(i)]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 9, SLI(i), &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)netinfo.last_change[i]) == -1)
+				if (mib_update_entry(&m_if_2_oid, 9, SLI(i), &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)netinfo.last_change[SLIP(i)]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 10, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_bytes[i] % UINT_MAX)) == -1)
+				if (mib_update_entry(&m_if_2_oid, 10, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_bytes[SLIP(i)] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 11, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_packets[i] % UINT_MAX)) == -1)
+				if (mib_update_entry(&m_if_2_oid, 11, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_packets[SLIP(i)] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 13, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_drops[i] % UINT_MAX)) == -1)
+				if (mib_update_entry(&m_if_2_oid, 13, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_drops[SLIP(i)] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 14, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_errors[i] % UINT_MAX)) == -1)
+				if (mib_update_entry(&m_if_2_oid, 14, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.rx_errors[SLIP(i)] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 16, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_bytes[i] % UINT_MAX)) == -1)
+				if (mib_update_entry(&m_if_2_oid, 16, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_bytes[SLIP(i)] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 17, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_packets[i] % UINT_MAX)) == -1)
+				if (mib_update_entry(&m_if_2_oid, 17, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_packets[SLIP(i)] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 19, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_drops[i] % UINT_MAX)) == -1)
+				if (mib_update_entry(&m_if_2_oid, 19, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_drops[SLIP(i)] % UINT_MAX)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_2_oid, 20, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_errors[i] % UINT_MAX)) == -1)
+				if (mib_update_entry(&m_if_2_oid, 20, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)(netinfo.tx_errors[SLIP(i)] % UINT_MAX)) == -1)
 					return -1;
 			}
 		}
@@ -2000,84 +2000,84 @@ int mib_update(int full)
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				unsigned int packets = netinfo.rx_mc_packets[i] % UINT_MAX;
+				unsigned int packets = netinfo.rx_mc_packets[SLIP(i)] % UINT_MAX;
 				if (mib_update_entry(&m_if_ext_oid, 2, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				unsigned int packets = netinfo.rx_bc_packets[i] % UINT_MAX;
+				unsigned int packets = netinfo.rx_bc_packets[SLIP(i)] % UINT_MAX;
 				if (mib_update_entry(&m_if_ext_oid, 3, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				unsigned int packets = netinfo.tx_mc_packets[i] % UINT_MAX;
+				unsigned int packets = netinfo.tx_mc_packets[SLIP(i)] % UINT_MAX;
 				if (mib_update_entry(&m_if_ext_oid, 4, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				unsigned int packets = netinfo.tx_bc_packets[i] % UINT_MAX;
+				unsigned int packets = netinfo.tx_bc_packets[SLIP(i)] % UINT_MAX;
 				if (mib_update_entry(&m_if_ext_oid, 5, SLI(i), &pos, BER_TYPE_COUNTER, (const void *)(uintptr_t)packets) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				val = (netinfo.rx_bytes[i] & 0xBFFFFFFFFFFFFFFFULL);
+				val = (netinfo.rx_bytes[SLIP(i)] & 0xBFFFFFFFFFFFFFFFULL);
 				if (mib_update_entry(&m_if_ext_oid, 6, SLI(i), &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				val = (netinfo.rx_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				val = (netinfo.rx_packets[SLIP(i)] & 0xBFFFFFFFFFFFFFFFULL);
 				if (mib_update_entry(&m_if_ext_oid, 7, SLI(i), &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				val = (netinfo.rx_mc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				val = (netinfo.rx_mc_packets[SLIP(i)] & 0xBFFFFFFFFFFFFFFFULL);
 				if (mib_update_entry(&m_if_ext_oid, 8, SLI(i), &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				val = (netinfo.rx_bc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				val = (netinfo.rx_bc_packets[SLIP(i)] & 0xBFFFFFFFFFFFFFFFULL);
 				if (mib_update_entry(&m_if_ext_oid, 9, SLI(i), &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				val = (netinfo.tx_bytes[i] & 0xBFFFFFFFFFFFFFFFULL);
+				val = (netinfo.tx_bytes[SLIP(i)] & 0xBFFFFFFFFFFFFFFFULL);
 				if (mib_update_entry(&m_if_ext_oid, 10, SLI(i), &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				val = (netinfo.tx_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				val = (netinfo.tx_packets[SLIP(i)] & 0xBFFFFFFFFFFFFFFFULL);
 				if (mib_update_entry(&m_if_ext_oid, 11, SLI(i), &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				val = (netinfo.tx_mc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				val = (netinfo.tx_mc_packets[SLIP(i)] & 0xBFFFFFFFFFFFFFFFULL);
 				if (mib_update_entry(&m_if_ext_oid, 12, SLI(i), &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				val = (netinfo.tx_bc_packets[i] & 0xBFFFFFFFFFFFFFFFULL);
+				val = (netinfo.tx_bc_packets[SLIP(i)] & 0xBFFFFFFFFFFFFFFFULL);
 				if (mib_update_entry(&m_if_ext_oid, 13, SLI(i), &pos, BER_TYPE_COUNTER64, (const void *)(&val)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_ext_oid, 15, SLI(i), &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)(netinfo.speed[i] / 1000000)) == -1)
+				if (mib_update_entry(&m_if_ext_oid, 15, SLI(i), &pos, BER_TYPE_GAUGE, (const void *)(intptr_t)(netinfo.speed[SLIP(i)] / 1000000)) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				int ifConnectorPresent = (netinfo.is_port[i] == 1 && netinfo.status[i] == 1) ? 1 : 2;
+				const int ifConnectorPresent = (netinfo.is_port[SLIP(i)] == 1 && netinfo.status[SLIP(i)] == 1) ? 1 : 2;
 
 				if (mib_update_entry(&m_if_ext_oid, 17, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)ifConnectorPresent) == -1)
 					return -1;
@@ -2101,7 +2101,7 @@ int mib_update(int full)
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (mib_update_entry(&m_if_ext_oid, 19, SLI(i), &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)netinfo.discont_time[i]) == -1)
+				if (mib_update_entry(&m_if_ext_oid, 19, SLI(i), &pos, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)netinfo.discont_time[SLIP(i)]) == -1)
 					return -1;
 			}
 		}
@@ -2109,42 +2109,42 @@ int mib_update(int full)
 
 	if (full && g_interface_list_length > 0) {
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (!g_ifaces_list[i].is_cellular)
+				if (!SLP(i).is_cellular)
 					continue;
 
-				if (mib_update_entry(&m_wan_3g_oid, 1, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.rssi[i])) == -1)
+				if (mib_update_entry(&m_wan_3g_oid, 1, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.rssi[SLIP(i)])) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (!g_ifaces_list[i].is_cellular)
+				if (!SLP(i).is_cellular)
 					continue;
 
-				if (mib_update_entry(&m_wan_cell_oid, 1, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.rsrp[i])) == -1)
+				if (mib_update_entry(&m_wan_cell_oid, 1, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.rsrp[SLIP(i)])) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (!g_ifaces_list[i].is_cellular)
+				if (!SLP(i).is_cellular)
 					continue;
 
-				if (mib_update_entry(&m_wan_cell_oid, 2, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.rsrq[i])) == -1)
+				if (mib_update_entry(&m_wan_cell_oid, 2, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.rsrq[SLIP(i)])) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (!g_ifaces_list[i].is_cellular)
+				if (!SLP(i).is_cellular)
 					continue;
 
-				if (mib_update_entry(&m_wan_cell_oid, 3, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.sinr[i])) == -1)
+				if (mib_update_entry(&m_wan_cell_oid, 3, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.sinr[SLIP(i)])) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_interface_list_length; i++) {
-				if (!g_ifaces_list[i].is_cellular)
+				if (!SLP(i).is_cellular)
 					continue;
 
-				if (mib_update_entry(&m_wan_cell_oid, 4, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.sinr[i])) == -1)
+				if (mib_update_entry(&m_wan_cell_oid, 4, SLI(i), &pos, BER_TYPE_INTEGER, (const void *)(intptr_t)(netinfo.sinr[SLIP(i)])) == -1)
 					return -1;
 			}
 	}
