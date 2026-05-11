@@ -555,6 +555,7 @@ int main(int argc, char *argv[])
 #endif
 	} sockaddr;
 	int opt = 1;
+	bool authenticated = false;
 
 	/* Prevent TERM and HUP signals from interrupting system calls */
 	sig.sa_handler = handle_signal;
@@ -674,6 +675,16 @@ int main(int argc, char *argv[])
 			NDM_CACHE_TTL_MS_, NDM_CORE_DEFAULT_CACHE_MAX_SIZE)) == NULL)
 	{
 		lprintf(LOG_ERR, "ndm core connection failed: %s", strerror(errno));
+
+		exit(EXIT_SYSCALL);
+	} else
+	if (!ndm_core_authenticate_local_service(
+			g_ndmcore, "snmp", true, &authenticated) ||
+		!authenticated)
+	{
+		lprintf(LOG_ERR, "ndm core authentication failed: %s", strerror(errno));
+
+		ndm_core_close(&g_ndmcore);
 
 		exit(EXIT_SYSCALL);
 	} else
