@@ -38,7 +38,6 @@
 #define MAX_NR_OIDS                                     20
 #define MAX_NR_SUBIDS                                   20
 #define MAX_NR_DISKS                                    4
-#define MAX_NR_INTERFACES                               8
 #define MAX_NR_VALUES                                   2048
 
 #define MAX_PACKET_SIZE                                 2048
