@@ -1,6 +1,6 @@
 /* .conf parser
  *
- * Copyright (C) 2018-2020  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (C) 2018-2026  Joachim Wiberg <troglobit@gmail.com>
  *
  * This file may be distributed and/or modified under the terms of the
  * GNU General Public License version 2 as published by the Free Software

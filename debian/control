@@ -1,7 +1,7 @@
 Source: mini-snmpd
 Section: net
 Priority: optional
-Maintainer: Joachim Nilsson <troglobit@gmail.com>
+Maintainer: Joachim Wiberg <troglobit@gmail.com>
 Build-Depends: debhelper (>= 10), libconfuse-dev, pkg-config, systemd
 Standards-Version: 4.3.0
 Homepage: https://troglobit.com/mini-snmpd.html
