@@ -26,7 +26,7 @@ jobs:
         run: |
           sudo apt-get -y update
           sudo apt-get -y install pkg-config libconfuse-dev libsystemd-dev snmp tree
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Configure
         run: |
           ./autogen.sh
@@ -49,7 +49,7 @@ jobs:
           make check || (cat test/test-suite.log; false)
       - name: Upload Test Results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mini-snmpd-test-${{ matrix.compiler }}
           path: test/*
