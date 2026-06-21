@@ -1,6 +1,6 @@
 Mini SNMP Daemon
 ================
-[![License Badge][]][License] [![Travis Status][]][Travis] [![Coverity Status][]][Coverity Scan]
+[![License Badge][]][License] [![Release Badge][]][Release] [![GitHub Status][]][GitHub] [![Coverity Status][]][Coverity Scan]
 
 > The [latest release][releases] is always available from GitHub.
 > Download only versioned tarballs, `mini-snmpd-X.Y.tar.gz`.  See
@@ -22,10 +22,10 @@ Introduction
 The Mini SNMP daemon is a minimal implementation of an SNMP daemon.  It
 is primarily targeted at embedded systems with limited disk and memory
 resources.  All configuration can be done using command line arguments,
-or using the optional `/etc/mini-snmp.conf` file.  It supports basic
+or using the optional `/etc/mini-snmpd.conf` file.  It supports basic
 CPU, memory, disk, and network interface statistics.
 
-`mini-snmpd` is not as flexibible as, and does not support the same
+`mini-snmpd` is not as flexible as, and does not support the same
 features as, the de-facto standard [net-snmp][], but this also means
 it does not have the same footprint and overhead.
 
@@ -37,7 +37,7 @@ Supported features:
 * Includes basic system info like CPU load, memory, disk and network interfaces
 * Does not need a configuration file, but one is supported
 * Supports UDP and TCP (thus supports SSH tunneling of SNMP connections)
-* Supports Linux kernel versions 2.4, 2.6, and later
+* Supports Linux 2.6 and later
 * Supports FreeBSD (needs procfs mounted using "mount_linprocfs procfs /proc")
 
 `mini-snmpd` has been tested on x86 and ARM platforms in Ubuntu Linux,
@@ -180,9 +180,11 @@ and pull request functions to report bugs or contribute new features.
 [net-snmp]:        https://www.net-snmp.org/
 [buildsystem]:     https://airs.com/ian/configure/
 [releases]:        https://github.com/troglobit/mini-snmpd/releases
+[Release]:         https://github.com/troglobit/mini-snmpd/releases
+[Release Badge]:   https://img.shields.io/github/v/release/troglobit/mini-snmpd
 [License]:         https://en.wikipedia.org/wiki/GPL_license
 [License Badge]:   https://img.shields.io/badge/License-GPL%20v2-blue.svg
-[Travis]:          https://travis-ci.org/troglobit/mini-snmpd
-[Travis Status]:   https://travis-ci.org/troglobit/mini-snmpd.png?branch=master
+[GitHub]:          https://github.com/troglobit/mini-snmpd/actions/workflows/build.yml/
+[GitHub Status]:   https://github.com/troglobit/mini-snmpd/actions/workflows/build.yml/badge.svg
 [Coverity Scan]:   https://scan.coverity.com/projects/15696
 [Coverity Status]: https://scan.coverity.com/projects/15696/badge.svg
