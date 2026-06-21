@@ -28,47 +28,22 @@ if HAVE_SYSTEMD
 systemd_DATA          = mini-snmpd.service
 endif
 
-## Generate MD5 checksum file
-MD5 = md5sum
-md5-dist:
-	@for file in $(DIST_ARCHIVES); do	\
-		$(MD5) $$file > ../$$file.md5;	\
-	done
-
-## Check if tagged in git
-release-hook:
-	@if [ ! `git tag | grep $(PACKAGE_VERSION)` ]; then				\
-		echo;									\
-		printf "\e[1m\e[41mCannot find release tag $(PACKAGE_VERSION)\e[0m\n";	\
-		printf "\e[1m\e[5mDo release anyway?\e[0m "; read yorn;			\
-		if [ "$$yorn" != "y" -a "$$yorn" != "Y" ]; then				\
-			printf "OK, aborting release.\n";				\
-			exit 1;								\
-		fi;									\
-		echo;									\
-	else										\
-		echo;									\
-		printf "\e[1m\e[42mFound GIT release tag $(PACKAGE_VERSION)\e[0m\n";	\
-		printf "\e[1m\e[44m>>Remember to push tags!\e[0m\n";			\
-		echo;									\
-	fi
-
+# Build a Debian/Ubuntu package, for local testing only.  Not part of
+# the release; the GitHub release ships the distribution tarball only.
 # lintian --profile debian -i -I --show-overrides ../$PKG.changes
 package build-deb:
 	@dpkg-buildpackage -uc -us -B
 
-## Target to run when building a release
-release: release-hook distcheck package md5-dist
+## Build and verify the distribution tarball.  distcheck also runs the
+## test suite, see DISTCHECK_CONFIGURE_FLAGS, before the tarball is
+## considered good.  The release workflow runs this when a tag is pushed.
+release: distcheck
 	@mv $(DIST_ARCHIVES) ../
 	@echo
 	@echo "Resulting release files:"
 	@echo "================================================================="
 	@for file in $(DIST_ARCHIVES); do					\
 		printf "%-32s Distribution tarball\n" $$file;			\
-		printf "%-32s " $$file.md5; cat ../$$file.md5 | cut -f1 -d' ';	\
-	done
-	@for file in `cd ..; ls $(PACKAGE)_$(VERSION)*`; do			\
-		printf "%-32s Debian/Ubuntu package\n" $$file;			\
 	done
 
 # Workaround for systemd unit file duing distcheck
