@@ -4,7 +4,7 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
-[v1.7][UNRELEASED] -- 
+[v1.7][] -- 2026-06-21
 ----------------------
 
 ### Changes
