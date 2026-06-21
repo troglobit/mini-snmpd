@@ -79,6 +79,9 @@ Separate multiple interface names with comma or semicolon,
 colon!
 .It Fl I, Fl -listen Ar IFNAME
 Network interface to bind to, default is listen on all interfaces.
+This option is only available on Linux, it uses the Linux-specific
+.Dv SO_BINDTODEVICE
+socket option.
 .It Fl l, Fl -loglevel Ar LEVEL
 Set log level: none, err, info, notice, debug. Default: notice.
 .It Fl L, Fl -location Ar STR

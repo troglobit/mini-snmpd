@@ -57,7 +57,9 @@ static int usage(int rc)
 #endif
 	       "  -h, --help             This help text\n"
 	       "  -i, --interfaces IFACE Network interfaces to monitor, default: none\n"
+#ifdef __linux__
 	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
+#endif
 	       "  -l, --loglevel LEVEL   Set log level: none, err, info, notice*, debug\n"
 	       "  -L, --location STR     System location, default: none\n"
 	       "  -n, --foreground       Run in foreground, do not detach from controlling terminal\n"
@@ -335,7 +337,7 @@ static char *progname(char *arg0)
 int main(int argc, char *argv[])
 {
 	static const char short_options[] = "ac:C:d:D:hi:l:L:np:P:st:u:vV:"
-#ifndef __FreeBSD__
+#ifdef __linux__
 		"I:"
 #endif
 #ifdef CONFIG_ENABLE_IPV6
@@ -360,7 +362,7 @@ int main(int argc, char *argv[])
 #endif
 		{ "help",        0, 0, 'h' },
 		{ "interfaces",  1, 0, 'i' },
-#ifndef __FreeBSD__
+#ifdef __linux__
 		{ "listen",      1, 0, 'I' },
 #endif
 		{ "loglevel",    1, 0, 'l' },
@@ -379,7 +381,7 @@ int main(int argc, char *argv[])
 	size_t i;
 	fd_set rfds, wfds;
 	struct sigaction sig;
-#ifndef __FreeBSD__
+#ifdef __linux__
 	struct ifreq ifreq;
 #endif
 	struct timeval tv_last;
@@ -445,7 +447,7 @@ int main(int argc, char *argv[])
 		case 'i':
 			g_interface_list_length = split(optarg, ",;", g_interface_list, MAX_NR_INTERFACES);
 			break;
-#ifndef __FreeBSD__
+#ifdef __linux__
 		case 'I':
 			g_bind_to_device = strdup(optarg);
 			break;
@@ -587,7 +589,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_SYSCALL);
 	}
 
-#ifndef __FreeBSD__
+#ifdef __linux__
 	if (g_bind_to_device) {
 		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof(ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
 		if (setsockopt(g_udp_sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifreq, sizeof(ifreq)) == -1) {
@@ -604,7 +606,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_SYSCALL);
 	}
 
-#ifndef __FreeBSD__
+#ifdef __linux__
 	if (g_bind_to_device) {
 		snprintf(ifreq.ifr_ifrn.ifrn_name, sizeof(ifreq.ifr_ifrn.ifrn_name), "%s", g_bind_to_device);
 		if (setsockopt(g_tcp_sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifreq, sizeof(ifreq)) == -1) {

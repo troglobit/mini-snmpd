@@ -13,6 +13,8 @@ All notable changes to the project are documented in this file.
 
 ### Fixes
 - Fix musl build failure caused by `struct sysinfo` redefinition
+- Fix #28: build failure on macOS; the Linux-only `-I`/bind-to-device
+  support is now gated on `__linux__` instead of `#ifndef __FreeBSD__`
 - Fix #31: memory leak when `realloc()` fails encoding an OCTET STRING
 - Harden SNMP packet parser: reject length underflow in `decode_str()`,
   `decode_oid()`, and `decode_ptr()`
