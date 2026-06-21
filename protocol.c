@@ -174,7 +174,7 @@ static int decode_cnt(const unsigned char *packet, size_t size, size_t *pos, siz
 /* Fetch the value as C string (user must have made sure the length is ok) */
 static int decode_str(const unsigned char *packet, size_t size, size_t *pos, size_t len, char *str, size_t str_len)
 {
-	if (*pos >= (size - len + 1)) {
+	if (len > size || *pos >= (size - len + 1)) {
 		logit(LOG_DEBUG, 0, "underflow for string");
 		errno = EINVAL;
 		return -1;
@@ -189,7 +189,7 @@ static int decode_str(const unsigned char *packet, size_t size, size_t *pos, siz
 /* Fetch the value as C string (user must have made sure the length is ok) */
 static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, size_t len, oid_t *value)
 {
-	if (*pos >= (size - len + 1)) {
+	if (len > size || *pos >= (size - len + 1)) {
 		logit(LOG_DEBUG, 0, "underflow for oid");
 		errno = EINVAL;
 		return -1;
@@ -256,9 +256,9 @@ static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, siz
 }
 
 /* Fetch the value as pointer (user must make sure not to overwrite packet) */
-static int decode_ptr(const unsigned char UNUSED(*packet), size_t size, size_t *pos, int len)
+static int decode_ptr(const unsigned char UNUSED(*packet), size_t size, size_t *pos, size_t len)
 {
-	if (*pos >= (size - len + 1)) {
+	if (len > size || *pos >= (size - len + 1)) {
 		logit(LOG_DEBUG, 0, "underflow for ptr");
 		errno = EINVAL;
 		return -1;
