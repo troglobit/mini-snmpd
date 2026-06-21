@@ -1,4 +1,8 @@
 EXEC                  = mini-snmpd
+SUBDIRS               = .
+if ENABLE_TEST
+SUBDIRS              += test
+endif
 EXTRA_DIST            = README.md COPYING ChangeLog.md
 doc_DATA              = README.md COPYING
 dist_man8_MANS        = $(EXEC).8
@@ -68,5 +72,5 @@ release: release-hook distcheck package md5-dist
 	done
 
 # Workaround for systemd unit file duing distcheck
-DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd)
+DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd) --enable-test
 DISTCLEANFILES = lib/.libs/* *~ *.bak *.map .*.d *.d DEADJOE semantic.cache *.gdb *.elf core core.*

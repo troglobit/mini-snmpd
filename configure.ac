@@ -6,7 +6,7 @@ AM_SILENT_RULES([yes])
 
 AC_CONFIG_SRCDIR([mini-snmpd.c])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile mini-snmpd.service])
+AC_CONFIG_FILES([Makefile test/Makefile mini-snmpd.service])
 
 AC_PROG_CC
 AC_PROG_INSTALL
@@ -60,6 +60,9 @@ AC_ARG_ENABLE(ethtool,
    AS_HELP_STRING([--enable-ethtool], [Enable ethtool interface stats, disabled by default]),
    	[enable_ethtool=$enableval], [enable_ethtool=no])
 
+AC_ARG_ENABLE(test,
+   AS_HELP_STRING([--enable-test], [Enable tests, requires unshare and net-snmp tools]),
+   	[enable_test=$enableval], [enable_test=no])
 
 ### Enable features ###########################################################################
 AS_IF([test "x$with_vendor" != "xno"],[
@@ -99,6 +102,7 @@ AS_IF([test "x$with_systemd" = "xyes" -o "x$with_systemd" = "xauto"], [
 AS_IF([test "x$with_systemd" != "xno"],
      [AC_SUBST([systemddir], [$with_systemd])])
 AM_CONDITIONAL([HAVE_SYSTEMD], [test "x$with_systemd" != "xno"])
+AM_CONDITIONAL([ENABLE_TEST],  [test "x$enable_test"  != "xno"])
 
 # Expand $sbindir early, into $SBINDIR, for systemd unit file
 # NOTE: This does *not* take prefix/exec_prefix override at "make
@@ -141,6 +145,7 @@ cat <<EOF
   demo mode.........: $enable_demo
   systemd...........: $with_systemd
   ethtool stats.....: $enable_ethtool
+  unit tests........: $enable_test
 
 ------------- Compiler version --------------
 $($CC --version || true)

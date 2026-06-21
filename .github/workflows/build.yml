@@ -1,0 +1,55 @@
+name: Bob the Builder
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    # Verify we can build on latest Ubuntu with both gcc and clang,
+    # then run the namespace-based smoke tests.
+    name: ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+      fail-fast: false
+    env:
+      MAKEFLAGS: -j3
+      CC: ${{ matrix.compiler }}
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install pkg-config libconfuse-dev libsystemd-dev snmp tree
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: |
+          ./autogen.sh
+          ./configure --prefix= --with-config --enable-ethtool --enable-test
+      - name: Build
+        run: |
+          make V=1
+      - name: Install
+        run: |
+          DESTDIR=~/tmp make install-strip
+          tree ~/tmp
+          ldd ~/tmp/sbin/mini-snmpd
+          size ~/tmp/sbin/mini-snmpd
+          ~/tmp/sbin/mini-snmpd -h
+      - name: Enable unprivileged userns (unshare)
+        run: |
+          sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Run smoke tests
+        run: |
+          make check || (cat test/test-suite.log; false)
+      - name: Upload Test Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-snmpd-test-${{ matrix.compiler }}
+          path: test/*

@@ -4,12 +4,14 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
-[v1.7][] -- UNRELEASED
+[v1.7][UNRELEASED] -- 
 ----------------------
 
 ### Changes
 - Add support for ethtool interface statistics on Linux, configurable
   per interface from an `ethtool` section in the .conf file, by Bjørn Mork
+- Add namespace-based smoke tests, enabled with `--enable-test` and run
+  with `make check`, plus a GitHub Actions workflow to run them on CI
 
 ### Fixes
 - Fix musl build failure caused by `struct sysinfo` redefinition
