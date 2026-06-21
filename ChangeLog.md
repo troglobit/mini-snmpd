@@ -4,6 +4,20 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
+[v1.7][] -- UNRELEASED
+----------------------
+
+### Changes
+- Add support for ethtool interface statistics on Linux, configurable
+  per interface from an `ethtool` section in the .conf file, by Bjørn Mork
+
+### Fixes
+- Fix musl build failure caused by `struct sysinfo` redefinition
+- Fix #31: memory leak when `realloc()` fails encoding an OCTET STRING
+- Harden SNMP packet parser: reject length underflow in `decode_str()`,
+  `decode_oid()`, and `decode_ptr()`
+
+
 [v1.6][] -- 2020-02-23
 ----------------------
 
@@ -188,6 +202,7 @@ getbulk are supported on UDP and TCP connections.
 
 
 [UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v1.6...HEAD
+[v1.7]:        https://github.com/troglobit/mini-snmpd/compare/v1.6...HEAD
 [v1.6]:        https://github.com/troglobit/mini-snmpd/compare/v1.5...v1.6
 [v1.5]:        https://github.com/troglobit/mini-snmpd/compare/v1.4...v1.5
 [v1.4]:        https://github.com/troglobit/mini-snmpd/compare/v1.3...v1.4

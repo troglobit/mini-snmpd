@@ -100,10 +100,12 @@ static int encode_byte_array(data_t *data, const char *string, size_t len)
 		return 2;
 
 	if ((len + 4) > data->max_length) {
-		data->max_length = len + 4;
-		data->buffer = realloc(data->buffer, data->max_length);
-		if (!data->buffer)
+		buffer = realloc(data->buffer, len + 4);
+		if (!buffer)
 			return 2;
+
+		data->buffer = buffer;
+		data->max_length = len + 4;
 	}
 
 	if (len > 0xFFFF) {
