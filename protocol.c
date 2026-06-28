@@ -1070,7 +1070,24 @@ int snmp(client_t *client)
 	if (strcmp(g_community, request.community)) {
 		response.error_status = (request.version == SNMP_VERSION_2C) ? SNMP_STATUS_NO_ACCESS : SNMP_STATUS_GEN_ERR;
 		response.error_index = 0;
-		snmp_trap(TRAP_AUTHFAIL, NULL, 0);
+
+		/*
+		 * Rate-limit the authenticationFailure trap.  The community is
+		 * attacker-controlled, so without this a spoofed flood of bad
+		 * packets would fan out one trap per packet to every sink.  Emit
+		 * at most one per holdoff; the first one always goes out.
+		 */
+		{
+			static unsigned int last;
+			static int seen;
+			unsigned int now = get_process_uptime();
+
+			if (!seen || now - last >= TRAP_AUTHFAIL_HOLDOFF) {
+				snmp_trap(TRAP_AUTHFAIL, NULL, 0);
+				last = now;
+				seen = 1;
+			}
+		}
 		goto done;
 	}
 	if (g_auth && request.version != SNMP_VERSION_2C) {

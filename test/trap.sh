@@ -81,9 +81,13 @@ print "Taking down dummy0, expecting linkDown ..."
 ip link set dummy0 down
 expect_trap "$TRAPLOG" "$LINKDOWN" linkDown
 
-print "Querying with the wrong community, expecting authFail ..."
-snmpget -v2c -c WRONG -t 1 -r 0 $HOST .1.3.6.1.2.1.1.3.0 >/dev/null 2>&1
+print "A burst of wrong-community queries yields one rate-limited authFail ..."
+for n in 1 2 3 4 5; do
+	snmpget -v2c -c WRONG -t 1 -r 0 $HOST .1.3.6.1.2.1.1.3.0 >/dev/null 2>&1
+done
 expect_trap "$TRAPLOG" "$AUTHFAIL" authFail
+n=$(grep -cF "$AUTHFAIL" "$TRAPLOG")
+[ "$n" = 1 ] || FAIL "authFail not rate-limited: $n traps from 5 bad queries"
 
 # Trap sinks combine: a -T on the command line and a trap-table in the
 # .conf must both receive, not override one another.  Only when built

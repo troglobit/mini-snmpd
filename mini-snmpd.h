@@ -82,6 +82,11 @@
 #define TRAP_LINKDOWN                                   ".1.3.6.1.6.3.1.1.5.3"
 #define TRAP_LINKUP                                     ".1.3.6.1.6.3.1.1.5.4"
 #define TRAP_AUTHFAIL                                   ".1.3.6.1.6.3.1.1.5.5"
+
+/* Minimum interval between authenticationFailure traps, in 1/100 s, so a
+ * spoofed flood of bad-community packets cannot become a trap storm. */
+#define TRAP_AUTHFAIL_HOLDOFF                           (5 * 100)
+
 #define SNMP_VERSION_3                                  3
 
 #define SNMP_STATUS_OK                                  0

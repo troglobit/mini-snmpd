@@ -29,9 +29,9 @@ All notable changes to the project are documented in this file.
   interfaces added or removed after start-up appear and disappear without a
   restart
 - Add SNMPv2c trap support, `-T addr[:port]`, sending coldStart at start-up,
-  linkUp/linkDown on interface oper status changes, and authenticationFailure
-  on a wrong community string.  Sinks may also be set in the `.conf`
-  `trap-table`
+  linkUp/linkDown on interface oper status changes, and a rate-limited
+  authenticationFailure on a wrong community string.  Sinks may also be set
+  in the `.conf` `trap-table`
 - Reload the configuration on `SIGHUP`: re-read the `.conf` over the command
   line and rebuild the MIB, leaving the listening sockets untouched so the
   daemon can reload after dropping privileges

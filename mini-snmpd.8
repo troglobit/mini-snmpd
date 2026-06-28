@@ -116,7 +116,8 @@ using the community from
 .Fl c .
 Repeat the option for more than one sink.  IPv6 sinks use the
 .Ar [addr]:port
-form.  Emitted on cold start, link up/down, and authentication failure.
+form.  Emitted on cold start, link up/down, and authentication failure;
+the authentication-failure trap is rate-limited.
 .It Fl t, Fl -timeout Ar SEC
 Timeout for updating the MIB variables, default is 1 second.
 .It Fl u, -drop-privs Ar USER
