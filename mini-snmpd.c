@@ -75,10 +75,6 @@ static int usage(int rc)
 	       , PACKAGE_NAME
 #endif
 		);
-	printf("Bug report address: %s\n", PACKAGE_BUGREPORT);
-#ifdef PACKAGE_URL
-	printf("Project homepage: %s\n", PACKAGE_URL);
-#endif
 
 	return rc;
 }
@@ -487,6 +483,10 @@ int main(int argc, char *argv[])
 
 		case 'v':
 			printf("v" PACKAGE_VERSION "\n");
+			printf("Bug report address: %s\n", PACKAGE_BUGREPORT);
+#ifdef PACKAGE_URL
+			printf("Project homepage: %s\n", PACKAGE_URL);
+#endif
 			return 0;
 
 		case 'V':
