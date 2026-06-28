@@ -3,6 +3,32 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
+[v1.8][UNRELEASED]
+------------------
+
+> [!IMPORTANT]
+> SNMPv1 requests now have their community string validated, the same as
+> SNMPv2c.  Previously a v1 request was accepted silently with any community
+> unless `--auth` was set.
+
+### Changes
+
+- `sysDescr` now defaults to `PRETTY_NAME` from os-release(5) when no
+  description is set with `-D` or in the .conf file
+- Increase `MAX_NR_OIDS` from 20 to 70, allowing more variable bindings per
+  request, which helps table walks, by Ilya Ponetayev
+- Log when rejecting a malformed SNMP request, by Ilya Ponetayev
+
+### Fixes
+
+- Fix #32: build failure with `--with-config` because `ethtool-conf.h` was
+  missing from the release tarball
+- Validate the community string for SNMPv1.  A request with a wrong community
+  is no longer accepted without `--auth`, by Ilya Ponetayev
+- Prepend a zero byte when encoding Counter, Gauge, TimeTicks, and Counter64
+  values with the high bit set, which otherwise decode as negative integers,
+  by Ilya Ponetayev
+- Fix IP-MIB address table OID index on big-endian systems, by Ilya Ponetayev
 
 [v1.7][] -- 2026-06-21
 ----------------------
@@ -205,8 +231,8 @@ This is the first feature-complete version.  SNMP get, getnext, and
 getbulk are supported on UDP and TCP connections.
 
 
-[UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v1.6...HEAD
-[v1.7]:        https://github.com/troglobit/mini-snmpd/compare/v1.6...HEAD
+[UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v1.7...HEAD
+[v1.7]:        https://github.com/troglobit/mini-snmpd/compare/v1.6...v1.7
 [v1.6]:        https://github.com/troglobit/mini-snmpd/compare/v1.5...v1.6
 [v1.5]:        https://github.com/troglobit/mini-snmpd/compare/v1.4...v1.5
 [v1.4]:        https://github.com/troglobit/mini-snmpd/compare/v1.3...v1.4
