@@ -49,6 +49,8 @@ static const oid_t m_ip_oid             = { { 1, 3, 6, 1, 2, 1, 4               
 static const oid_t m_tcp_oid            = { { 1, 3, 6, 1, 2, 1, 6               },  7, 8  };
 static const oid_t m_udp_oid            = { { 1, 3, 6, 1, 2, 1, 7               },  7, 8  };
 static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           },  8, 9  };
+static const oid_t m_host_mem_oid       = { { 1, 3, 6, 1, 2, 1, 25, 2           },  8, 9  };
+static const oid_t m_host_storage_oid   = { { 1, 3, 6, 1, 2, 1, 25, 2, 3, 1     }, 10, 11 };
 static const oid_t m_ifxtable_oid       = { { 1, 3, 6, 1, 2, 1, 31, 1, 1, 1     }, 10, 11 };
 static const oid_t m_memory_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 4,        },  8, 10 };
 static const oid_t m_disk_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 9, 1      },  9, 11 };
@@ -59,6 +61,10 @@ static const oid_t m_demo_oid           = { { 1, 3, 6, 1, 4, 1, 99999           
 #endif
 
 static const int m_load_avg_times[3] = { 1, 5, 15 };
+
+/* hrStorageType OIDs, used for the hrStorageTable type column */
+#define HR_STORAGE_RAM   ".1.3.6.1.2.1.25.2.1.2"
+#define HR_STORAGE_DISK  ".1.3.6.1.2.1.25.2.1.4"
 
 static int oid_build  (oid_t *oid, const oid_t *prefix, int column, int row);
 static int encode_oid_len (oid_t *oid);
@@ -788,7 +794,7 @@ int mib_build(void)
 	netinfo_t netinfo;
 	char hostname[MAX_STRING_SIZE];
 	char name[16];
-	size_t i;
+	size_t i, nstore;
 	int sysServices;
 
 	sysServices = ((1 << 0) +	/* Physical layer */
@@ -952,6 +958,46 @@ int mib_build(void)
 		return -1;
 
 	/*
+	 * HOST-RESOURCES-MIB hrMemorySize and hrStorageTable: physical memory
+	 * plus one row per monitored filesystem.  Sizes are in kB, hence the
+	 * 1024-byte hrStorageAllocationUnits below.
+	 * Caution: on changes, adapt the corresponding mib_update() section too!
+	 */
+	if (!mib_alloc_entry(&m_host_mem_oid, 2, 0, BER_TYPE_INTEGER))
+		return -1;
+
+	nstore = 1 + g_disk_list_length;	/* RAM + filesystems */
+
+	for (i = 1; i <= nstore; i++) {		/* hrStorageIndex */
+		if (build_int(&m_host_storage_oid, 1, i, i) == -1)
+			return -1;
+	}
+
+	if (mib_build_entry(&m_host_storage_oid, 2, 1, BER_TYPE_OID, HR_STORAGE_RAM) == -1)
+		return -1;
+	for (i = 0; i < g_disk_list_length; i++) {	/* hrStorageType */
+		if (mib_build_entry(&m_host_storage_oid, 2, i + 2, BER_TYPE_OID, HR_STORAGE_DISK) == -1)
+			return -1;
+	}
+
+	if (build_str(&m_host_storage_oid, 3, 1, "Physical memory") == -1)
+		return -1;
+	for (i = 0; i < g_disk_list_length; i++) {	/* hrStorageDescr */
+		if (build_str(&m_host_storage_oid, 3, i + 2, g_disk_list[i]) == -1)
+			return -1;
+	}
+
+	for (i = 1; i <= nstore; i++) {		/* hrStorageAllocationUnits */
+		if (build_int(&m_host_storage_oid, 4, i, 1024) == -1)
+			return -1;
+	}
+
+	/* hrStorageSize and hrStorageUsed, filled in by mib_update() */
+	if (mib_build_entries(&m_host_storage_oid, 5, 1, nstore, BER_TYPE_INTEGER) == -1 ||
+	    mib_build_entries(&m_host_storage_oid, 6, 1, nstore, BER_TYPE_INTEGER) == -1)
+		return -1;
+
+	/*
 	 * IF-MIB continuation
 	 * ifXTable
 	 */
@@ -1104,9 +1150,7 @@ int mib_update(int full)
 	char nr[16];
 	size_t i, pos;
 	union {
-		diskinfo_t diskinfo;
 		loadinfo_t loadinfo;
-		meminfo_t meminfo;
 		ipinfo_t ipinfo;
 		tcpinfo_t tcpinfo;
 		udpinfo_t udpinfo;
@@ -1116,6 +1160,11 @@ int mib_update(int full)
 #endif
 	} u;
 	netinfo_t netinfo;
+	/* memory and disk are needed together (hrStorageTable), so they cannot
+	 * share the mutually exclusive union u; gather once, used by the
+	 * HOST-RESOURCES and UCD-SNMP sections below. */
+	meminfo_t mem;
+	diskinfo_t disk;
 
 	/* Begin searching at the first MIB entry */
 	pos = 0;
@@ -1277,6 +1326,35 @@ int mib_update(int full)
 		return -1;
 
 	/*
+	 * HOST-RESOURCES-MIB hrMemorySize and hrStorageTable size/used.
+	 * Caution: on changes, adapt the corresponding mib_build() section too!
+	 */
+	if (full) {
+		get_meminfo(&mem);
+		if (g_disk_list_length > 0)
+			get_diskinfo(&disk);
+
+		if (update_int(&m_host_mem_oid, 2, 0, &pos, mem.total) == -1)
+			return -1;
+
+		/* hrStorageSize: physical memory, then each filesystem */
+		if (update_int(&m_host_storage_oid, 5, 1, &pos, mem.total) == -1)
+			return -1;
+		for (i = 0; i < g_disk_list_length; i++) {
+			if (update_int(&m_host_storage_oid, 5, i + 2, &pos, disk.total[i]) == -1)
+				return -1;
+		}
+
+		/* hrStorageUsed: physical memory, then each filesystem */
+		if (update_int(&m_host_storage_oid, 6, 1, &pos, mem.total - mem.free) == -1)
+			return -1;
+		for (i = 0; i < g_disk_list_length; i++) {
+			if (update_int(&m_host_storage_oid, 6, i + 2, &pos, disk.used[i]) == -1)
+				return -1;
+		}
+	}
+
+	/*
 	 * IF-MIB
 	 * ifXTable
 	 */
@@ -1386,12 +1464,11 @@ int mib_update(int full)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
 	if (full) {
-		get_meminfo(&u.meminfo);
-		if (update_int(&m_memory_oid,  5, 0, &pos, u.meminfo.total)   == -1 ||
-		    update_int(&m_memory_oid,  6, 0, &pos, u.meminfo.free)    == -1 ||
-		    update_int(&m_memory_oid, 13, 0, &pos, u.meminfo.shared)  == -1 ||
-		    update_int(&m_memory_oid, 14, 0, &pos, u.meminfo.buffers) == -1 ||
-		    update_int(&m_memory_oid, 15, 0, &pos, u.meminfo.cached)  == -1)
+		if (update_int(&m_memory_oid,  5, 0, &pos, mem.total)   == -1 ||
+		    update_int(&m_memory_oid,  6, 0, &pos, mem.free)    == -1 ||
+		    update_int(&m_memory_oid, 13, 0, &pos, mem.shared)  == -1 ||
+		    update_int(&m_memory_oid, 14, 0, &pos, mem.buffers) == -1 ||
+		    update_int(&m_memory_oid, 15, 0, &pos, mem.cached)  == -1)
 			return -1;
 	}
 
@@ -1401,29 +1478,28 @@ int mib_update(int full)
 	 */
 	if (full) {
 		if (g_disk_list_length > 0) {
-			get_diskinfo(&u.diskinfo);
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (update_int(&m_disk_oid, 6, i + 1, &pos, u.diskinfo.total[i]) == -1)
+				if (update_int(&m_disk_oid, 6, i + 1, &pos, disk.total[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (update_int(&m_disk_oid, 7, i + 1, &pos, u.diskinfo.free[i]) == -1)
+				if (update_int(&m_disk_oid, 7, i + 1, &pos, disk.free[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (update_int(&m_disk_oid, 8, i + 1, &pos, u.diskinfo.used[i]) == -1)
+				if (update_int(&m_disk_oid, 8, i + 1, &pos, disk.used[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (update_int(&m_disk_oid, 9, i + 1, &pos, u.diskinfo.blocks_used_percent[i]) == -1)
+				if (update_int(&m_disk_oid, 9, i + 1, &pos, disk.blocks_used_percent[i]) == -1)
 					return -1;
 			}
 
 			for (i = 0; i < g_disk_list_length; i++) {
-				if (update_int(&m_disk_oid, 10, i + 1, &pos, u.diskinfo.inodes_used_percent[i]) == -1)
+				if (update_int(&m_disk_oid, 10, i + 1, &pos, disk.inodes_used_percent[i]) == -1)
 					return -1;
 			}
 		}

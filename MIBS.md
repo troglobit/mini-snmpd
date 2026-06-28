@@ -129,11 +129,32 @@ Mbit, where the 32-bit ifTable counters wrap too quickly.
 
 ## HOST-RESOURCES-MIB
 
-`1.3.6.1.2.1.25.1`
+`1.3.6.1.2.1.25`
+
+### System, `.1`
 
 | OID  | Object         | Type      |
 |------|----------------|-----------|
 | .1.0 | hrSystemUptime | TimeTicks |
+
+### Storage, `.2`
+
+| OID  | Object       | Type         |
+|------|--------------|--------------|
+| .2.0 | hrMemorySize | INTEGER (kB) |
+
+`hrStorageTable`, `.3.1` — one row for physical memory, then one per `-d`
+mount point.  `hrStorageSize`/`hrStorageUsed` are in `hrStorageAllocationUnits`,
+which mini-snmpd reports as 1024 (i.e. kB).
+
+| OID | Object                   | Type            |
+|-----|--------------------------|-----------------|
+| .1  | hrStorageIndex           | INTEGER         |
+| .2  | hrStorageType            | OID             |
+| .3  | hrStorageDescr           | DisplayString   |
+| .4  | hrStorageAllocationUnits | INTEGER (bytes) |
+| .5  | hrStorageSize            | INTEGER         |
+| .6  | hrStorageUsed            | INTEGER         |
 
 ## UCD-SNMP-MIB
 
