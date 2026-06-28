@@ -97,6 +97,23 @@ start_snmpd()
 	      .1.3.6.1.2.1.1.3.0 >/dev/null 2>&1
 }
 
+# Stop the running daemon and wait for it to release the port, so a
+# subsequent start_snmpd() can bind 161 again.
+stop_snmpd()
+{
+    [ -f "/tmp/$NM/snmpd.pid" ] || return 0
+
+    pid=$(cat "/tmp/$NM/snmpd.pid")
+    rm -f "/tmp/$NM/snmpd.pid"
+    kill "$pid" 2>/dev/null
+
+    i=0
+    while [ "$i" -lt 5 ] && kill -0 "$pid" 2>/dev/null; do
+	sleep 1
+	i=$((i + 1))
+    done
+}
+
 # Convenience wrappers around the net-snmp client tools
 snmp_get()
 {
@@ -106,6 +123,16 @@ snmp_get()
 snmp_walk()
 {
     snmpwalk -v1 -c $COMMUNITY -On -t 2 -r 2 $HOST "$@"
+}
+
+# GET $1 and assert the response contains the substring $2
+expect()
+{
+    oid=$1
+    want=$2
+    got=$(snmp_get "$oid") || FAIL "GET $oid failed, daemon log:$(cat "/tmp/$NM/snmpd.log")"
+    dprint "$got"
+    echo "$got" | grep -qF "$want" || FAIL "GET $oid: expected '$want', got '$got'"
 }
 
 teardown()

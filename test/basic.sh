@@ -24,15 +24,6 @@ sysLocation=.1.3.6.1.2.1.1.6.0
 start_snmpd -D "$DESC" -C "$CONTACT" -L "$LOCATION"
 
 print "Verifying system group round-trips ..."
-expect()
-{
-    oid=$1
-    want=$2
-    got=$(snmp_get "$oid") || FAIL "GET $oid failed, daemon log:$(cat "/tmp/$NM/snmpd.log")"
-    dprint "$got"
-    echo "$got" | grep -qF "$want" || FAIL "GET $oid: expected '$want', got '$got'"
-}
-
 expect $sysDescr    "$DESC"
 expect $sysContact  "$CONTACT"
 expect $sysLocation "$LOCATION"
