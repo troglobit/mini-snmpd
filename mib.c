@@ -624,9 +624,11 @@ static int build_ip_mib(oid_t *oid, int type, unsigned int in_addr[], unsigned i
 		if (!in_addr[pos])
 			continue;
 
-		ip = htonl(in_addr[pos]);
+		/* in_addr[] is in host order; lay out the dotted-quad index
+		 * most-significant byte first, independent of endianness. */
+		ip = in_addr[pos];
 		for (j = 0; j < 4; ++j)
-			oid->subid_list[10 + j] = ((ip & (0xFF << (j * 8))) >> (j * 8));
+			oid->subid_list[10 + j] = (ip >> ((3 - j) * 8)) & 0xFF;
 
 		if (mib_build_ip_entry(oid, type, (const void *)(intptr_t)value[pos]) == -1)
 			return -1;
