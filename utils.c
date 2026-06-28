@@ -280,24 +280,22 @@ void dump_packet(const client_t *client)
 {
 	size_t i, len = 0;
 	char *buf = allocate(BUFSIZ);
-	char straddr[my_inet_addrstrlen];
-	my_in_addr_t client_addr;
+	char straddr[INET_ADDRSTR_LEN];
 
 	if (!buf)
 		return;
 
-	client_addr = client->addr;
 	for (i = 0; i < client->size; i++) {
 		len += snprintf(buf + len, BUFSIZ - len, i ? " %02X" : "%02X", client->packet[i]);
 		if (len >= BUFSIZ)
 			break;
 	}
 
-	inet_ntop(my_af_inet, &client_addr, straddr, sizeof(straddr));
+	inet_ntop2(&client->addr, straddr, sizeof(straddr));
 	logit(LOG_DEBUG, 0, "%s %u bytes %s %s:%d (%s)",
 	      client->outgoing ? "transmitted" : "received", (int) client->size,
 	      client->outgoing ? "to" : "from", straddr,
-	      ntohs(client->port), buf);
+	      inet_port(&client->addr), buf);
 
 	free(buf);
 }

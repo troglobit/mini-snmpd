@@ -24,7 +24,7 @@
 
 const struct in_addr inaddr_any = { INADDR_ANY };
 
-int       g_family  = AF_INET;
+int       g_family  = AF_UNSPEC;	/* AF_UNSPEC: listen on both IPv4 and IPv6 */
 int       g_timeout = 1;
 int       g_auth    = 0;
 int       g_daemon  = 1;
@@ -49,9 +49,6 @@ size_t    g_interface_list_length;
 
 in_port_t g_udp_port = 161;
 in_port_t g_tcp_port = 161;
-
-int       g_udp_sockfd = -1;
-int       g_tcp_sockfd = -1;
 
 client_t  g_udp_client;
 client_t *g_tcp_client_list[MAX_NR_CLIENTS];
