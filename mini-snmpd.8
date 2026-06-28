@@ -77,17 +77,21 @@ Configuration file, default:
 .It Fl h, -help
 Show summary of command line options and exit.
 .It Fl i, Fl -interfaces Ar IFNAME[,IFNAME]
-List of network interfaces to monitor for IF-MIB, default is none.
+List of network interfaces to monitor for IF-MIB.  The default is to
+monitor all interfaces, with the loopback interface first, on
+.Sy ifIndex
+1.
 Separate multiple interface names with comma or semicolon,
 .Em not
 colon!
-Names may contain shell-style globs, e.g.
-.Ar eth*
-or
-.Ar vlan* ,
-matched against the interfaces present at start-up; use
-.Ar *
-to monitor all of them.
+A name with a trailing
+.Ar +
+is a prefix wildcard, iptables style, matched against the interfaces
+present at start-up: e.g.
+.Ar eth+
+matches eth0, eth1, ..., and a lone
+.Ar +
+matches all of them.
 .It Fl I, Fl -listen Ar IFNAME
 Network interface to bind to, default is listen on all interfaces.
 This option is only available on Linux, it uses the Linux-specific

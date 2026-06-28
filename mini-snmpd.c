@@ -25,7 +25,6 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <getopt.h>
-#include <fnmatch.h>
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
@@ -57,7 +56,7 @@ static int usage(int rc)
 	       "  -f, --file FILE        Configuration file. Default: " SYSCONFDIR "/%s.conf\n"
 #endif
 	       "  -h, --help             This help text\n"
-	       "  -i, --interfaces IFACE Network interfaces to monitor, globs OK, default: none\n"
+	       "  -i, --interfaces IFACE Network interfaces to monitor, e.g. eth+, default: all\n"
 #ifdef __linux__
 	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
 #endif
@@ -404,66 +403,106 @@ static char *progname(char *arg0)
        return nm;
 }
 
+/* The loopback interface, lo on Linux, lo0 on the BSDs */
+static int is_loopback(const char *name)
+{
+	return !strcmp(name, "lo") || !strcmp(name, "lo0");
+}
+
+/* A trailing '+' marks an interface name as a prefix wildcard */
+static int ifname_is_wildcard(const char *name)
+{
+	size_t len = strlen(name);
+
+	return len > 0 && name[len - 1] == '+';
+}
+
+/* Append @name to @list (owned copy) unless already present or full */
+static void add_unique(char **list, size_t *len, const char *name)
+{
+	char *dup;
+	size_t i;
+
+	if (*len >= MAX_NR_INTERFACES)
+		return;
+	for (i = 0; i < *len; i++) {
+		if (!strcmp(list[i], name))
+			return;
+	}
+	dup = strdup(name);
+	if (dup)
+		list[(*len)++] = dup;
+}
+
 /*
- * Expand shell-style globs (eth*, vlan*, *) in the interface list against
- * the interfaces present at startup.  Plain names are kept verbatim, so
- * this only affects users who actually pass a pattern.  The expansion is
- * a one-shot at startup; interfaces created later are not picked up.
+ * Expand interface name wildcards in the interface list against the
+ * interfaces present at start-up.  Following iptables (and smcroute), a
+ * trailing '+' is a prefix match: eth+ matches eth0, eth15, ..., and a
+ * lone + matches every interface.  '+' is not a shell metacharacter, so
+ * patterns survive on the command line unquoted.  Plain names are kept
+ * verbatim, so this only affects users who actually pass a wildcard.
+ *
+ * The expansion is a one-shot at start-up; interfaces created later are
+ * not picked up.
  */
 static void expand_interfaces(void)
 {
 	char *list[MAX_NR_INTERFACES];
 	struct if_nameindex *ifni, *p;
-	size_t len = 0, i, j;
-	int globs = 0;
+	size_t len = 0, i;
+	int wild = 0;
 
 	for (i = 0; i < g_interface_list_length; i++) {
-		if (strpbrk(g_interface_list[i], "*?["))
-			globs = 1;
+		if (ifname_is_wildcard(g_interface_list[i]))
+			wild = 1;
 	}
-	if (!globs)
+	if (!wild)
 		return;
 
 	ifni = if_nameindex();
 	if (!ifni) {
-		logit(LOG_WARNING, errno, "Failed listing interfaces, cannot expand patterns");
+		logit(LOG_WARNING, errno, "Failed listing interfaces, cannot expand wildcards");
 		return;
 	}
 
-	for (i = 0; i < g_interface_list_length && len < NELEMS(list); i++) {
+	for (i = 0; i < g_interface_list_length; i++) {
 		char *pat = g_interface_list[i];
+		size_t prefix;
 
-		/* A plain name is kept as-is (skipping duplicates) */
-		if (!strpbrk(pat, "*?[")) {
-			for (j = 0; j < len; j++) {
-				if (!strcmp(list[j], pat))
-					break;
-			}
-			if (j == len)
-				list[len++] = pat;
+		/* A plain name is kept verbatim */
+		if (!ifname_is_wildcard(pat)) {
+			add_unique(list, &len, pat);
 			continue;
 		}
 
-		for (p = ifni; p->if_index != 0 && len < NELEMS(list); p++) {
-			if (fnmatch(pat, p->if_name, 0))
-				continue;
-
-			for (j = 0; j < len; j++) {
-				if (!strcmp(list[j], p->if_name))
-					break;
-			}
-			if (j == len && (list[len] = strdup(p->if_name)))
-				len++;
+		/* Trailing '+': prefix match against all interfaces */
+		prefix = strlen(pat) - 1;
+		for (p = ifni; p->if_index != 0; p++) {
+			if (!strncmp(pat, p->if_name, prefix))
+				add_unique(list, &len, p->if_name);
 		}
 	}
 
 	if_freenameindex(ifni);
 
+	/* Keep loopback first, so it lands on ifIndex 1 like the kernel does */
+	for (i = 0; i < len; i++) {
+		if (is_loopback(list[i])) {
+			char *lo = list[i];
+			size_t k;
+
+			for (k = i; k > 0; k--)
+				list[k] = list[k - 1];
+			list[0] = lo;
+			break;
+		}
+	}
+
 	for (i = 0; i < len; i++)
 		g_interface_list[i] = list[i];
 	g_interface_list_length = len;
 
-	logit(LOG_DEBUG, 0, "Interface patterns expanded to %zu interface(s)", len);
+	logit(LOG_DEBUG, 0, "Interface wildcards expanded to %zu interface(s)", len);
 }
 
 /*
@@ -738,6 +777,13 @@ int main(int argc, char *argv[])
 		g_location = "";
 	if (!g_contact)
 		g_contact = "";
+
+	/* No interfaces given?  Monitor them all, expand_interfaces() sorts
+	 * loopback first so it lands on ifIndex 1, like the kernel does. */
+	if (g_interface_list_length == 0) {
+		g_interface_list[0] = "+";
+		g_interface_list_length = 1;
+	}
 
 	g_timeout *= 100;
 
