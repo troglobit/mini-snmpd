@@ -925,16 +925,15 @@ int snmp(client_t *client)
 		return -1;
 
 	/*
-	 * If we are using SNMP v2c or require authentication, check the community
-	 * string for length and validity.
+	 * Validate the community string for both SNMP versions.  With --auth
+	 * additionally reject plain SNMPv1, requiring v2c.
 	 */
-	if (request.version == SNMP_VERSION_2C) {
-		if (strcmp(g_community, request.community)) {
-			response.error_status = (request.version == SNMP_VERSION_2C) ? SNMP_STATUS_NO_ACCESS : SNMP_STATUS_GEN_ERR;
-			response.error_index = 0;
-			goto done;
-		}
-	} else if (g_auth) {
+	if (strcmp(g_community, request.community)) {
+		response.error_status = (request.version == SNMP_VERSION_2C) ? SNMP_STATUS_NO_ACCESS : SNMP_STATUS_GEN_ERR;
+		response.error_index = 0;
+		goto done;
+	}
+	if (g_auth && request.version != SNMP_VERSION_2C) {
 		response.error_status = SNMP_STATUS_GEN_ERR;
 		response.error_index = 0;
 		goto done;
