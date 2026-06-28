@@ -51,7 +51,7 @@ static int usage(int rc)
 	       "  -c, --community STR    Community string, default: public\n"
 	       "  -C, --contact STR      System contact, default: none\n"
 	       "  -d, --disks PATH       Disks to monitor, default: /\n"
-	       "  -D, --description STR  System description, default: none\n"
+	       "  -D, --description STR  System description, default: PRETTY_NAME, os-release(8)\n"
 #ifdef HAVE_LIBCONFUSE
 	       "  -f, --file FILE        Configuration file. Default: " SYSCONFDIR "/%s.conf\n"
 #endif
@@ -528,6 +528,8 @@ int main(int argc, char *argv[])
 		g_community = "public";
 	if (!g_vendor)
 		g_vendor = VENDOR;
+	if (!g_description)
+		g_description = os_pretty_name();
 	if (!g_description)
 		g_description = "";
 	if (!g_location)

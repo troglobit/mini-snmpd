@@ -140,6 +140,47 @@ int read_file(const char *filename, char *buf, size_t size)
 	return 0;
 }
 
+/* Best-effort sysDescr default from os-release(5) PRETTY_NAME, NULL if unavailable */
+char *os_pretty_name(void)
+{
+	const char *paths[] = { "/etc/os-release", "/usr/lib/os-release", NULL };
+	char line[256];
+	size_t i;
+
+	for (i = 0; paths[i]; i++) {
+		FILE *fp;
+
+		fp = fopen(paths[i], "r");
+		if (!fp)
+			continue;
+
+		while (fgets(line, sizeof(line), fp)) {
+			char *val, *end;
+
+			if (strncmp(line, "PRETTY_NAME=", 12))
+				continue;
+
+			val = line + 12;
+			val[strcspn(val, "\n")] = 0;
+
+			if (*val == '"' || *val == '\'') {
+				char q = *val++;
+
+				end = strrchr(val, q);
+				if (end)
+					*end = 0;
+			}
+
+			fclose(fp);
+			return strdup(val);
+		}
+
+		fclose(fp);
+	}
+
+	return NULL;
+}
+
 unsigned int read_value(const char *buf, const char *prefix)
 {
 	buf = strstr(buf, prefix);
