@@ -49,6 +49,10 @@ All notable changes to the project are documented in this file.
 
 - Fix #32: build failure with `--with-config` because `ethtool-conf.h` was
   missing from the release tarball
+- Drop privileges correctly with `-u`: take the primary group from the
+  user's passwd entry instead of a group named after the user, which need
+  not exist (`-u nobody` would refuse to start), and drop root's
+  supplementary groups with `initgroups()`
 - Reply to UDP requests from the address they were sent to, so on a
   multi-homed host the reply comes from the queried address (Linux)
 - Validate the community string for SNMPv1.  A request with a wrong community

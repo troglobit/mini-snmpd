@@ -926,35 +926,41 @@ int main(int argc, char *argv[])
 
 	if (g_user && geteuid() == 0) {
 		struct passwd *pwd;
-		struct group *grp;
 
 		errno = 0;
-
 		pwd = getpwnam(g_user);
 		if (pwd == NULL) {
-			logit(LOG_ERR, errno, "Unable to get UID for user \"%s\"", g_user);
+			logit(LOG_ERR, errno, "Unable to look up user \"%s\"", g_user);
 			exit(EXIT_SYSCALL);
 		}
 
-		errno = 0;
-
-		grp = getgrnam(g_user);
-		if (grp == NULL) {
-			logit(LOG_ERR, errno, "Unable to get GID for group \"%s\"", g_user);
+		/*
+		 * Drop root's supplementary groups, then the primary GID, then
+		 * the UID -- in that order, since each step needs the privilege
+		 * of the one before.  The GID comes from the user's passwd entry,
+		 * not a same-named group, which is not guaranteed to exist.
+		 */
+		if (initgroups(g_user, pwd->pw_gid) == -1) {
+			logit(LOG_ERR, errno, "Unable to set supplementary groups for \"%s\"", g_user);
 			exit(EXIT_SYSCALL);
 		}
-
-		if (setgid(grp->gr_gid) == -1) {
-			logit(LOG_ERR, errno, "Unable to set new group \"%s\"", g_user);
+		if (setgid(pwd->pw_gid) == -1) {
+			logit(LOG_ERR, errno, "Unable to set GID %u for \"%s\"", (unsigned)pwd->pw_gid, g_user);
 			exit(EXIT_SYSCALL);
 		}
-
 		if (setuid(pwd->pw_uid) == -1) {
-			logit(LOG_ERR, errno, "Unable to set new user \"%s\"", g_user);
+			logit(LOG_ERR, errno, "Unable to set UID %u for \"%s\"", (unsigned)pwd->pw_uid, g_user);
 			exit(EXIT_SYSCALL);
 		}
 
-		logit(LOG_INFO, 0, "Successfully dropped privileges to %s:%s", g_user, g_user);
+		/* Belt and suspenders: a non-root drop must be irreversible */
+		if (pwd->pw_uid != 0 && setuid(0) != -1) {
+			logit(LOG_ERR, 0, "Could regain root after dropping privileges, aborting");
+			exit(EXIT_SYSCALL);
+		}
+
+		logit(LOG_INFO, 0, "Dropped privileges to %s (uid %u gid %u)",
+		      g_user, (unsigned)pwd->pw_uid, (unsigned)pwd->pw_gid);
 	}
 
 	/*
