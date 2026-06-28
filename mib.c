@@ -768,6 +768,21 @@ static int update_c64(const oid_t *oid, int col, int row, size_t *pos, long long
  * the MIB array, (see mini-snmpd.h for the value of MAX_NR_VALUES).
  */
 
+/*
+ * Free all MIB entries so mib_build() can run again, e.g. after a netlink
+ * event changed the set of interfaces or addresses.
+ */
+void mib_reset(void)
+{
+	size_t i;
+
+	for (i = 0; i < g_mib_length; i++) {
+		free(g_mib[i].data.buffer);
+		g_mib[i].data.buffer = NULL;
+	}
+	g_mib_length = 0;
+}
+
 int mib_build(void)
 {
 	netinfo_t netinfo;

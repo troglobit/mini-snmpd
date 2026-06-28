@@ -10,7 +10,8 @@ sbin_PROGRAMS         = $(EXEC)
 AM_CPPFLAGS           = -DSYSCONFDIR=\"@sysconfdir@\" -DRUNSTATEDIR=\"@runstatedir@\"
 
 mini_snmpd_SOURCES    = mini-snmpd.c mini-snmpd.h linux.c freebsd.c mib.c	\
-			globals.c protocol.c utils.c compat.h inet.c inet.h
+			globals.c protocol.c utils.c compat.h inet.c inet.h	\
+			netlink.c netlink.h
 if HAVE_CONFUSE
 mini_snmpd_SOURCES   += conf.c linux_ethtool.c ethtool-conf.h
 endif

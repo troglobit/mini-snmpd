@@ -38,6 +38,15 @@
 #include <grp.h>
 
 #include "mini-snmpd.h"
+#include "netlink.h"
+
+/*
+ * The user's -i interface spec (plain names and '+' wildcards), preserved
+ * so the monitored set can be rebuilt on netlink events.  expand_interfaces()
+ * (re)builds g_interface_list from this.
+ */
+static char  *iface_pattern[MAX_NR_INTERFACES];
+static size_t iface_pattern_len;
 
 static int usage(int rc)
 {
@@ -448,25 +457,23 @@ static void add_unique(char **list, size_t *len, const char *name)
 static void expand_interfaces(void)
 {
 	char *list[MAX_NR_INTERFACES];
-	struct if_nameindex *ifni, *p;
+	struct if_nameindex *ifni = NULL, *p;
 	size_t len = 0, i;
 	int wild = 0;
 
-	for (i = 0; i < g_interface_list_length; i++) {
-		if (ifname_is_wildcard(g_interface_list[i]))
+	for (i = 0; i < iface_pattern_len; i++) {
+		if (ifname_is_wildcard(iface_pattern[i]))
 			wild = 1;
 	}
-	if (!wild)
-		return;
 
-	ifni = if_nameindex();
-	if (!ifni) {
-		logit(LOG_WARNING, errno, "Failed listing interfaces, cannot expand wildcards");
-		return;
+	if (wild) {
+		ifni = if_nameindex();
+		if (!ifni)
+			logit(LOG_WARNING, errno, "Failed listing interfaces, cannot expand wildcards");
 	}
 
-	for (i = 0; i < g_interface_list_length; i++) {
-		char *pat = g_interface_list[i];
+	for (i = 0; i < iface_pattern_len; i++) {
+		char *pat = iface_pattern[i];
 		size_t prefix;
 
 		/* A plain name is kept verbatim */
@@ -475,7 +482,9 @@ static void expand_interfaces(void)
 			continue;
 		}
 
-		/* Trailing '+': prefix match against all interfaces */
+		/* Trailing '+': prefix match against the interfaces present now */
+		if (!ifni)
+			continue;
 		prefix = strlen(pat) - 1;
 		for (p = ifni; p->if_index != 0; p++) {
 			if (!strncmp(pat, p->if_name, prefix))
@@ -483,7 +492,8 @@ static void expand_interfaces(void)
 		}
 	}
 
-	if_freenameindex(ifni);
+	if (ifni)
+		if_freenameindex(ifni);
 
 	/* Keep loopback first, so it lands on ifIndex 1 like the kernel does */
 	for (i = 0; i < len; i++) {
@@ -498,11 +508,27 @@ static void expand_interfaces(void)
 		}
 	}
 
+	/* Swap in the freshly expanded list, freeing the previous one */
+	for (i = 0; i < g_interface_list_length; i++)
+		free(g_interface_list[i]);
 	for (i = 0; i < len; i++)
 		g_interface_list[i] = list[i];
 	g_interface_list_length = len;
 
-	logit(LOG_DEBUG, 0, "Interface wildcards expanded to %zu interface(s)", len);
+	logit(LOG_DEBUG, 0, "Monitoring %zu interface(s)", len);
+}
+
+/*
+ * Re-expand the interface list and rebuild the MIB from scratch, e.g. when
+ * netlink reports an interface or address change.  Picks up interfaces
+ * created since start-up and drops ones that went away.
+ */
+static void rebuild_mib(void)
+{
+	expand_interfaces();
+	mib_reset();
+	if (mib_build() == -1 || mib_update(1) == -1)
+		exit(EXIT_SYSCALL);
 }
 
 /*
@@ -622,7 +648,7 @@ int main(int argc, char *argv[])
 		{ "vendor",      1, 0, 'V' },
 		{ NULL, 0, 0, 0 }
 	};
-	int ticks, nfds, c, sd, option_index = 1;
+	int ticks, nfds, c, sd, nl_sd, option_index = 1;
 	size_t i, j;
 	fd_set rfds, wfds;
 	struct sigaction sig;
@@ -778,12 +804,18 @@ int main(int argc, char *argv[])
 	if (!g_contact)
 		g_contact = "";
 
-	/* No interfaces given?  Monitor them all, expand_interfaces() sorts
-	 * loopback first so it lands on ifIndex 1, like the kernel does. */
+	/* No interfaces given?  Monitor them all (loopback lands on ifIndex 1). */
 	if (g_interface_list_length == 0) {
 		g_interface_list[0] = "+";
 		g_interface_list_length = 1;
 	}
+
+	/* Preserve the -i spec so the list can be rebuilt on netlink events,
+	 * then let expand_interfaces() build the concrete g_interface_list. */
+	for (i = 0; i < g_interface_list_length; i++)
+		iface_pattern[i] = g_interface_list[i];
+	iface_pattern_len = g_interface_list_length;
+	g_interface_list_length = 0;
 
 	g_timeout *= 100;
 
@@ -889,6 +921,9 @@ int main(int argc, char *argv[])
 	if (pidfile(NULL))
 		logit(LOG_ERR, errno, "Failed creating PID file");
 
+	/* Watch for interface/address changes; the poll below is the fallback */
+	nl_sd = netlink_init();
+
 	/* Handle incoming connect requests and incoming data */
 	while (!g_quit) {
 		/* Sleep until we get a request or the timeout is over */
@@ -904,6 +939,11 @@ int main(int argc, char *argv[])
 			FD_SET(tcp_fds[j], &rfds);
 			if (nfds < tcp_fds[j])
 				nfds = tcp_fds[j];
+		}
+		if (nl_sd >= 0) {
+			FD_SET(nl_sd, &rfds);
+			if (nfds < nl_sd)
+				nfds = nl_sd;
 		}
 
 		for (i = 0; i < g_tcp_client_list_length; i++) {
@@ -958,6 +998,12 @@ int main(int argc, char *argv[])
 				handle_tcp_connect(tcp_fds[j]);
 		}
 
+		/* Rescan and rebuild the MIB on interface/address changes */
+		if (nl_sd >= 0 && FD_ISSET(nl_sd, &rfds)) {
+			if (netlink_read(nl_sd) > 0)
+				rebuild_mib();
+		}
+
 		for (i = 0; i < g_tcp_client_list_length; i++) {
 			if (g_tcp_client_list[i]->outgoing) {
 				if (FD_ISSET(g_tcp_client_list[i]->sockfd, &wfds))
@@ -987,6 +1033,8 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+
+	netlink_exit(nl_sd);
 
 	/* We were signaled, print a message and exit */
 	logit(LOG_NOTICE, 0, PROGRAM_IDENT " stopping");

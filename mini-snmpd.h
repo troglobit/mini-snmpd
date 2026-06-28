@@ -341,6 +341,7 @@ int snmp                   (      client_t *client);
 int snmp_element_as_string (const data_t *data, char *buffer, size_t size);
 
 int mib_build    (void);
+void mib_reset   (void);
 int mib_update   (int full);
 
 value_t *mib_find     (const oid_t *oid, size_t *pos);
