@@ -3,42 +3,64 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
-[v1.8][UNRELEASED]
+[v2.0][UNRELEASED]
 ------------------
 
 > [!IMPORTANT]
-> SNMPv1 requests now have their community string validated, the same as
-> SNMPv2c.  Previously a v1 request was accepted silently with any community
-> unless `--auth` was set.
+> A few defaults changed this cycle, hence the major version bump:
+>
+> - With no `-i`, all interfaces are now monitored, loopback first on
+>   `ifIndex` 1.  Previously none were monitored unless explicitly listed.
+> - The daemon serves IPv4 and IPv6 at the same time by default.  Use `-4`
+>   or `-6` to restrict it to one family.
+> - SNMPv1 requests now have their community string validated, like SNMPv2c.
+>   Previously a v1 request was accepted with any community unless `--auth`
+>   was set.
+> - `SIGHUP` reloads the configuration; it used to stop the daemon.
 
 ### Changes
 
+- Add simultaneous dual-stack IPv4/IPv6 support, on by default; restrict to
+  one family with `-4` or `-6`
+- Monitor all interfaces by default, loopback first on `ifIndex` 1
+- Support interface name wildcards, iptables style: a trailing `+` is a
+  prefix match (`eth+` matches eth0, eth1, ...) and a lone `+` matches all
+- Track interface and address changes in real time on Linux via netlink;
+  interfaces added or removed after start-up appear and disappear without a
+  restart
 - Add SNMPv2c trap support, `-T addr[:port]`, sending coldStart at start-up,
   linkUp/linkDown on interface oper status changes, and authenticationFailure
-  on a wrong community string
+  on a wrong community string.  Sinks may also be set in the `.conf`
+  `trap-table`
 - Reload the configuration on `SIGHUP`: re-read the `.conf` over the command
   line and rebuild the MIB, leaving the listening sockets untouched so the
-  daemon can reload after dropping privileges.  `SIGHUP` previously stopped
-  the daemon, like `SIGTERM`
-- `sysDescr` now defaults to `PRETTY_NAME` from os-release(5) when no
-  description is set with `-D` or in the .conf file
+  daemon can reload after dropping privileges
+- Extend HOST-RESOURCES-MIB with `hrMemorySize`, `hrStorageTable`, and
+  `hrProcessorTable` (per-CPU load)
+- `sysDescr` defaults to `PRETTY_NAME` from os-release(5) when no description
+  is set with `-D` or in the `.conf` file
 - Increase `MAX_NR_OIDS` from 20 to 70, allowing more variable bindings per
   request, which helps table walks, by Ilya Ponetayev
 - Log when rejecting a malformed SNMP request, by Ilya Ponetayev
+- Move the bug report and homepage info from `-h` usage to `-v` version output
+- Document the supported MIBs and objects in MIBS.md
 
 ### Fixes
 
 - Fix #32: build failure with `--with-config` because `ethtool-conf.h` was
   missing from the release tarball
+- Reply to UDP requests from the address they were sent to, so on a
+  multi-homed host the reply comes from the queried address (Linux)
 - Validate the community string for SNMPv1.  A request with a wrong community
   is no longer accepted without `--auth`, by Ilya Ponetayev
 - Prepend a zero byte when encoding Counter, Gauge, TimeTicks, and Counter64
   values with the high bit set, which otherwise decode as negative integers,
   by Ilya Ponetayev
 - Fix IP-MIB address table OID index on big-endian systems, by Ilya Ponetayev
-- The .conf file no longer overrides the command line: list options (`-d`,
-  `-i`, `-T`) now combine with `disk-table`, `iface-table`, and `trap-table`,
-  and an unset key no longer clears a value given on the command line
+- The command line and `.conf` file now combine instead of the file
+  overriding: list options (`-d`, `-i`, `-T`) append to `disk-table`,
+  `iface-table`, and `trap-table`, and an unset key no longer clears a value
+  given on the command line
 
 [v1.7][] -- 2026-06-21
 ----------------------
