@@ -47,6 +47,9 @@ size_t    g_disk_list_length        = 1;
 char     *g_interface_list[MAX_NR_INTERFACES];
 size_t    g_interface_list_length;
 
+inet_addr_t g_trap_dst[MAX_NR_TRAPS];
+size_t      g_trap_dst_len;
+
 in_port_t g_udp_port = 161;
 in_port_t g_tcp_port = 161;
 

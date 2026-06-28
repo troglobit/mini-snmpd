@@ -212,3 +212,21 @@ is the percentage of time the CPU was busy since the previous poll.
 | .53.0 | ssCpuRawIdle    | Counter32 |
 | .59.0 | ssRawInterrupts | Counter32 |
 | .60.0 | ssRawContexts   | Counter32 |
+
+## Notifications
+
+mini-snmpd sends SNMPv2c traps to the sinks set with `-T addr[:port]` or a
+`trap-table` in the .conf file.  Each carries `sysUpTime.0` and the
+`snmpTrapOID.0` below.
+
+| snmpTrapOID          | Notification          | Source     | Sent when                             |
+|----------------------|-----------------------|------------|---------------------------------------|
+| .1.3.6.1.6.3.1.1.5.1 | coldStart             | SNMPv2-MIB | the daemon starts                     |
+| .1.3.6.1.6.3.1.1.5.3 | linkDown              | IF-MIB     | an interface leaves the up state      |
+| .1.3.6.1.6.3.1.1.5.4 | linkUp                | IF-MIB     | an interface enters the up state      |
+| .1.3.6.1.6.3.1.1.5.5 | authenticationFailure | SNMPv2-MIB | a request carries the wrong community |
+
+linkUp and linkDown also carry `ifIndex`, `ifAdminStatus`, and
+`ifOperStatus` for the interface that changed.
+
+authenticationFailure is rate-limited.

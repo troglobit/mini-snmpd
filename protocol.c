@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 #include "mini-snmpd.h"
 
@@ -779,6 +781,107 @@ static int encode_snmp_response(request_t *request, response_t *response, client
 	return 0;
 }
 
+/*
+ * Build and send an SNMPv2-Trap to every configured sink (-T).  The PDU is
+ * sysUpTime.0 + snmpTrapOID.0 (= @trap_oid) followed by the caller's extra
+ * varbinds @vb[0..nvb-1], which the caller still owns.  Assembled backwards
+ * into a local buffer, mirroring encode_snmp_response().
+ */
+void snmp_trap(const char *trap_oid, const value_t *vb, size_t nvb)
+{
+	static unsigned int id = 1;
+	value_t list[2 + MAX_NR_OIDS];
+	unsigned char packet[MAX_PACKET_SIZE];
+	size_t i, n, len, pos, msglen;
+
+	if (g_trap_dst_len == 0)
+		return;
+
+	if (mib_value(&list[0], ".1.3.6.1.2.1.1.3.0", BER_TYPE_TIME_TICKS,
+		      (const void *)(uintptr_t)get_process_uptime()) == -1)
+		return;
+	if (mib_value(&list[1], ".1.3.6.1.6.3.1.1.4.1.0", BER_TYPE_OID, trap_oid) == -1) {
+		free(list[0].data.buffer);
+		return;
+	}
+
+	n = 2;
+	for (i = 0; i < nvb && n < NELEMS(list); i++)
+		list[n++] = vb[i];
+
+	/* Encode backwards, like encode_snmp_response() */
+	pos = MAX_PACKET_SIZE;
+	for (i = n; i > 0; i--) {
+		if (encode_snmp_varbind(packet, &pos, &list[i - 1]) == -1)
+			goto done;
+	}
+
+	len = get_hdrlen(MAX_PACKET_SIZE - pos);	/* varbind list */
+	if (pos < len)
+		goto done;
+	encode_snmp_sequence_header(&packet[pos - len], MAX_PACKET_SIZE - pos, BER_TYPE_SEQUENCE);
+	pos -= len;
+
+	len = get_intlen(0);				/* error index */
+	if (pos < len)
+		goto done;
+	encode_snmp_integer(&packet[pos - len], 0);
+	pos -= len;
+
+	len = get_intlen(0);				/* error status */
+	if (pos < len)
+		goto done;
+	encode_snmp_integer(&packet[pos - len], 0);
+	pos -= len;
+
+	len = get_intlen(id);				/* request id */
+	if (pos < len)
+		goto done;
+	encode_snmp_integer(&packet[pos - len], id++);
+	pos -= len;
+
+	len = get_hdrlen(MAX_PACKET_SIZE - pos);	/* Trap PDU */
+	if (pos < len)
+		goto done;
+	encode_snmp_sequence_header(&packet[pos - len], MAX_PACKET_SIZE - pos, BER_TYPE_SNMP_TRAP);
+	pos -= len;
+
+	len = get_strlen(g_community);			/* community */
+	if (pos < len)
+		goto done;
+	encode_snmp_string(&packet[pos - len], g_community);
+	pos -= len;
+
+	len = get_intlen(SNMP_VERSION_2C);		/* version */
+	if (pos < len)
+		goto done;
+	encode_snmp_integer(&packet[pos - len], SNMP_VERSION_2C);
+	pos -= len;
+
+	len = get_hdrlen(MAX_PACKET_SIZE - pos);	/* message */
+	if (pos < len)
+		goto done;
+	encode_snmp_sequence_header(&packet[pos - len], MAX_PACKET_SIZE - pos, BER_TYPE_SEQUENCE);
+	pos -= len;
+
+	msglen = MAX_PACKET_SIZE - pos;
+	for (i = 0; i < g_trap_dst_len; i++) {
+		int sd;
+
+		sd = socket(inet_family(&g_trap_dst[i]), SOCK_DGRAM, 0);
+		if (sd < 0)
+			continue;
+		if (sendto(sd, &packet[pos], msglen, 0, (struct sockaddr *)&g_trap_dst[i],
+			   inet_len(&g_trap_dst[i])) == -1)
+			logit(LOG_WARNING, errno, "Failed sending trap");
+		close(sd);
+	}
+
+done:
+	free(list[0].data.buffer);
+	free(list[1].data.buffer);
+}
+
 static int handle_snmp_get(request_t *request, response_t *response, client_t *UNUSED(client))
 {
 	size_t i, pos;
@@ -967,6 +1070,7 @@ int snmp(client_t *client)
 	if (strcmp(g_community, request.community)) {
 		response.error_status = (request.version == SNMP_VERSION_2C) ? SNMP_STATUS_NO_ACCESS : SNMP_STATUS_GEN_ERR;
 		response.error_index = 0;
+		snmp_trap(TRAP_AUTHFAIL, NULL, 0);
 		goto done;
 	}
 	if (g_auth && request.version != SNMP_VERSION_2C) {

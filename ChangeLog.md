@@ -13,6 +13,9 @@ All notable changes to the project are documented in this file.
 
 ### Changes
 
+- Add SNMPv2c trap support, `-T addr[:port]`, sending coldStart at start-up,
+  linkUp/linkDown on interface oper status changes, and authenticationFailure
+  on a wrong community string
 - `sysDescr` now defaults to `PRETTY_NAME` from os-release(5) when no
   description is set with `-D` or in the .conf file
 - Increase `MAX_NR_OIDS` from 20 to 70, allowing more variable bindings per

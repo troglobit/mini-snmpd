@@ -23,6 +23,7 @@
 .Op Fl p, -udp-port Ar PORT
 .Op Fl P, -tcp-port Ar PORT
 .Op Fl s, -syslog
+.Op Fl T, -trap Ar ADDR
 .Op Fl t, -timeout Ar SEC
 .Op Fl u, -drop-privs Ar USER
 .Op Fl v, -version
@@ -109,6 +110,13 @@ UDP port to listen to for incoming connections, default is 161.
 TCP port to listen to for incoming connections, default is 161.
 .It Fl s, -syslog
 Use syslog for logging, even if running in the foreground.
+.It Fl T, Fl -trap Ar ADDR Ns Op : Ns Ar port
+Send SNMPv2c notifications (traps) to the given sink, default port 162,
+using the community from
+.Fl c .
+Repeat the option for more than one sink.  IPv6 sinks use the
+.Ar [addr]:port
+form.  Emitted on cold start, link up/down, and authentication failure.
 .It Fl t, Fl -timeout Ar SEC
 Timeout for updating the MIB variables, default is 1 second.
 .It Fl u, -drop-privs Ar USER

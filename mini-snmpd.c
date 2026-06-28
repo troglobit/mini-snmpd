@@ -75,6 +75,7 @@ static int usage(int rc)
 	       "  -p, --udp-port PORT    UDP port to bind to, default: 161\n"
 	       "  -P, --tcp-port PORT    TCP port to bind to, default: 161\n"
 	       "  -s, --syslog           Use syslog for logging, even if running in the foreground\n"
+	       "  -T, --trap ADDR        SNMPv2c trap sink, addr[:port], may be repeated\n"
 	       "  -t, --timeout SEC      Timeout for MIB updates, default: 1 second\n"
 	       "  -u, --drop-privs USER  Drop privileges after opening sockets to USER, default: no\n"
 	       "  -v, --version          Show program version and exit\n"
@@ -607,7 +608,7 @@ static int open_socket(int family, int type, int port)
 
 int main(int argc, char *argv[])
 {
-	static const char short_options[] = "ac:C:d:D:hi:l:L:np:P:st:u:vV:"
+	static const char short_options[] = "ac:C:d:D:hi:l:L:np:P:sT:t:u:vV:"
 #ifdef __linux__
 		"I:"
 #endif
@@ -642,6 +643,7 @@ int main(int argc, char *argv[])
 		{ "udp-port",    1, 0, 'p' },
 		{ "tcp-port",    1, 0, 'P' },
 		{ "syslog",      0, 0, 's' },
+		{ "trap",        1, 0, 'T' },
 		{ "timeout",     1, 0, 't' },
 		{ "drop-privs",  1, 0, 'u' },
 		{ "version",     0, 0, 'v' },
@@ -738,6 +740,15 @@ int main(int argc, char *argv[])
 
 		case 's':
 			g_syslog = 1;
+			break;
+
+		case 'T':
+			if (g_trap_dst_len >= MAX_NR_TRAPS)
+				logit(LOG_ERR, 0, "Too many trap sinks, ignoring '%s'", optarg);
+			else if (inet_pton2(optarg, 162, &g_trap_dst[g_trap_dst_len]) == 0)
+				g_trap_dst_len++;
+			else
+				logit(LOG_ERR, 0, "Invalid trap address '%s'", optarg);
 			break;
 
 		case 't':
@@ -923,6 +934,9 @@ int main(int argc, char *argv[])
 
 	/* Watch for interface/address changes; the poll below is the fallback */
 	nl_sd = netlink_init();
+
+	/* Announce we are (re)started to any configured trap sinks */
+	snmp_trap(TRAP_COLDSTART, NULL, 0);
 
 	/* Handle incoming connect requests and incoming data */
 	while (!g_quit) {

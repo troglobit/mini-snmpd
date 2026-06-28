@@ -40,6 +40,7 @@
 #define MAX_NR_SUBIDS                                   20
 #define MAX_NR_DISKS                                    4
 #define MAX_NR_CPUS                                     64
+#define MAX_NR_TRAPS                                    4
 #define MAX_NR_VALUES                                   2048
 
 #define MAX_PACKET_SIZE                                 2048
@@ -75,6 +76,12 @@
 
 #define SNMP_VERSION_1                                  0
 #define SNMP_VERSION_2C                                 1
+
+/* snmpTrapOID.0 values for the notifications we emit, see RFC 3418 */
+#define TRAP_COLDSTART                                  ".1.3.6.1.6.3.1.1.5.1"
+#define TRAP_LINKDOWN                                   ".1.3.6.1.6.3.1.1.5.3"
+#define TRAP_LINKUP                                     ".1.3.6.1.6.3.1.1.5.4"
+#define TRAP_AUTHFAIL                                   ".1.3.6.1.6.3.1.1.5.5"
 #define SNMP_VERSION_3                                  3
 
 #define SNMP_STATUS_OK                                  0
@@ -285,6 +292,9 @@ extern size_t    g_disk_list_length;
 extern char     *g_interface_list[MAX_NR_INTERFACES];
 extern size_t    g_interface_list_length;
 
+extern inet_addr_t g_trap_dst[MAX_NR_TRAPS];	/* trap sinks, -T */
+extern size_t      g_trap_dst_len;
+
 extern in_port_t g_udp_port;
 extern in_port_t g_tcp_port;
 
@@ -346,10 +356,12 @@ int          logit              (int priority, int syserr, const char *fmt, ...)
 
 int snmp_packet_complete   (const client_t *client);
 int snmp                   (      client_t *client);
+void snmp_trap             (const char *trap_oid, const value_t *vb, size_t nvb);
 int snmp_element_as_string (const data_t *data, char *buffer, size_t size);
 
 int mib_build    (void);
 void mib_reset   (void);
+int mib_value    (value_t *value, const char *oidstr, int type, const void *arg);
 int mib_update   (int full);
 
 value_t *mib_find     (const oid_t *oid, size_t *pos);

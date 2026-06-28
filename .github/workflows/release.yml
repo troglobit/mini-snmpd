@@ -20,7 +20,7 @@ jobs:
       - name: Installing dependencies ...
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install pkg-config libconfuse-dev libsystemd-dev ethtool snmp tree tshark tcpdump
+          sudo apt-get -y install pkg-config libconfuse-dev libsystemd-dev ethtool snmp snmptrapd tree tshark tcpdump
       - name: Setting release variables ...
         id: build
         run: |

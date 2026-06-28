@@ -24,6 +24,7 @@
 #include <stdint.h>		/* intptr_t/uintptr_t */
 #include <errno.h>
 #include <time.h>
+#include <net/if.h>		/* IFNAMSIZ */
 
 #include "mini-snmpd.h"
 
@@ -73,6 +74,81 @@ static const int m_load_avg_times[3] = { 1, 5, 15 };
 /* Per-CPU load for hrProcessorTable, sampled across full MIB updates */
 static size_t    g_ncpu;
 static cpuload_t prev_cpuload;
+
+/*
+ * Previous per-interface oper status, for linkUp/linkDown trap detection.
+ * Keyed by interface name, not table index, so the baseline survives the
+ * MIB rebuilds that netlink triggers on every link state change.  A
+ * generation counter prunes interfaces no longer monitored, so one that is
+ * removed and re-added re-baselines instead of firing a stale transition.
+ */
+static struct link_state {
+	char         name[IFNAMSIZ];
+	unsigned int oper;
+	unsigned int gen;
+} link_prev[MAX_NR_INTERFACES];
+static unsigned int link_gen;
+
+static struct link_state *link_find(const char *name)
+{
+	size_t i;
+
+	for (i = 0; i < MAX_NR_INTERFACES; i++) {
+		if (link_prev[i].name[0] && !strcmp(link_prev[i].name, name))
+			return &link_prev[i];
+	}
+
+	return NULL;
+}
+
+static struct link_state *link_add(const char *name)
+{
+	size_t i;
+
+	for (i = 0; i < MAX_NR_INTERFACES; i++) {
+		if (!link_prev[i].name[0]) {
+			snprintf(link_prev[i].name, sizeof(link_prev[i].name), "%s", name);
+			return &link_prev[i];
+		}
+	}
+
+	return NULL;
+}
+
+static void link_prune(unsigned int gen)
+{
+	size_t i;
+
+	for (i = 0; i < MAX_NR_INTERFACES; i++) {
+		if (link_prev[i].name[0] && link_prev[i].gen != gen)
+			link_prev[i].name[0] = 0;
+	}
+}
+
+/* Send a linkUp/linkDown trap for interface @i (RFC 3418 varbinds) */
+static void link_trap(size_t i, unsigned int admin, unsigned int oper, const char *trap)
+{
+	struct { const char *col; unsigned int val; } vbs[] = {
+		{ ".1.3.6.1.2.1.2.2.1.1.%zu", (unsigned int)(i + 1) },	/* ifIndex */
+		{ ".1.3.6.1.2.1.2.2.1.7.%zu", admin },			/* ifAdminStatus */
+		{ ".1.3.6.1.2.1.2.2.1.8.%zu", oper },			/* ifOperStatus */
+	};
+	value_t vb[NELEMS(vbs)];
+	size_t j, n = 0;
+	char buf[48];
+
+	for (j = 0; j < NELEMS(vbs); j++) {
+		snprintf(buf, sizeof(buf), vbs[j].col, i + 1);
+		if (mib_value(&vb[j], buf, BER_TYPE_INTEGER, (const void *)(intptr_t)vbs[j].val))
+			goto done;
+		n++;
+	}
+
+	snmp_trap(trap, vb, n);
+done:
+	for (j = 0; j < n; j++)
+		free(vb[j].data.buffer);
+}
 
 static int oid_build  (oid_t *oid, const oid_t *prefix, int column, int row);
 static int encode_oid_len (oid_t *oid);
@@ -797,6 +873,29 @@ void mib_reset(void)
 	g_mib_length = 0;
 }
 
+/*
+ * Build a standalone MIB value (OID + encoded data), e.g. a trap varbind.
+ * Not part of g_mib; the caller owns value->data.buffer.  Returns 0 on
+ * success, -1 on error.
+ */
+int mib_value(value_t *value, const char *oidstr, int type, const void *arg)
+{
+	oid_t *oid;
+
+	oid = oid_aton(oidstr);
+	if (!oid)
+		return -1;
+
+	memset(value, 0, sizeof(*value));
+	value->oid = *oid;
+	if (encode_oid_len(&value->oid))
+		return -1;
+	if (data_alloc(&value->data, type))
+		return -1;
+
+	return data_set(&value->data, type, arg);
+}
+
 int mib_build(void)
 {
 	netinfo_t netinfo;
@@ -1248,6 +1347,30 @@ int mib_update(int full)
 				if (update_int(&m_if_2_oid, 8, i + 1, &pos, netinfo.status[i]) == -1)
 					return -1;
 			}
+
+			/* Emit linkUp/linkDown traps on oper-status transitions */
+			link_gen++;
+			for (i = 0; i < g_interface_list_length; i++) {
+				unsigned int oper  = netinfo.status[i];
+				unsigned int admin = oper != 2 ? 1 : 2;
+				struct link_state *ls = link_find(g_interface_list[i]);
+
+				if (ls) {
+					if (oper != ls->oper) {
+						if (oper == 1)
+							link_trap(i, admin, oper, TRAP_LINKUP);
+						else if (ls->oper == 1)
+							link_trap(i, admin, oper, TRAP_LINKDOWN);
+					}
+				} else
+					ls = link_add(g_interface_list[i]);	/* new iface: baseline only */
+
+				if (ls) {
+					ls->oper = oper;
+					ls->gen  = link_gen;
+				}
+			}
+			link_prune(link_gen);
 
 			for (i = 0; i < g_interface_list_length; i++) {
 				if (update_tm(&m_if_2_oid, 9, i + 1, &pos, netinfo.lastchange[i]) == -1)

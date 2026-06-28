@@ -66,6 +66,7 @@ static size_t get_list(cfg_t *cfg, const char *key, char **list, size_t len)
 
 int read_config(char *file)
 {
+	unsigned int i;
 	int rc = 0;
 	cfg_opt_t ethtool_opts[] = {
 		CFG_STR("rx_bytes", NULL, CFGF_NONE),
@@ -92,6 +93,7 @@ int read_config(char *file)
 		CFG_STR ("vendor", VENDOR, CFGF_NONE),
 		CFG_STR_LIST("disk-table", "/", CFGF_NONE),
 		CFG_STR_LIST("iface-table", NULL, CFGF_NONE),
+		CFG_STR_LIST("trap-table", NULL, CFGF_NONE),
 		CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
 		CFG_END()
 	};
@@ -128,6 +130,16 @@ int read_config(char *file)
 
 	g_disk_list_length = get_list(cfg, "disk-table", g_disk_list, NELEMS(g_disk_list));
 	g_interface_list_length = get_list(cfg, "iface-table", g_interface_list, NELEMS(g_interface_list));
+
+	/* Append any trap-table sinks to those already given with -T */
+	for (i = 0; i < cfg_size(cfg, "trap-table") && g_trap_dst_len < MAX_NR_TRAPS; i++) {
+		char *str = cfg_getnstr(cfg, "trap-table", i);
+
+		if (str && inet_pton2(str, 162, &g_trap_dst[g_trap_dst_len]) == 0)
+			g_trap_dst_len++;
+		else if (str)
+			logit(LOG_ERR, 0, "Invalid trap address '%s'", str);
+	}
 
 	g_auth        = cfg_getbool(cfg, "authentication");
 	g_community   = get_string(cfg, "community");
