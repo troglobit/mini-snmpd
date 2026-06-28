@@ -49,6 +49,16 @@ static char *get_string(cfg_t *cfg, const char *key)
 	return NULL;
 }
 
+/* Replace *dst with val when the file set the key (val != NULL), freeing
+ * the baseline copy; otherwise keep the command-line value. */
+static void set_string(char **dst, char *val)
+{
+	if (val) {
+		free(*dst);
+		*dst = val;
+	}
+}
+
 /* Append the values of list-key @key to @list, after the @pos entries it
  * already holds (e.g. from the command line), and return the new length. */
 static size_t get_list(cfg_t *cfg, const char *key, char **list, size_t len, size_t pos)
@@ -66,11 +76,118 @@ static size_t get_list(cfg_t *cfg, const char *key, char **list, size_t len, siz
 	return pos;
 }
 
+/*
+ * The values given on the command line, snapshot before the first file
+ * parse.  read_config() can then recompute the effective config as the
+ * baseline plus the file on every (re)load, instead of layering each
+ * reload onto the previous result -- so a key deleted from the file
+ * reverts to its command-line value, and lists do not keep growing.
+ *
+ * The baseline holds the original argv/strdup pointers, which live for
+ * the lifetime of the process; it is never freed.  The effective globals,
+ * in contrast, are always heap copies owned here and freed on each reload.
+ */
+static struct baseline {
+	int         captured;
+	char       *location, *contact, *description, *community, *vendor;
+	int         auth, timeout;
+	char       *disk[MAX_NR_DISKS];        size_t ndisk;
+	char       *iface[MAX_NR_INTERFACES];  size_t niface;
+	inet_addr_t trap[MAX_NR_TRAPS];        size_t ntrap;
+} base;
+static int applied;
+
+static void capture_baseline(void)
+{
+	size_t i;
+
+	base.location    = g_location;
+	base.contact     = g_contact;
+	base.description = g_description;
+	base.community   = g_community;
+	base.vendor      = g_vendor;
+	base.auth        = g_auth;
+	base.timeout     = g_timeout;
+
+	for (i = 0; i < g_disk_list_length; i++)
+		base.disk[i] = g_disk_list[i];
+	base.ndisk = g_disk_list_length;
+
+	for (i = 0; i < g_interface_list_length; i++)
+		base.iface[i] = g_interface_list[i];
+	base.niface = g_interface_list_length;
+
+	for (i = 0; i < g_trap_dst_len; i++)
+		base.trap[i] = g_trap_dst[i];
+	base.ntrap = g_trap_dst_len;
+
+	base.captured = 1;
+}
+
+static char *dup_or_null(const char *str)
+{
+	return str ? strdup(str) : NULL;
+}
+
+/* Reset the effective config to the command-line baseline, freeing the
+ * heap copies left by the previous (re)load. */
+static void apply_baseline(void)
+{
+	size_t i;
+
+	if (applied) {
+		free(g_location);
+		free(g_contact);
+		free(g_description);
+		free(g_community);
+		free(g_vendor);
+		for (i = 0; i < g_disk_list_length; i++)
+			free(g_disk_list[i]);
+		for (i = 0; i < g_interface_list_length; i++)
+			free(g_interface_list[i]);
+	}
+
+	g_location    = dup_or_null(base.location);
+	g_contact     = dup_or_null(base.contact);
+	g_description = dup_or_null(base.description);
+	g_community   = dup_or_null(base.community);
+	g_vendor      = dup_or_null(base.vendor);
+	g_auth        = base.auth;
+	g_timeout     = base.timeout;
+
+	for (i = 0; i < base.ndisk; i++)
+		g_disk_list[i] = strdup(base.disk[i]);
+	g_disk_list_length = base.ndisk;
+
+	for (i = 0; i < base.niface; i++)
+		g_interface_list[i] = strdup(base.iface[i]);
+	g_interface_list_length = base.niface;
+
+	for (i = 0; i < base.ntrap; i++)
+		g_trap_dst[i] = base.trap[i];
+	g_trap_dst_len = base.ntrap;
+
+	applied = 1;
+}
+
 int read_config(char *file)
 {
 	unsigned int i;
 	char *str;
 	int rc = 0;
+
+	/* Effective config always starts from the command-line baseline; the
+	 * file is then overlaid.  This makes the function idempotent, so a
+	 * SIGHUP reload recomputes from scratch instead of stacking onto the
+	 * previous result. */
+	if (!base.captured)
+		capture_baseline();
+	apply_baseline();
+
+	if (access(file, F_OK))
+		return 0;		/* no file: the baseline stands */
+
+	{
 	cfg_opt_t ethtool_opts[] = {
 		CFG_STR("rx_bytes", NULL, CFGF_NONE),
 		CFG_STR("rx_mc_packets", NULL, CFGF_NONE),
@@ -86,6 +203,8 @@ int read_config(char *file)
 		CFG_STR("tx_drops", NULL, CFGF_NONE),
 		CFG_END()
 	};
+	/* authentication and timeout default to the baseline value just
+	 * restored above, so an unset key keeps the command-line value. */
 	cfg_opt_t opts[] = {
 		CFG_STR ("location", NULL, CFGF_NONE),
 		CFG_STR ("contact", NULL, CFGF_NONE),
@@ -100,9 +219,6 @@ int read_config(char *file)
 		CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
 		CFG_END()
 	};
-
-	if (access(file, F_OK))
-		return 0;
 
 	cfg = cfg_init(opts, CFGF_NONE);
 	if (!cfg) {
@@ -127,15 +243,12 @@ int read_config(char *file)
 		break;
 	}
 
-	/* Scalars: only override the command line when the key is actually
-	 * set in the file, so an unset key does not clobber a -L/-C/... value.
-	 * timeout and authentication default to the current global, so they
-	 * already fall through to the command line when unset. */
-	if ((str = get_string(cfg, "location")))    g_location    = str;
-	if ((str = get_string(cfg, "contact")))     g_contact     = str;
-	if ((str = get_string(cfg, "description"))) g_description = str;
-	if ((str = get_string(cfg, "community")))   g_community   = str;
-	if ((str = get_string(cfg, "vendor")))      g_vendor      = str;
+	/* Scalars: a key present in the file overrides the baseline. */
+	set_string(&g_location,    get_string(cfg, "location"));
+	set_string(&g_contact,     get_string(cfg, "contact"));
+	set_string(&g_description, get_string(cfg, "description"));
+	set_string(&g_community,   get_string(cfg, "community"));
+	set_string(&g_vendor,      get_string(cfg, "vendor"));
 
 	g_auth        = cfg_getbool(cfg, "authentication");
 	g_timeout     = cfg_getint(cfg, "timeout");
@@ -158,5 +271,7 @@ int read_config(char *file)
 
 error:
 	cfg_free(cfg);
+	}
+
 	return rc;
 }

@@ -17,8 +17,10 @@ Supported features:
 - SNMP version 1 and 2c
 - Community string authentication when using 2c or explicitly configured
 - Read-only access (writing is not supported)
+- SNMPv2c traps: coldStart, linkUp/linkDown, and authentication failure
 - Includes basic system info like CPU load, memory, disk and network interfaces
 - Does not need a configuration file, but one is supported
+- Reloads the configuration on `SIGHUP`, command line and file combined
 - Supports UDP and TCP (thus supports SSH tunneling of SNMP connections)
 - Supports Linux 2.6 and later
 - Supports FreeBSD (needs procfs mounted using "mount_linprocfs procfs /proc")

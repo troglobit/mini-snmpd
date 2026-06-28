@@ -48,6 +48,14 @@
 static char  *iface_pattern[MAX_NR_INTERFACES];
 static size_t iface_pattern_len;
 
+/* Set on SIGHUP, handled in the main loop: re-read config and rebuild MIB */
+static volatile sig_atomic_t g_reload;
+
+#ifdef HAVE_LIBCONFUSE
+static char  conf_path[256];		/* default path buffer */
+static char *conf_file;			/* -f FILE, or conf_path */
+#endif
+
 static int usage(int rc)
 {
 	printf("Usage: %s [options]\n"
@@ -89,9 +97,12 @@ static int usage(int rc)
 	return rc;
 }
 
-static void handle_signal(int UNUSED(signo))
+static void handle_signal(int signo)
 {
-	g_quit = 1;
+	if (signo == SIGHUP)
+		g_reload = 1;
+	else
+		g_quit = 1;
 }
 
 static void handle_udp_client(int sockfd)
@@ -533,6 +544,59 @@ static void rebuild_mib(void)
 }
 
 /*
+ * Fill in built-in defaults for anything the command line and the .conf
+ * file left unset.  Heap-allocated, like the rest of the effective config,
+ * so a reload can free and redo them.
+ */
+static void apply_defaults(void)
+{
+	if (!g_community)   g_community   = strdup("public");
+	if (!g_vendor)      g_vendor      = strdup(VENDOR);
+	if (!g_description) g_description = os_pretty_name();
+	if (!g_description) g_description = strdup("");
+	if (!g_location)    g_location    = strdup("");
+	if (!g_contact)     g_contact     = strdup("");
+}
+
+/*
+ * (Re)compute the effective configuration: overlay the .conf file on the
+ * command-line baseline, apply defaults, and resolve the disk and
+ * interface lists.  Idempotent, so it is also the SIGHUP reload path.
+ */
+static void configure(void)
+{
+	size_t i;
+
+#ifdef HAVE_LIBCONFUSE
+	read_config(conf_file);
+#endif
+	apply_defaults();
+
+	/* No disks given?  Monitor the root filesystem. */
+	if (g_disk_list_length == 0) {
+		g_disk_list[0] = strdup("/");
+		g_disk_list_length = 1;
+	}
+
+	/* No interfaces given?  Monitor them all (loopback lands on ifIndex 1). */
+	if (g_interface_list_length == 0) {
+		g_interface_list[0] = strdup("+");
+		g_interface_list_length = 1;
+	}
+
+	/* Preserve the interface spec so the list can be rebuilt on netlink
+	 * events and reloads, then let expand_interfaces() resolve it. */
+	for (i = 0; i < iface_pattern_len; i++)
+		free(iface_pattern[i]);
+	for (i = 0; i < g_interface_list_length; i++)
+		iface_pattern[i] = g_interface_list[i];
+	iface_pattern_len = g_interface_list_length;
+	g_interface_list_length = 0;
+
+	g_timeout *= 100;
+}
+
+/*
  * Open and bind a listening socket of @family (AF_INET/AF_INET6) for the
  * given socket @type on @port.  Returns the descriptor, or -1 on error.
  */
@@ -659,10 +723,6 @@ int main(int argc, char *argv[])
 	struct timeval tv_sleep;
 	int udp_fds[2] = { -1, -1 }, tcp_fds[2] = { -1, -1 };
 	size_t n_udp = 0, n_tcp = 0;
-#ifdef HAVE_LIBCONFUSE
-	char path[256] = "";
-	char *config = NULL;
-#endif
 
 	g_prognm = progname(argv[0]);
 
@@ -703,7 +763,7 @@ int main(int argc, char *argv[])
 			break;
 #ifdef HAVE_LIBCONFUSE
 		case 'f':
-			config = optarg;
+			conf_file = optarg;
 			break;
 #endif
 		case 'h':
@@ -790,51 +850,16 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef HAVE_LIBCONFUSE
-	if (!config) {
-		snprintf(path, sizeof(path), "%s/%s.conf", SYSCONFDIR, PACKAGE_NAME);
-		config = path;
-	} else if (access(config, F_OK)) {
-		logit(LOG_ERR, errno, "Failed reading config file '%s'", config);
+	if (!conf_file) {
+		snprintf(conf_path, sizeof(conf_path), "%s/%s.conf", SYSCONFDIR, PACKAGE_NAME);
+		conf_file = conf_path;
+	} else if (access(conf_file, F_OK)) {
+		logit(LOG_ERR, errno, "Failed reading config file '%s'", conf_file);
 		return 1;
 	}
-
-	if (read_config(config))
-		return 1;
 #endif
 
-	if (!g_community)
-		g_community = "public";
-	if (!g_vendor)
-		g_vendor = VENDOR;
-	if (!g_description)
-		g_description = os_pretty_name();
-	if (!g_description)
-		g_description = "";
-	if (!g_location)
-		g_location = "";
-	if (!g_contact)
-		g_contact = "";
-
-	/* No disks given?  Monitor the root filesystem. */
-	if (g_disk_list_length == 0) {
-		g_disk_list[0] = "/";
-		g_disk_list_length = 1;
-	}
-
-	/* No interfaces given?  Monitor them all (loopback lands on ifIndex 1). */
-	if (g_interface_list_length == 0) {
-		g_interface_list[0] = "+";
-		g_interface_list_length = 1;
-	}
-
-	/* Preserve the -i spec so the list can be rebuilt on netlink events,
-	 * then let expand_interfaces() build the concrete g_interface_list. */
-	for (i = 0; i < g_interface_list_length; i++)
-		iface_pattern[i] = g_interface_list[i];
-	iface_pattern_len = g_interface_list_length;
-	g_interface_list_length = 0;
-
-	g_timeout *= 100;
+	configure();
 
 	/* Store the starting time since we need it for MIB updates */
 	if (gettimeofday(&tv_last, NULL) == -1) {
@@ -977,11 +1002,30 @@ int main(int argc, char *argv[])
 		}
 
 		if (select(nfds + 1, &rfds, &wfds, NULL, &tv_sleep) == -1) {
-			if (g_quit)
-				break;
+			if (errno != EINTR) {
+				logit(LOG_ERR, errno, "could not select from sockets");
+				exit(EXIT_SYSCALL);
+			}
 
-			logit(LOG_ERR, errno, "could not select from sockets");
-			exit(EXIT_SYSCALL);
+			/* Interrupted by a signal (select is not restarted even
+			 * with SA_RESTART); nothing is readable this round. */
+			FD_ZERO(&rfds);
+			FD_ZERO(&wfds);
+		}
+
+		if (g_quit)
+			break;
+
+		/* SIGHUP: re-read the config over the command-line baseline and
+		 * rebuild the MIB.  Listening sockets are left untouched, so a
+		 * daemon that has dropped privileges can still reload. */
+		if (g_reload) {
+			g_reload = 0;
+			logit(LOG_NOTICE, 0, "Reloading configuration");
+#ifdef HAVE_LIBCONFUSE
+			configure();
+#endif
+			rebuild_mib();
 		}
 
 		/* Determine whether to update the MIB and the next ticks to sleep */

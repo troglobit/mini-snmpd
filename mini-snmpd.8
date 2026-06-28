@@ -138,8 +138,16 @@ responds to the following signals:
 Tell
 .Nm
 to exit gracefully
-.It HUP
+.It INT
 Same as TERM
+.It HUP
+Reload: re-read the configuration file over the command-line options and
+rebuild the MIB.  A setting present in the file overrides the matching
+command-line option; removing it and reloading again restores the
+command-line value.  The listening sockets are left untouched, so the
+daemon can reload after dropping privileges.  Built without libConfuse,
+.Nm
+has no file to read and only rebuilds the MIB.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/mini-snmpd.pid -compact
