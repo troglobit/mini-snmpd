@@ -3,7 +3,7 @@ SUBDIRS               = .
 if ENABLE_TEST
 SUBDIRS              += test
 endif
-EXTRA_DIST            = README.md COPYING ChangeLog.md
+EXTRA_DIST            = README.md COPYING ChangeLog.md MIBS.md
 doc_DATA              = README.md COPYING
 dist_man8_MANS        = $(EXEC).8
 sbin_PROGRAMS         = $(EXEC)

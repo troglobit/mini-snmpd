@@ -29,6 +29,7 @@ endian may not work.
 
 - For info about licensing, see the file [COPYING][license]
 - For info about using the program, see the file [mini-snmpd.8][man]
+- For the list of supported MIBs and objects, see the file [MIBS.md][mibs]
 - For info about how to (cross)compile the program, see the file [Makefile][build]
 - For info about how to extend the MIB, see the file [README.develop][contrib]
 
@@ -165,6 +166,7 @@ and pull request functions to report bugs or contribute new features.
 
 [1]:               http://members.aon.at/linuxfreak/linux/mini_snmpd.html
 [man]:             https://man.troglobit.com/man8/mini-snmpd.8.html
+[mibs]:            https://github.com/troglobit/mini-snmpd/blob/master/MIBS.md
 [github]:          https://github.com/troglobit/mini-snmpd
 [license]:         https://github.com/troglobit/mini-snmpd/blob/master/COPYING
 [contrib]:         https://github.com/troglobit/mini-snmpd/blob/master/README.develop
