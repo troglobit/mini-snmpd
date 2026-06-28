@@ -25,6 +25,7 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <getopt.h>
+#include <fnmatch.h>
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
@@ -56,7 +57,7 @@ static int usage(int rc)
 	       "  -f, --file FILE        Configuration file. Default: " SYSCONFDIR "/%s.conf\n"
 #endif
 	       "  -h, --help             This help text\n"
-	       "  -i, --interfaces IFACE Network interfaces to monitor, default: none\n"
+	       "  -i, --interfaces IFACE Network interfaces to monitor, globs OK, default: none\n"
 #ifdef __linux__
 	       "  -I, --listen IFACE     Network interface to listen, default: all\n"
 #endif
@@ -404,6 +405,68 @@ static char *progname(char *arg0)
 }
 
 /*
+ * Expand shell-style globs (eth*, vlan*, *) in the interface list against
+ * the interfaces present at startup.  Plain names are kept verbatim, so
+ * this only affects users who actually pass a pattern.  The expansion is
+ * a one-shot at startup; interfaces created later are not picked up.
+ */
+static void expand_interfaces(void)
+{
+	char *list[MAX_NR_INTERFACES];
+	struct if_nameindex *ifni, *p;
+	size_t len = 0, i, j;
+	int globs = 0;
+
+	for (i = 0; i < g_interface_list_length; i++) {
+		if (strpbrk(g_interface_list[i], "*?["))
+			globs = 1;
+	}
+	if (!globs)
+		return;
+
+	ifni = if_nameindex();
+	if (!ifni) {
+		logit(LOG_WARNING, errno, "Failed listing interfaces, cannot expand patterns");
+		return;
+	}
+
+	for (i = 0; i < g_interface_list_length && len < NELEMS(list); i++) {
+		char *pat = g_interface_list[i];
+
+		/* A plain name is kept as-is (skipping duplicates) */
+		if (!strpbrk(pat, "*?[")) {
+			for (j = 0; j < len; j++) {
+				if (!strcmp(list[j], pat))
+					break;
+			}
+			if (j == len)
+				list[len++] = pat;
+			continue;
+		}
+
+		for (p = ifni; p->if_index != 0 && len < NELEMS(list); p++) {
+			if (fnmatch(pat, p->if_name, 0))
+				continue;
+
+			for (j = 0; j < len; j++) {
+				if (!strcmp(list[j], p->if_name))
+					break;
+			}
+			if (j == len && (list[len] = strdup(p->if_name)))
+				len++;
+		}
+	}
+
+	if_freenameindex(ifni);
+
+	for (i = 0; i < len; i++)
+		g_interface_list[i] = list[i];
+	g_interface_list_length = len;
+
+	logit(LOG_DEBUG, 0, "Interface patterns expanded to %zu interface(s)", len);
+}
+
+/*
  * Open and bind a listening socket of @family (AF_INET/AF_INET6) for the
  * given socket @type on @port.  Returns the descriptor, or -1 on error.
  */
@@ -686,6 +749,9 @@ int main(int argc, char *argv[])
 		tv_sleep.tv_sec = g_timeout / 100;
 		tv_sleep.tv_usec = (g_timeout % 100) * 10000;
 	}
+
+	/* Expand any interface patterns (eth*, vlan*, ...) before building the MIB */
+	expand_interfaces();
 
 	/* Build the MIB and execute the first MIB update to get actual values */
 	if (mib_build() == -1)

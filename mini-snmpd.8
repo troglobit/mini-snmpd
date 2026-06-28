@@ -81,6 +81,13 @@ List of network interfaces to monitor for IF-MIB, default is none.
 Separate multiple interface names with comma or semicolon,
 .Em not
 colon!
+Names may contain shell-style globs, e.g.
+.Ar eth*
+or
+.Ar vlan* ,
+matched against the interfaces present at start-up; use
+.Ar *
+to monitor all of them.
 .It Fl I, Fl -listen Ar IFNAME
 Network interface to bind to, default is listen on all interfaces.
 This option is only available on Linux, it uses the Linux-specific
