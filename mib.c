@@ -51,6 +51,7 @@ static const oid_t m_udp_oid            = { { 1, 3, 6, 1, 2, 1, 7               
 static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           },  8, 9  };
 static const oid_t m_host_mem_oid       = { { 1, 3, 6, 1, 2, 1, 25, 2           },  8, 9  };
 static const oid_t m_host_storage_oid   = { { 1, 3, 6, 1, 2, 1, 25, 2, 3, 1     }, 10, 11 };
+static const oid_t m_host_cpu_oid       = { { 1, 3, 6, 1, 2, 1, 25, 3, 3, 1     }, 10, 11 };
 static const oid_t m_ifxtable_oid       = { { 1, 3, 6, 1, 2, 1, 31, 1, 1, 1     }, 10, 11 };
 static const oid_t m_memory_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 4,        },  8, 10 };
 static const oid_t m_disk_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 9, 1      },  9, 11 };
@@ -65,6 +66,13 @@ static const int m_load_avg_times[3] = { 1, 5, 15 };
 /* hrStorageType OIDs, used for the hrStorageTable type column */
 #define HR_STORAGE_RAM   ".1.3.6.1.2.1.25.2.1.2"
 #define HR_STORAGE_DISK  ".1.3.6.1.2.1.25.2.1.4"
+
+/* hrProcessorFrwID: the null OID { 0 0 }, i.e. unknown firmware */
+#define HR_PROCESSOR_FRWID ".0.0"
+
+/* Per-CPU load for hrProcessorTable, sampled across full MIB updates */
+static size_t    g_ncpu;
+static cpuload_t prev_cpuload;
 
 static int oid_build  (oid_t *oid, const oid_t *prefix, int column, int row);
 static int encode_oid_len (oid_t *oid);
@@ -998,6 +1006,27 @@ int mib_build(void)
 		return -1;
 
 	/*
+	 * HOST-RESOURCES-MIB hrProcessorTable: one row per logical CPU, the
+	 * load filled in by mib_update() from per-CPU jiffy deltas.
+	 * Caution: on changes, adapt the corresponding mib_update() section too!
+	 */
+	{
+		cpuload_t cpu;
+
+		get_cpuload(&cpu);
+		g_ncpu = cpu.ncpu;
+		prev_cpuload = cpu;	/* seed the first load delta */
+
+		for (i = 1; i <= g_ncpu; i++) {		/* hrProcessorFrwID: unknown */
+			if (mib_build_entry(&m_host_cpu_oid, 1, i, BER_TYPE_OID, HR_PROCESSOR_FRWID) == -1)
+				return -1;
+		}
+
+		if (mib_build_entries(&m_host_cpu_oid, 2, 1, g_ncpu, BER_TYPE_INTEGER) == -1)
+			return -1;
+	}
+
+	/*
 	 * IF-MIB continuation
 	 * ifXTable
 	 */
@@ -1352,6 +1381,28 @@ int mib_update(int full)
 			if (update_int(&m_host_storage_oid, 6, i + 2, &pos, disk.used[i]) == -1)
 				return -1;
 		}
+	}
+
+	/*
+	 * HOST-RESOURCES-MIB hrProcessorLoad: percentage busy per CPU since the
+	 * previous full update.
+	 * Caution: on changes, adapt the corresponding mib_build() section too!
+	 */
+	if (full && g_ncpu > 0) {
+		cpuload_t cpu;
+
+		get_cpuload(&cpu);
+		for (i = 0; i < g_ncpu; i++) {
+			long long dt = cpu.total[i] - prev_cpuload.total[i];
+			long long db = cpu.busy[i]  - prev_cpuload.busy[i];
+			unsigned int load = dt > 0 ? (unsigned int)(100 * db / dt) : 0;
+
+			if (load > 100)
+				load = 100;
+			if (update_int(&m_host_cpu_oid, 2, i + 1, &pos, load) == -1)
+				return -1;
+		}
+		prev_cpuload = cpu;
 	}
 
 	/*

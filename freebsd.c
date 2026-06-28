@@ -155,6 +155,47 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	cpuinfo->cntxts = 0;	/* TODO */
 }
 
+/* Per-CPU cumulative ticks, from the kern.cp_times sysctl */
+void get_cpuload(cpuload_t *cpuload)
+{
+	long *cp_times;
+	size_t len = 0;
+	int ncpu = 0, i;
+	size_t nlen = sizeof(ncpu);
+
+	memset(cpuload, 0, sizeof(*cpuload));
+
+	if (sysctlbyname("hw.ncpu", &ncpu, &nlen, NULL, 0) < 0 || ncpu <= 0)
+		return;
+	if (ncpu > MAX_NR_CPUS)
+		ncpu = MAX_NR_CPUS;
+
+	if (sysctlbyname("kern.cp_times", NULL, &len, NULL, 0) < 0)
+		return;
+	cp_times = malloc(len);
+	if (!cp_times)
+		return;
+	if (sysctlbyname("kern.cp_times", cp_times, &len, NULL, 0) < 0) {
+		free(cp_times);
+		return;
+	}
+
+	cpuload->ncpu = ncpu;
+	for (i = 0; i < ncpu; i++) {
+		long *c = &cp_times[i * CPUSTATES];
+		long long total = 0;
+		int s;
+
+		for (s = 0; s < CPUSTATES; s++)
+			total += c[s];
+
+		cpuload->busy[i]  = total - c[CP_IDLE];
+		cpuload->total[i] = total;
+	}
+
+	free(cp_times);
+}
+
 void get_ipinfo(ipinfo_t *ipinfo)
 {
 	size_t len;

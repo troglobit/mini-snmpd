@@ -110,6 +110,53 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 	parse_file("/proc/stat", fields, NELEMS(fields), 0);
 }
 
+/* Per-CPU cumulative jiffies, from the 'cpuN' lines of /proc/stat */
+void get_cpuload(cpuload_t *cpuload)
+{
+	char line[256];
+	FILE *fp;
+
+	memset(cpuload, 0, sizeof(*cpuload));
+
+	fp = fopen("/proc/stat", "r");
+	if (!fp)
+		return;
+
+	while (fgets(line, sizeof(line), fp)) {
+		long long v[10] = { 0 };
+		long long total = 0, idle;
+		unsigned long n;
+		char *p;
+		int i, got;
+
+		/* Only the per-CPU lines, 'cpuN ...', not the 'cpu ' aggregate */
+		if (strncmp(line, "cpu", 3) || !isdigit((unsigned char)line[3]))
+			continue;
+
+		n = strtoul(line + 3, &p, 10);
+		if (n >= MAX_NR_CPUS)
+			continue;
+
+		got = sscanf(p, "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld",
+			     &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6], &v[7], &v[8], &v[9]);
+		if (got < 4)
+			continue;
+
+		for (i = 0; i < got; i++)
+			total += v[i];
+		idle = v[3];			/* idle */
+		if (got > 4)
+			idle += v[4];		/* + iowait */
+
+		cpuload->busy[n]  = total - idle;
+		cpuload->total[n] = total;
+		if (n + 1 > cpuload->ncpu)
+			cpuload->ncpu = n + 1;
+	}
+
+	fclose(fp);
+}
+
 void get_ipinfo(ipinfo_t *ipinfo)
 {
 	long long garbage;

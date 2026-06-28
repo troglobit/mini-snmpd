@@ -156,6 +156,16 @@ which mini-snmpd reports as 1024 (i.e. kB).
 | .5  | hrStorageSize            | INTEGER         |
 | .6  | hrStorageUsed            | INTEGER         |
 
+### Device, `.3`
+
+`hrProcessorTable`, `.3.3.1` — one row per logical CPU.  `hrProcessorLoad`
+is the percentage of time the CPU was busy since the previous poll.
+
+| OID | Object           | Type                    |
+|-----|------------------|-------------------------|
+| .1  | hrProcessorFrwID | OID (`.0.0`, unknown)   |
+| .2  | hrProcessorLoad  | INTEGER (0-100, % busy) |
+
 ## UCD-SNMP-MIB
 
 `1.3.6.1.4.1.2021` — memory, disk, load average, and CPU statistics.
