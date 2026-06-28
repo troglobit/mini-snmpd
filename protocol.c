@@ -393,8 +393,8 @@ static int decode_snmp_request(request_t *request, client_t *client)
 	while (pos < client->size) {
 		/* If there is not enough room in the OID list, bail out now */
 		if (request->oid_list_length >= MAX_NR_OIDS) {
-			logit(LOG_DEBUG, 0, "Overflow in OID list");
-			errno = EFAULT;
+			logit(LOG_WARNING, 0, "Too many variable bindings in request, max %d per PDU", MAX_NR_OIDS);
+			errno = E2BIG;
 			return -1;
 		}
 
