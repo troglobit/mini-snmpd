@@ -815,6 +815,12 @@ int main(int argc, char *argv[])
 	if (!g_contact)
 		g_contact = "";
 
+	/* No disks given?  Monitor the root filesystem. */
+	if (g_disk_list_length == 0) {
+		g_disk_list[0] = "/";
+		g_disk_list_length = 1;
+	}
+
 	/* No interfaces given?  Monitor them all (loopback lands on ifIndex 1). */
 	if (g_interface_list_length == 0) {
 		g_interface_list[0] = "+";

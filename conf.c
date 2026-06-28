@@ -49,24 +49,27 @@ static char *get_string(cfg_t *cfg, const char *key)
 	return NULL;
 }
 
-static size_t get_list(cfg_t *cfg, const char *key, char **list, size_t len)
+/* Append the values of list-key @key to @list, after the @pos entries it
+ * already holds (e.g. from the command line), and return the new length. */
+static size_t get_list(cfg_t *cfg, const char *key, char **list, size_t len, size_t pos)
 {
-	size_t i = 0;
+	size_t i;
 
-	while (i < cfg_size(cfg, key)) {
+	for (i = 0; i < cfg_size(cfg, key) && pos < len; i++) {
 		char *str;
 
 		str = cfg_getnstr(cfg, key, i);
-		if (str && i < len)
-			list[i++] = strdup(str);
+		if (str)
+			list[pos++] = strdup(str);
 	}
 
-	return i;
+	return pos;
 }
 
 int read_config(char *file)
 {
 	unsigned int i;
+	char *str;
 	int rc = 0;
 	cfg_opt_t ethtool_opts[] = {
 		CFG_STR("rx_bytes", NULL, CFGF_NONE),
@@ -90,8 +93,8 @@ int read_config(char *file)
 		CFG_BOOL("authentication", g_auth, CFGF_NONE),
 		CFG_STR ("community", NULL, CFGF_NONE),
 		CFG_INT ("timeout", g_timeout, CFGF_NONE),
-		CFG_STR ("vendor", VENDOR, CFGF_NONE),
-		CFG_STR_LIST("disk-table", "/", CFGF_NONE),
+		CFG_STR ("vendor", NULL, CFGF_NONE),
+		CFG_STR_LIST("disk-table", NULL, CFGF_NONE),
 		CFG_STR_LIST("iface-table", NULL, CFGF_NONE),
 		CFG_STR_LIST("trap-table", NULL, CFGF_NONE),
 		CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
@@ -124,28 +127,32 @@ int read_config(char *file)
 		break;
 	}
 
-	g_location    = get_string(cfg, "location");
-	g_contact     = get_string(cfg, "contact");
-	g_description = get_string(cfg, "description");
+	/* Scalars: only override the command line when the key is actually
+	 * set in the file, so an unset key does not clobber a -L/-C/... value.
+	 * timeout and authentication default to the current global, so they
+	 * already fall through to the command line when unset. */
+	if ((str = get_string(cfg, "location")))    g_location    = str;
+	if ((str = get_string(cfg, "contact")))     g_contact     = str;
+	if ((str = get_string(cfg, "description"))) g_description = str;
+	if ((str = get_string(cfg, "community")))   g_community   = str;
+	if ((str = get_string(cfg, "vendor")))      g_vendor      = str;
 
-	g_disk_list_length = get_list(cfg, "disk-table", g_disk_list, NELEMS(g_disk_list));
-	g_interface_list_length = get_list(cfg, "iface-table", g_interface_list, NELEMS(g_interface_list));
+	g_auth        = cfg_getbool(cfg, "authentication");
+	g_timeout     = cfg_getint(cfg, "timeout");
 
-	/* Append any trap-table sinks to those already given with -T */
+	/* Lists combine: append the file's entries to those from the command
+	 * line (-d/-i/-T), rather than replacing them. */
+	g_disk_list_length      = get_list(cfg, "disk-table",  g_disk_list,      NELEMS(g_disk_list),      g_disk_list_length);
+	g_interface_list_length = get_list(cfg, "iface-table", g_interface_list, NELEMS(g_interface_list), g_interface_list_length);
+
 	for (i = 0; i < cfg_size(cfg, "trap-table") && g_trap_dst_len < MAX_NR_TRAPS; i++) {
-		char *str = cfg_getnstr(cfg, "trap-table", i);
+		str = cfg_getnstr(cfg, "trap-table", i);
 
 		if (str && inet_pton2(str, 162, &g_trap_dst[g_trap_dst_len]) == 0)
 			g_trap_dst_len++;
 		else if (str)
 			logit(LOG_ERR, 0, "Invalid trap address '%s'", str);
 	}
-
-	g_auth        = cfg_getbool(cfg, "authentication");
-	g_community   = get_string(cfg, "community");
-	g_timeout     = cfg_getint(cfg, "timeout");
-
-	g_vendor      = get_string(cfg, "vendor");
 
 	ethtool_xlate_cfg(cfg);
 

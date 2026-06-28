@@ -32,6 +32,9 @@ All notable changes to the project are documented in this file.
   values with the high bit set, which otherwise decode as negative integers,
   by Ilya Ponetayev
 - Fix IP-MIB address table OID index on big-endian systems, by Ilya Ponetayev
+- The .conf file no longer overrides the command line: list options (`-d`,
+  `-i`, `-T`) now combine with `disk-table`, `iface-table`, and `trap-table`,
+  and an unset key no longer clears a value given on the command line
 
 [v1.7][] -- 2026-06-21
 ----------------------

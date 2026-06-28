@@ -41,8 +41,8 @@ char     *g_contact;
 char     *g_bind_to_device;
 char     *g_user;
 
-char     *g_disk_list[MAX_NR_DISKS] = { "/" };
-size_t    g_disk_list_length        = 1;
+char     *g_disk_list[MAX_NR_DISKS];
+size_t    g_disk_list_length;
 
 char     *g_interface_list[MAX_NR_INTERFACES];
 size_t    g_interface_list_length;
