@@ -230,7 +230,9 @@ static int encode_unsigned(data_t *data, int type, unsigned int ticks_value)
 	int length;
 
 	buffer = data->buffer;
-	if (ticks_value & 0xFF800000)
+	if (ticks_value & 0x80000000)
+		length = 5;
+	else if (ticks_value & 0xFF800000)
 		length = 4;
 	else if (ticks_value & 0x007F8000)
 		length = 3;
@@ -241,6 +243,14 @@ static int encode_unsigned(data_t *data, int type, unsigned int ticks_value)
 
 	*buffer++ = type;
 	*buffer++ = length;
+
+	/* Prepend a zero byte so a value with the high bit set is not
+	 * misdecoded as a negative integer. */
+	if (length == 5) {
+		length--;
+		*buffer++ = 0;
+	}
+
 	while (length--)
 		*buffer++ = (ticks_value >> (8 * length)) & 0xFF;
 
@@ -255,7 +265,9 @@ static int encode_unsigned64(data_t *data, int type, uint64_t ticks_value)
 	int length;
 
 	buffer = data->buffer;
-	if (ticks_value & 0xFF80000000000000ULL)
+	if (ticks_value & 0x8000000000000000ULL)
+		length = 9;
+	else if (ticks_value & 0xFF80000000000000ULL)
 		length = 8;
 	else if (ticks_value & 0x007F800000000000ULL)
 		length = 7;
@@ -274,6 +286,14 @@ static int encode_unsigned64(data_t *data, int type, uint64_t ticks_value)
 
 	*buffer++ = type;
 	*buffer++ = length;
+
+	/* Prepend a zero byte so a value with the high bit set is not
+	 * misdecoded as a negative integer. */
+	if (length == 9) {
+		length--;
+		*buffer++ = 0;
+	}
+
 	while (length--)
 		*buffer++ = (ticks_value >> (8 * length)) & 0xFF;
 
@@ -488,7 +508,7 @@ static int data_alloc(data_t *data, int type)
 		break;
 
 	case BER_TYPE_COUNTER64:
-		data->max_length = sizeof(uint64_t) + 2;
+		data->max_length = sizeof(uint64_t) + 3;
 		data->encoded_length = 0;
 		data->buffer = allocate(data->max_length);
 		break;
