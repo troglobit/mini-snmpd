@@ -89,20 +89,66 @@ static void handle_udp_client(int sockfd)
 	const char *req_msg = "Failed UDP request from";
 	const char *snd_msg = "Failed UDP response to";
 	inet_addr_t sockaddr;
+	char straddr[INET_ADDRSTR_LEN] = { 0 };
+	struct iovec iov;
+	struct msghdr mh;
 	socklen_t socklen;
 	ssize_t rv;
-	char straddr[INET_ADDRSTR_LEN] = { 0 };
+#ifdef __linux__
+	/* Control buffer large enough for an IPv4 or IPv6 packet-info cmsg */
+	union {
+		char buf[CMSG_SPACE(sizeof(struct in_pktinfo))
+#ifdef CONFIG_ENABLE_IPV6
+			 + CMSG_SPACE(sizeof(struct in6_pktinfo))
+#endif
+			];
+		struct cmsghdr align;
+	} cmsg_in, cmsg_out;
+	struct cmsghdr *cmsg;
+	struct in_pktinfo pkt4;
+#ifdef CONFIG_ENABLE_IPV6
+	struct in6_pktinfo pkt6;
+#endif
+	int local_af = 0;
+#endif /* __linux__ */
 
 	memset(&sockaddr, 0, sizeof(sockaddr));
 
 	/* Read the whole UDP packet from the socket at once */
-	socklen = sizeof(sockaddr);
-	rv = recvfrom(sockfd, g_udp_client.packet, sizeof(g_udp_client.packet),
-		      0, (struct sockaddr *)&sockaddr, &socklen);
+	iov.iov_base = g_udp_client.packet;
+	iov.iov_len  = sizeof(g_udp_client.packet);
+	memset(&mh, 0, sizeof(mh));
+	mh.msg_name    = &sockaddr;
+	mh.msg_namelen = sizeof(sockaddr);
+	mh.msg_iov     = &iov;
+	mh.msg_iovlen  = 1;
+#ifdef __linux__
+	mh.msg_control    = cmsg_in.buf;
+	mh.msg_controllen = sizeof(cmsg_in.buf);
+#endif
+
+	rv = recvmsg(sockfd, &mh, 0);
 	if (rv == -1) {
 		logit(LOG_WARNING, errno, "Failed receiving UDP request on port %d", g_udp_port);
 		return;
 	}
+	socklen = mh.msg_namelen;
+
+#ifdef __linux__
+	/* Remember which local address the request was sent to */
+	for (cmsg = CMSG_FIRSTHDR(&mh); cmsg; cmsg = CMSG_NXTHDR(&mh, cmsg)) {
+		if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_PKTINFO) {
+			memcpy(&pkt4, CMSG_DATA(cmsg), sizeof(pkt4));
+			local_af = AF_INET;
+		}
+#ifdef CONFIG_ENABLE_IPV6
+		else if (cmsg->cmsg_level == IPPROTO_IPV6 && cmsg->cmsg_type == IPV6_PKTINFO) {
+			memcpy(&pkt6, CMSG_DATA(cmsg), sizeof(pkt6));
+			local_af = AF_INET6;
+		}
+#endif
+	}
+#endif /* __linux__ */
 
 	g_udp_client.timestamp = time(NULL);
 	g_udp_client.sockfd = sockfd;
@@ -125,9 +171,49 @@ static void handle_udp_client(int sockfd)
 	}
 	g_udp_client.outgoing = 1;
 
-	/* Send the whole UDP packet to the socket at once */
-	rv = sendto(sockfd, g_udp_client.packet, g_udp_client.size,
-		    MSG_DONTWAIT, (struct sockaddr *)&sockaddr, socklen);
+	/* Reply, from the same local address the request was sent to */
+	iov.iov_base = g_udp_client.packet;
+	iov.iov_len  = g_udp_client.size;
+	memset(&mh, 0, sizeof(mh));
+	mh.msg_name    = &sockaddr;
+	mh.msg_namelen = socklen;
+	mh.msg_iov     = &iov;
+	mh.msg_iovlen  = 1;
+
+#ifdef __linux__
+	if (local_af == AF_INET) {
+		struct in_pktinfo *pi;
+
+		memset(&cmsg_out, 0, sizeof(cmsg_out));
+		mh.msg_control    = cmsg_out.buf;
+		mh.msg_controllen = CMSG_SPACE(sizeof(*pi));
+		cmsg = CMSG_FIRSTHDR(&mh);
+		cmsg->cmsg_level = IPPROTO_IP;
+		cmsg->cmsg_type  = IP_PKTINFO;
+		cmsg->cmsg_len   = CMSG_LEN(sizeof(*pi));
+		pi = (struct in_pktinfo *)CMSG_DATA(cmsg);
+		pi->ipi_spec_dst = pkt4.ipi_addr;     /* reply source address */
+		pi->ipi_ifindex  = pkt4.ipi_ifindex;  /* out the same interface */
+	}
+#ifdef CONFIG_ENABLE_IPV6
+	else if (local_af == AF_INET6) {
+		struct in6_pktinfo *pi;
+
+		memset(&cmsg_out, 0, sizeof(cmsg_out));
+		mh.msg_control    = cmsg_out.buf;
+		mh.msg_controllen = CMSG_SPACE(sizeof(*pi));
+		cmsg = CMSG_FIRSTHDR(&mh);
+		cmsg->cmsg_level = IPPROTO_IPV6;
+		cmsg->cmsg_type  = IPV6_PKTINFO;
+		cmsg->cmsg_len   = CMSG_LEN(sizeof(*pi));
+		pi = (struct in6_pktinfo *)CMSG_DATA(cmsg);
+		pi->ipi6_addr    = pkt6.ipi6_addr;     /* reply source address */
+		pi->ipi6_ifindex = pkt6.ipi6_ifindex;  /* out the same interface */
+	}
+#endif
+#endif /* __linux__ */
+
+	rv = sendmsg(sockfd, &mh, MSG_DONTWAIT);
 	if (rv == -1)
 		logit(LOG_WARNING, errno, "%s %s:%d", snd_msg, straddr, inet_port(&sockaddr));
 	else if ((size_t)rv != g_udp_client.size)
@@ -345,6 +431,23 @@ static int open_socket(int family, int type, int port)
 #endif
 
 #ifdef __linux__
+	/*
+	 * Capture the local destination address of incoming UDP requests so
+	 * the reply can be sent from that same address.  On multi-homed or
+	 * wildcard-bound hosts the kernel would otherwise pick the source by
+	 * routing, which confuses many SNMP clients.
+	 */
+	if (type == SOCK_DGRAM) {
+		if (family == AF_INET &&
+		    setsockopt(sd, IPPROTO_IP, IP_PKTINFO, &val, sizeof(val)) == -1)
+			logit(LOG_WARNING, errno, "could not set IP_PKTINFO on %s socket", proto);
+#ifdef CONFIG_ENABLE_IPV6
+		if (family == AF_INET6 &&
+		    setsockopt(sd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &val, sizeof(val)) == -1)
+			logit(LOG_WARNING, errno, "could not set IPV6_RECVPKTINFO on %s socket", proto);
+#endif
+	}
+
 	if (g_bind_to_device) {
 		struct ifreq ifreq;
 
@@ -424,7 +527,7 @@ int main(int argc, char *argv[])
 	struct timeval tv_last;
 	struct timeval tv_now;
 	struct timeval tv_sleep;
-	int udp_fds[2], tcp_fds[2];
+	int udp_fds[2] = { -1, -1 }, tcp_fds[2] = { -1, -1 };
 	size_t n_udp = 0, n_tcp = 0;
 #ifdef HAVE_LIBCONFUSE
 	char path[256] = "";
