@@ -12,7 +12,7 @@ AM_CPPFLAGS           = -DSYSCONFDIR=\"@sysconfdir@\" -DRUNSTATEDIR=\"@runstated
 mini_snmpd_SOURCES    = mini-snmpd.c mini-snmpd.h linux.c freebsd.c mib.c	\
 			globals.c protocol.c utils.c compat.h
 if HAVE_CONFUSE
-mini_snmpd_SOURCES   += conf.c linux_ethtool.c
+mini_snmpd_SOURCES   += conf.c linux_ethtool.c ethtool-conf.h
 endif
 mini_snmpd_CPPFLAGS   = $(AM_CPPFLAGS)
 mini_snmpd_CFLAGS     = -W -Wall -Wextra -std=gnu99
@@ -47,5 +47,5 @@ release: distcheck
 	done
 
 # Workaround for systemd unit file duing distcheck
-DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd) --enable-test
+DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd) --enable-test --with-config --enable-ethtool
 DISTCLEANFILES = lib/.libs/* *~ *.bak *.map .*.d *.d DEADJOE semantic.cache *.gdb *.elf core core.*
