@@ -36,6 +36,7 @@
 #include <time.h>
 #include <math.h>
 #include <utmp.h>
+#include <glob.h>
 
 #include "mini-snmpd.h"
 
@@ -134,6 +135,98 @@ void get_cpuinfo(cpuinfo_t *cpuinfo)
 
 	memset(cpuinfo, 0, sizeof(cpuinfo_t));
 	parse_file("/proc/stat", fields, NELEMS(fields), 0);
+}
+
+/* Strip trailing newline from a sysfs one-liner */
+static void chomp(char *str)
+{
+	str[strcspn(str, "\n")] = 0;
+}
+
+/* Quiet one-line sysfs reader.  Optional label files and flaky sensors
+ * are expected here, so unlike read_file() this does not log failures,
+ * which would otherwise spam the log on every MIB update. */
+static int sysfs_read(const char *path, char *buf, size_t len)
+{
+	FILE *fp;
+
+	fp = fopen(path, "r");
+	if (!fp)
+		return -1;
+
+	if (!fgets(buf, len, fp)) {
+		fclose(fp);
+		return -1;
+	}
+
+	fclose(fp);
+	return 0;
+}
+
+/*
+ * Temperature sensors from /sys/class/hwmon, in milli-degrees Celsius.
+ * Each sensor is named "<chip> <label>", e.g. "k10temp Tctl", falling
+ * back to the tempN stem when the driver provides no label.
+ */
+void get_sensinfo(sensinfo_t *sensinfo)
+{
+	glob_t gl;
+	size_t i;
+
+	memset(sensinfo, 0, sizeof(*sensinfo));
+
+	if (glob("/sys/class/hwmon/hwmon*/temp*_input", 0, NULL, &gl))
+		return;
+
+	for (i = 0; i < gl.gl_pathc && sensinfo->count < MAX_NR_SENSORS; i++) {
+		char path[256], chip[32], label[32], buf[32];
+		char *stem, *sep;
+		int val;
+
+		/* A transient read error reads as 0, keeping the row set
+		 * stable between MIB build and update */
+		val = 0;
+		if (sysfs_read(gl.gl_pathv[i], buf, sizeof(buf)) != -1)
+			val = atoi(buf);
+
+		/* chip name lives in ../name, label in tempN_label */
+		snprintf(path, sizeof(path), "%s", gl.gl_pathv[i]);
+		stem = strrchr(path, '/');
+		snprintf(chip, sizeof(chip), "hwmon");
+		if (stem) {
+			*stem = 0;
+			snprintf(path + strlen(path), sizeof(path) - strlen(path), "/name");
+			if (sysfs_read(path, chip, sizeof(chip)) != -1)
+				chomp(chip);
+			*stem = '/';
+			snprintf(path, sizeof(path), "%s", gl.gl_pathv[i]);
+		}
+
+		sep = strstr(path, "_input");
+		label[0] = 0;
+		if (sep) {
+			snprintf(sep, sizeof(path) - (sep - path), "_label");
+			if (sysfs_read(path, label, sizeof(label)) != -1)
+				chomp(label);
+			else
+				label[0] = 0;
+		}
+		if (!label[0]) {
+			/* fall back to the tempN stem */
+			stem = strrchr(gl.gl_pathv[i], '/');
+			snprintf(label, sizeof(label), "%s", stem ? stem + 1 : "temp");
+			sep = strstr(label, "_input");
+			if (sep)
+				*sep = 0;
+		}
+
+		snprintf(sensinfo->name[sensinfo->count], sizeof(sensinfo->name[0]),
+			 "%s %s", chip, label);
+		sensinfo->temp[sensinfo->count] = val > 0 ? (unsigned int)val : 0;
+		sensinfo->count++;
+	}
+
+	globfree(&gl);
 }
 
 /* Per-CPU cumulative jiffies, from the 'cpuN' lines of /proc/stat */

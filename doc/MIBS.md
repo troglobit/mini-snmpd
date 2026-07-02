@@ -242,6 +242,18 @@ is the percentage of time the CPU was busy since the previous poll.
 | .59.0 | ssRawInterrupts | Counter32 |
 | .60.0 | ssRawContexts   | Counter32 |
 
+### Temperature sensors, `.13.16.2.1` — one row per hwmon temperature
+
+`lmTempSensorsTable` from LM-SENSORS-MIB, populated from
+`/sys/class/hwmon` on Linux; absent when the machine has no sensors, and
+on FreeBSD.  Values are in milli-degrees Celsius.
+
+| OID | Object              | Type              |
+|-----|---------------------|-------------------|
+| .1  | lmTempSensorsIndex  | INTEGER           |
+| .2  | lmTempSensorsDevice | DisplayString     |
+| .3  | lmTempSensorsValue  | Gauge32 (m&deg;C) |
+
 ## Notifications
 
 mini-snmpd sends SNMPv2c traps to the sinks set with `-T addr[:port]` or a

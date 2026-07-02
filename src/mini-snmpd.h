@@ -40,6 +40,7 @@
 #define MAX_NR_SUBIDS                                   20
 #define MAX_NR_DISKS                                    4
 #define MAX_NR_CPUS                                     64
+#define MAX_NR_SENSORS                                  16
 #define MAX_NR_TRAPS                                    4
 #define MAX_NR_CUSTOM                                   8
 #define MAX_NR_VALUES                                   2048
@@ -194,6 +195,12 @@ typedef struct cpuload_s {
 	long long busy[MAX_NR_CPUS];		/* cumulative non-idle jiffies */
 	long long total[MAX_NR_CPUS];		/* cumulative total jiffies */
 } cpuload_t;
+
+typedef struct sensinfo_s {
+	size_t       count;
+	char         name[MAX_NR_SENSORS][64];
+	unsigned int temp[MAX_NR_SENSORS];	/* milli-degrees Celsius */
+} sensinfo_t;
 
 typedef struct diskinfo_s {
 	unsigned int total[MAX_NR_DISKS];
@@ -368,6 +375,7 @@ void         get_loadinfo       (loadinfo_t *loadinfo);
 void         get_meminfo        (meminfo_t *meminfo);
 void         get_cpuinfo        (cpuinfo_t *cpuinfo);
 void         get_cpuload        (cpuload_t *cpuload);
+void         get_sensinfo       (sensinfo_t *sensinfo);
 void         get_ipinfo         (ipinfo_t *ipinfo);
 void         get_tcpinfo        (tcpinfo_t *tcpinfo);
 void         get_udpinfo        (udpinfo_t *udpinfo);

@@ -60,6 +60,7 @@ static const oid_t m_memory_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 4,        
 static const oid_t m_disk_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 9, 1      },  9, 11 };
 static const oid_t m_load_oid           = { { 1, 3, 6, 1, 4, 1, 2021, 10, 1     },  9, 11 };
 static const oid_t m_cpu_oid            = { { 1, 3, 6, 1, 4, 1, 2021, 11        },  8, 10 };
+static const oid_t m_sensor_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 13, 16, 2, 1 }, 11, 13 };
 #ifdef CONFIG_ENABLE_DEMO
 static const oid_t m_demo_oid           = { { 1, 3, 6, 1, 4, 1, 99999           },  7, 10 };
 #endif
@@ -76,6 +77,9 @@ static const int m_load_avg_times[3] = { 1, 5, 15 };
 /* Per-CPU load for hrProcessorTable, sampled across full MIB updates */
 static size_t    g_ncpu;
 static cpuload_t prev_cpuload;
+
+/* Number of temperature sensor rows, fixed at MIB build time */
+static size_t    g_nsensors;
 
 /*
  * Previous per-interface oper status, for linkUp/linkDown trap detection.
@@ -1372,6 +1376,31 @@ int mib_build(void)
 	    !mib_alloc_entry(&m_cpu_oid, 60, 0, BER_TYPE_COUNTER))
 		return -1;
 
+	/*
+	 * LM-SENSORS-MIB lmTempSensorsTable: one row per hwmon temperature,
+	 * in milli-degrees Celsius (Linux only).
+	 * Caution: on changes, adapt the corresponding mib_update() section too!
+	 */
+	{
+		sensinfo_t sens;
+
+		get_sensinfo(&sens);
+		g_nsensors = sens.count;
+
+		for (i = 0; i < g_nsensors; i++) {	/* lmTempSensorsIndex */
+			if (build_int(&m_sensor_oid, 1, i + 1, i + 1) == -1)
+				return -1;
+		}
+		for (i = 0; i < g_nsensors; i++) {	/* lmTempSensorsDevice */
+			if (build_str(&m_sensor_oid, 2, i + 1, sens.name[i]) == -1)
+				return -1;
+		}
+		for (i = 0; i < g_nsensors; i++) {	/* lmTempSensorsValue */
+			if (build_gge(&m_sensor_oid, 3, i + 1, sens.temp[i]) == -1)
+				return -1;
+		}
+	}
+
 	/* The demo MIB: two random integers
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
@@ -1874,6 +1903,20 @@ int mib_update(int full)
 		    update_cnt(&m_cpu_oid, 59, 0, &pos, u.cpuinfo.irqs)   == -1 ||
 		    update_cnt(&m_cpu_oid, 60, 0, &pos, u.cpuinfo.cntxts) == -1)
 			return -1;
+	}
+
+	/*
+	 * LM-SENSORS-MIB lmTempSensorsValue
+	 * Caution: on changes, adapt the corresponding mib_build() section too!
+	 */
+	if (full && g_nsensors > 0) {
+		sensinfo_t sens;
+
+		get_sensinfo(&sens);
+		for (i = 0; i < g_nsensors && i < sens.count; i++) {
+			if (update_gge(&m_sensor_oid, 3, i + 1, &pos, sens.temp[i]) == -1)
+				return -1;
+		}
 	}
 
 	/*

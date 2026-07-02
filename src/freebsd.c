@@ -85,6 +85,12 @@ unsigned int get_system_uptime(void)
 #endif
 }
 
+/* No temperature sensor back-end on FreeBSD yet */
+void get_sensinfo(sensinfo_t *sensinfo)
+{
+	memset(sensinfo, 0, sizeof(*sensinfo));
+}
+
 unsigned int get_process_count(void)
 {
 	int mib[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
