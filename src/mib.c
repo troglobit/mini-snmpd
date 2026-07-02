@@ -94,6 +94,7 @@ static struct link_state {
 	unsigned int gen;
 } link_prev[MAX_NR_INTERFACES];
 static unsigned int link_gen;
+static int          link_bootstrapped;	/* first pass baselines silently */
 
 static struct link_state *link_find(const char *name)
 {
@@ -1530,8 +1531,19 @@ int mib_update(int full)
 						else if (ls->oper == 1)
 							link_trap(i, admin, oper, TRAP_LINKDOWN);
 					}
-				} else
-					ls = link_add(g_interface_list[i]);	/* new iface: baseline only */
+				} else {
+					ls = link_add(g_interface_list[i]);
+
+					/* A monitored interface that shows up
+					 * after start-up already in the up state
+					 * has, as far as this agent can tell,
+					 * just come up.  Also covers a create +
+					 * up sequence coalesced into a single
+					 * netlink rebuild.  The first pass only
+					 * takes the baseline. */
+					if (ls && link_bootstrapped && oper == 1)
+						link_trap(i, admin, oper, TRAP_LINKUP);
+				}
 
 				if (ls) {
 					ls->oper = oper;
@@ -1585,6 +1597,11 @@ int mib_update(int full)
 					return -1;
 			}
 		}
+
+		/* The first full update only baselines the link states, even
+		 * when no interface matches yet; from here on an interface
+		 * that appears in the up state emits linkUp. */
+		link_bootstrapped = 1;
 	}
 
 	/*
