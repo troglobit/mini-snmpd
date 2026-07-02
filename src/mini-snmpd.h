@@ -41,6 +41,7 @@
 #define MAX_NR_DISKS                                    4
 #define MAX_NR_CPUS                                     64
 #define MAX_NR_TRAPS                                    4
+#define MAX_NR_CUSTOM                                   8
 #define MAX_NR_VALUES                                   2048
 
 #define MAX_PACKET_SIZE                                 2048
@@ -299,6 +300,10 @@ extern size_t    g_interface_list_length;
 
 extern inet_addr_t g_trap_dst[MAX_NR_TRAPS];	/* trap sinks, -T */
 extern size_t      g_trap_dst_len;
+
+extern char       *g_custom_oid[MAX_NR_CUSTOM];	/* custom static responses, .conf only */
+extern char       *g_custom_val[MAX_NR_CUSTOM];
+extern size_t      g_custom_len;
 
 extern in_port_t g_udp_port;
 extern in_port_t g_tcp_port;

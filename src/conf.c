@@ -184,10 +184,21 @@ int read_config(char *file)
 		capture_baseline();
 	apply_baseline();
 
+	/* Custom responses exist only in the file, reset before each parse */
+	for (i = 0; i < g_custom_len; i++) {
+		free(g_custom_oid[i]);
+		free(g_custom_val[i]);
+	}
+	g_custom_len = 0;
+
 	if (access(file, F_OK))
 		return 0;		/* no file: the baseline stands */
 
 	{
+	cfg_opt_t custom_opts[] = {
+		CFG_STR("value", NULL, CFGF_NONE),
+		CFG_END()
+	};
 	cfg_opt_t ethtool_opts[] = {
 		CFG_STR("rx_bytes", NULL, CFGF_NONE),
 		CFG_STR("rx_mc_packets", NULL, CFGF_NONE),
@@ -216,6 +227,7 @@ int read_config(char *file)
 		CFG_STR_LIST("disk-table", NULL, CFGF_NONE),
 		CFG_STR_LIST("iface-table", NULL, CFGF_NONE),
 		CFG_STR_LIST("trap-table", NULL, CFGF_NONE),
+		CFG_SEC("custom", custom_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
 		CFG_SEC("ethtool", ethtool_opts, CFGF_MULTI | CFGF_TITLE | CFGF_NO_TITLE_DUPES),
 		CFG_END()
 	};
@@ -265,6 +277,30 @@ int read_config(char *file)
 			g_trap_dst_len++;
 		else if (str)
 			logit(LOG_ERR, 0, "Invalid trap address '%s'", str);
+	}
+
+	/* Custom static responses: one titled section per OID */
+	for (i = 0; i < cfg_size(cfg, "custom"); i++) {
+		cfg_t *sec = cfg_getnsec(cfg, "custom", i);
+		const char *oid = cfg_title(sec);
+
+		str = cfg_getstr(sec, "value");
+		if (!oid || !oid_aton(oid)) {
+			logit(LOG_ERR, 0, "Invalid custom OID '%s'", oid ? oid : "");
+			continue;
+		}
+		if (!str) {
+			logit(LOG_ERR, 0, "Custom OID '%s' lacks a value", oid);
+			continue;
+		}
+		if (g_custom_len >= MAX_NR_CUSTOM) {
+			logit(LOG_ERR, 0, "Too many custom OIDs, ignoring '%s'", oid);
+			continue;
+		}
+
+		g_custom_oid[g_custom_len] = strdup(oid);
+		g_custom_val[g_custom_len] = strdup(str);
+		g_custom_len++;
 	}
 
 	ethtool_xlate_cfg(cfg);

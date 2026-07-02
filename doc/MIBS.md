@@ -234,3 +234,10 @@ linkUp and linkDown also carry `ifIndex`, `ifAdminStatus`, and
 `ifOperStatus` for the interface that changed.
 
 authenticationFailure is rate-limited.
+
+## Custom OIDs
+
+On top of the built-in objects above, `custom` sections in
+mini-snmpd.conf(5) serve fixed strings on user-chosen OIDs, e.g. to
+emulate the responses of another device.  Those are deployment-specific
+and not part of this conformance list.

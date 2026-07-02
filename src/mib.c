@@ -790,6 +790,12 @@ static void encode_date(unsigned char buf[11], size_t *len)
 	*len = 11;
 }
 
+/* qsort comparator for g_mib, ascending OID order */
+static int mib_oid_cmp(const void *a, const void *b)
+{
+	return oid_cmp(&((const value_t *)a)->oid, &((const value_t *)b)->oid);
+}
+
 static int mib_build_entries(const oid_t *prefix, int column, int row_from, int row_to, int type)
 {
 	int row;
@@ -1324,6 +1330,34 @@ int mib_build(void)
 	    !mib_alloc_entry(&m_demo_oid, 2, 0, BER_TYPE_INTEGER))
 		return -1;
 #endif
+
+	/* Custom static responses from the .conf, e.g. to emulate another
+	 * device (issue #29).  These may land anywhere in the tree, so the
+	 * table is sorted below to keep the getnext invariant. */
+	for (i = 0; i < g_custom_len; i++) {
+		size_t pos = 0;
+		oid_t *oid = oid_aton(g_custom_oid[i]);
+
+		if (oid && mib_find(oid, &pos) && !oid_cmp(&g_mib[pos].oid, oid)) {
+			logit(LOG_ERR, 0, "Custom OID '%s' already served, skipping", g_custom_oid[i]);
+			continue;
+		}
+		if (g_mib_length >= MAX_NR_VALUES) {
+			logit(LOG_ERR, 0, "Failed creating custom OID '%s': table overflow", g_custom_oid[i]);
+			return -1;
+		}
+		if (mib_value(&g_mib[g_mib_length], g_custom_oid[i],
+			      BER_TYPE_OCTET_STRING, g_custom_val[i]) == -1) {
+			logit(LOG_ERR, 0, "Failed creating custom OID '%s'", g_custom_oid[i]);
+			continue;
+		}
+		g_mib_length++;
+	}
+
+	/* The getnext and getbulk handlers require the table in ascending
+	 * OID order; the sections above are built that way, custom OIDs
+	 * can be anywhere.  Sort to enforce the invariant. */
+	qsort(g_mib, g_mib_length, sizeof(value_t), mib_oid_cmp);
 
 	return 0;
 }
