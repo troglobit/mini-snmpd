@@ -25,6 +25,10 @@ Supported features:
 - Supports Linux 2.6 and later
 - Supports FreeBSD (needs procfs mounted using "mount_linprocfs procfs /proc")
 
+> [!NOTE]
+> SNMPv3 (USM authentication and privacy) is out of scope for now.
+> Contributions welcome; if you need v3 today, use [net-snmp][].
+
 `mini-snmpd` has been tested on x86 and ARM platforms in Ubuntu Linux,
 Alpine Linux, and FreeBSD, using net-snmp and SnmpB as clients.  Big
 endian may not work.
@@ -55,7 +59,7 @@ DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (93103) 0:15:31.03
 Complete walk:
 
 ```console
-$ snmpwalk -v2c -c public 127.0.0.1:16161
+$ snmpwalk -v2c -c public 127.0.0.1:16161 .1
 SNMPv2-MIB::sysDescr.0 = STRING: My laptop
 SNMPv2-MIB::sysObjectID.0 = OID: SNMPv2-SMI::enterprises
 DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (93103) 0:15:31.03
@@ -81,6 +85,7 @@ IF-MIB::ifOutUcastPkts.1 = Counter32: 88071
 IF-MIB::ifOutDiscards.1 = Counter32: 0
 IF-MIB::ifOutErrors.1 = Counter32: 0
 HOST-RESOURCES-MIB::hrSystemUptime.0 = Timeticks: (454155) 1:15:41.55
+...
 ```
 
 Check load average:
@@ -104,6 +109,16 @@ UCD-SNMP-MIB::dskUsed.1 = INTEGER: 206130896
 UCD-SNMP-MIB::dskPercent.1 = INTEGER: 85
 UCD-SNMP-MIB::dskPercentNode.1 = INTEGER: 10
 ```
+
+Send SNMPv2c traps to a manager, `-T addr[:port]` (repeatable):
+
+```console
+$ ./mini-snmpd -n -c public -i eth0 -T 192.0.2.5
+```
+
+This emits `coldStart` at start-up, `linkUp`/`linkDown` as `eth0` changes
+state, and `authenticationFailure` on a wrong community.  Receive them
+with, e.g., `snmptrapd -f -Lo --disableAuthorization=yes udp:162`.
 
 Build & Install
 ---------------
