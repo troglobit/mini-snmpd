@@ -54,6 +54,7 @@ static const oid_t m_snmp_oid           = { { 1, 3, 6, 1, 2, 1, 11              
 static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           },  8, 9  };
 static const oid_t m_host_mem_oid       = { { 1, 3, 6, 1, 2, 1, 25, 2           },  8, 9  };
 static const oid_t m_host_storage_oid   = { { 1, 3, 6, 1, 2, 1, 25, 2, 3, 1     }, 10, 11 };
+static const oid_t m_host_device_oid    = { { 1, 3, 6, 1, 2, 1, 25, 3, 2, 1     }, 10, 11 };
 static const oid_t m_host_cpu_oid       = { { 1, 3, 6, 1, 2, 1, 25, 3, 3, 1     }, 10, 11 };
 static const oid_t m_ifxtable_oid       = { { 1, 3, 6, 1, 2, 1, 31, 1, 1, 1     }, 10, 11 };
 static const oid_t m_memory_oid         = { { 1, 3, 6, 1, 4, 1, 2021, 4,        },  8, 10 };
@@ -73,6 +74,9 @@ static const int m_load_avg_times[3] = { 1, 5, 15 };
 
 /* hrProcessorFrwID: the null OID { 0 0 }, i.e. unknown firmware */
 #define HR_PROCESSOR_FRWID ".0.0"
+
+/* hrDeviceType value for a processor, from HOST-RESOURCES-TYPES */
+#define HR_DEVICE_PROCESSOR ".1.3.6.1.2.1.25.3.1.3"
 
 /* Per-CPU load for hrProcessorTable, sampled across full MIB updates */
 static size_t    g_ncpu;
@@ -1227,10 +1231,40 @@ int mib_build(void)
 	 */
 	{
 		cpuload_t cpu;
+		char name[16];
 
 		get_cpuload(&cpu);
 		g_ncpu = cpu.ncpu;
 		prev_cpuload = cpu;	/* seed the first load delta */
+
+		/* hrDeviceTable: one processor row per logical CPU, sharing
+		 * its index with the hrProcessorTable row below (RFC 2790).
+		 * All static, so no mib_update() section. */
+		for (i = 1; i <= g_ncpu; i++) {		/* hrDeviceIndex */
+			if (build_int(&m_host_device_oid, 1, i, i) == -1)
+				return -1;
+		}
+		for (i = 1; i <= g_ncpu; i++) {		/* hrDeviceType */
+			if (mib_build_entry(&m_host_device_oid, 2, i, BER_TYPE_OID, HR_DEVICE_PROCESSOR) == -1)
+				return -1;
+		}
+		for (i = 1; i <= g_ncpu; i++) {		/* hrDeviceDescr */
+			snprintf(name, sizeof(name), "CPU %zu", i - 1);
+			if (build_str(&m_host_device_oid, 3, i, name) == -1)
+				return -1;
+		}
+		for (i = 1; i <= g_ncpu; i++) {		/* hrDeviceID: unknown */
+			if (mib_build_entry(&m_host_device_oid, 4, i, BER_TYPE_OID, HR_PROCESSOR_FRWID) == -1)
+				return -1;
+		}
+		for (i = 1; i <= g_ncpu; i++) {		/* hrDeviceStatus: running(2) */
+			if (build_int(&m_host_device_oid, 5, i, 2) == -1)
+				return -1;
+		}
+		for (i = 1; i <= g_ncpu; i++) {		/* hrDeviceErrors */
+			if (mib_build_entry(&m_host_device_oid, 6, i, BER_TYPE_COUNTER, 0) == -1)
+				return -1;
+		}
 
 		for (i = 1; i <= g_ncpu; i++) {		/* hrProcessorFrwID: unknown */
 			if (mib_build_entry(&m_host_cpu_oid, 1, i, BER_TYPE_OID, HR_PROCESSOR_FRWID) == -1)

@@ -187,6 +187,18 @@ which mini-snmpd reports as 1024 (i.e. kB).
 
 ### Device, `.3`
 
+`hrDeviceTable`, `.3.2.1` — one processor row per logical CPU, sharing its
+index with the `hrProcessorTable` row.
+
+| OID | Object         | Type                       |
+|-----|----------------|----------------------------|
+| .1  | hrDeviceIndex  | INTEGER                    |
+| .2  | hrDeviceType   | OID (hrDeviceProcessor)    |
+| .3  | hrDeviceDescr  | DisplayString              |
+| .4  | hrDeviceID     | OID (`.0.0`, unknown)      |
+| .5  | hrDeviceStatus | INTEGER (running)          |
+| .6  | hrDeviceErrors | Counter32 (always 0)       |
+
 `hrProcessorTable`, `.3.3.1` — one row per logical CPU.  `hrProcessorLoad`
 is the percentage of time the CPU was busy since the previous poll.
 
