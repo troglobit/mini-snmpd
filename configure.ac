@@ -4,9 +4,9 @@ AC_CONFIG_AUX_DIR(aux)
 AM_INIT_AUTOMAKE([1.11 foreign subdir-objects])
 AM_SILENT_RULES([yes])
 
-AC_CONFIG_SRCDIR([mini-snmpd.c])
+AC_CONFIG_SRCDIR([src/mini-snmpd.c])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile test/Makefile mini-snmpd.service])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile test/Makefile src/mini-snmpd.service])
 
 AC_PROG_CC
 AC_PROG_INSTALL

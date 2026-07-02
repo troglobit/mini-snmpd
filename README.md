@@ -33,7 +33,7 @@ endian may not work.
 - For info about using the program, see the file [mini-snmpd.8][man]
 - For the list of supported MIBs and objects, see the file [MIBS.md][mibs]
 - For info about how to (cross)compile the program, see the file [Makefile][build]
-- For info about how to extend the MIB, see the file [README.develop][contrib]
+- For info about how to extend the MIB, see the file [extending.md][contrib]
 
 Examples
 --------
@@ -163,15 +163,15 @@ Origin & References
 focal point for patches and development of the original [mini_snmpd][1]
 project by Robert Ernst, since the original site now has gone dark.
 
-The new project is [maintained at GitHub][github]. Use its issue tracker
+This project is [maintained at GitHub][github].  Use its issue tracker
 and pull request functions to report bugs or contribute new features.
 
 [1]:               http://members.aon.at/linuxfreak/linux/mini_snmpd.html
 [man]:             https://man.troglobit.com/man8/mini-snmpd.8.html
-[mibs]:            https://github.com/troglobit/mini-snmpd/blob/master/MIBS.md
+[mibs]:            https://github.com/troglobit/mini-snmpd/blob/master/doc/MIBS.md
 [github]:          https://github.com/troglobit/mini-snmpd
 [license]:         https://github.com/troglobit/mini-snmpd/blob/master/COPYING
-[contrib]:         https://github.com/troglobit/mini-snmpd/blob/master/README.develop
+[contrib]:         https://github.com/troglobit/mini-snmpd/blob/master/doc/extending.md
 [build]:           https://github.com/troglobit/mini-snmpd/blob/master/Makefile
 [Joachim Wiberg]: https://troglobit.com
 [net-snmp]:        https://www.net-snmp.org/

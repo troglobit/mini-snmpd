@@ -1,33 +1,10 @@
-EXEC                  = mini-snmpd
-SUBDIRS               = .
+SUBDIRS               = src doc
 if ENABLE_TEST
 SUBDIRS              += test
 endif
-EXTRA_DIST            = README.md COPYING ChangeLog.md MIBS.md
+
 doc_DATA              = README.md COPYING
-dist_man8_MANS        = $(EXEC).8
-sbin_PROGRAMS         = $(EXEC)
-AM_CPPFLAGS           = -DSYSCONFDIR=\"@sysconfdir@\" -DRUNSTATEDIR=\"@runstatedir@\"
-
-mini_snmpd_SOURCES    = mini-snmpd.c mini-snmpd.h linux.c freebsd.c mib.c	\
-			globals.c protocol.c utils.c compat.h inet.c inet.h	\
-			netlink.c netlink.h
-if HAVE_CONFUSE
-mini_snmpd_SOURCES   += conf.c linux_ethtool.c ethtool-conf.h
-endif
-mini_snmpd_CPPFLAGS   = $(AM_CPPFLAGS)
-mini_snmpd_CFLAGS     = -W -Wall -Wextra -std=gnu99
-mini_snmpd_LDADD      = $(LIBS) $(LIBOBJS)
-mini_snmpd_CFLAGS    += $(confuse_CFLAGS)
-mini_snmpd_LDADD     += $(confuse_LIBS)
-
-if HAVE_CONFUSE
-dist_sysconf_DATA     = mini-snmpd.conf
-endif
-
-if HAVE_SYSTEMD
-systemd_DATA          = mini-snmpd.service
-endif
+EXTRA_DIST            = README.md COPYING
 
 # Build a Debian/Ubuntu package, for local testing only.  Not part of
 # the release; the GitHub release ships the distribution tarball only.
@@ -49,4 +26,4 @@ release: distcheck
 
 # Workaround for systemd unit file duing distcheck
 DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd) --enable-test --with-config --enable-ethtool
-DISTCLEANFILES = lib/.libs/* *~ *.bak *.map .*.d *.d DEADJOE semantic.cache *.gdb *.elf core core.*
+DISTCLEANFILES = *~ *.bak *.map .*.d *.d DEADJOE semantic.cache *.gdb *.elf core core.*

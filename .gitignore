@@ -2,8 +2,7 @@
 *.o
 *~
 .dirstamp
-.deps/*
-lib/.deps/*
+.deps/
 aux/*
 Makefile
 Makefile.in

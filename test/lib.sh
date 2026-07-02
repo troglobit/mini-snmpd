@@ -9,8 +9,8 @@
 # Test name, used everywhere as /tmp/$NM/foo
 NM=$(basename "$0" .sh)
 
-# Path to the daemon under test (built one level up)
-SNMPD=../mini-snmpd
+# Path to the daemon under test (built in ../src)
+SNMPD=../src/mini-snmpd
 
 # SNMP community and the address the daemon listens on inside the netns
 COMMUNITY=public
