@@ -37,6 +37,10 @@ int pidfile(const char *basename);
 int utimensat(int dirfd, const char *pathname, const struct timespec ts[2], int flags);
 #endif
 
+#ifndef HAVE_STRLCPY
+size_t strlcpy(char *dst, const char *src, size_t dsize);
+#endif
+
 #ifndef HAVE_GETPROGNAME
 static inline char *getprogname(void)
 {

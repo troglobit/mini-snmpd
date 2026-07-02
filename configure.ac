@@ -15,7 +15,7 @@ AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
 
 # Check for usually missing API's, which we can replace
-AC_REPLACE_FUNCS([pidfile utimensat])
+AC_REPLACE_FUNCS([pidfile utimensat strlcpy])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
 # Check for other library functions

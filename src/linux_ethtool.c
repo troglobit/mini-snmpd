@@ -84,7 +84,7 @@ static struct ethtool_gstrings *get_stringset(const char *iname)
 	sset_info.hdr.reserved = 0;
 	sset_info.hdr.sset_mask = 1ULL << ETH_SS_STATS;
 	ifr.ifr_data = (void *)&sset_info;
-	strcpy(ifr.ifr_name, iname);
+	strlcpy(ifr.ifr_name, iname, sizeof(ifr.ifr_name));
 	if (ioctl(fd, SIOCETHTOOL, &ifr) == 0) {
 		const u32 *sset_lengths = sset_info.hdr.data;
 
@@ -222,7 +222,7 @@ int ethtool_gstats(int intf, netinfo_t *netinfo, field_t *field)
 
 	stats->cmd = ETHTOOL_GSTATS;
 	stats->n_stats = ethtool[intf].n_stats;
-	strcpy(ifr.ifr_name, g_interface_list[intf]);
+	strlcpy(ifr.ifr_name, g_interface_list[intf], sizeof(ifr.ifr_name));
 	ifr.ifr_data = (void *)stats;
 	if (ioctl(fd, SIOCETHTOOL, &ifr) < 0) {
 		logit(LOG_ERR, errno, "Cannot get ethtool stats");
