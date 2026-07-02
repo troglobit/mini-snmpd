@@ -54,6 +54,8 @@ char       *g_custom_oid[MAX_NR_CUSTOM];
 char       *g_custom_val[MAX_NR_CUSTOM];
 size_t      g_custom_len;
 
+snmpstats_t g_snmpstats;
+
 in_port_t g_udp_port = 161;
 in_port_t g_tcp_port = 161;
 

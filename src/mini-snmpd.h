@@ -305,6 +305,18 @@ extern char       *g_custom_oid[MAX_NR_CUSTOM];	/* custom static responses, .con
 extern char       *g_custom_val[MAX_NR_CUSTOM];
 extern size_t      g_custom_len;
 
+/* The agent's own counters, SNMPv2-MIB snmp group (RFC 3418) */
+typedef struct snmpstats_s {
+	unsigned int in_pkts;
+	unsigned int bad_versions;
+	unsigned int bad_community_names;
+	unsigned int bad_community_uses;
+	unsigned int asn_parse_errs;
+	unsigned int silent_drops;
+} snmpstats_t;
+
+extern snmpstats_t g_snmpstats;
+
 extern in_port_t g_udp_port;
 extern in_port_t g_tcp_port;
 

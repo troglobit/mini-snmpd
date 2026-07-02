@@ -49,6 +49,7 @@ static const oid_t m_if_2_oid           = { { 1, 3, 6, 1, 2, 1, 2, 2, 1         
 static const oid_t m_ip_oid             = { { 1, 3, 6, 1, 2, 1, 4               },  7, 8  };
 static const oid_t m_tcp_oid            = { { 1, 3, 6, 1, 2, 1, 6               },  7, 8  };
 static const oid_t m_udp_oid            = { { 1, 3, 6, 1, 2, 1, 7               },  7, 8  };
+static const oid_t m_snmp_oid           = { { 1, 3, 6, 1, 2, 1, 11              },  7, 8  };
 static const oid_t m_host_oid           = { { 1, 3, 6, 1, 2, 1, 25, 1           },  8, 9  };
 static const oid_t m_host_mem_oid       = { { 1, 3, 6, 1, 2, 1, 25, 2           },  8, 9  };
 static const oid_t m_host_storage_oid   = { { 1, 3, 6, 1, 2, 1, 25, 2, 3, 1     }, 10, 11 };
@@ -1107,6 +1108,20 @@ int mib_build(void)
 	}
 
 	/*
+	 * SNMPv2-MIB snmp group: the agent's own counters (RFC 3418)
+	 * Caution: on changes, adapt the corresponding mib_update() section too!
+	 */
+	if (!mib_alloc_entry(&m_snmp_oid,  1, 0, BER_TYPE_COUNTER) ||	/* snmpInPkts */
+	    !mib_alloc_entry(&m_snmp_oid,  3, 0, BER_TYPE_COUNTER) ||	/* snmpInBadVersions */
+	    !mib_alloc_entry(&m_snmp_oid,  4, 0, BER_TYPE_COUNTER) ||	/* snmpInBadCommunityNames */
+	    !mib_alloc_entry(&m_snmp_oid,  5, 0, BER_TYPE_COUNTER) ||	/* snmpInBadCommunityUses */
+	    !mib_alloc_entry(&m_snmp_oid,  6, 0, BER_TYPE_COUNTER) ||	/* snmpInASNParseErrs */
+	    !mib_alloc_entry(&m_snmp_oid, 30, 0, BER_TYPE_INTEGER) ||	/* snmpEnableAuthenTraps */
+	    !mib_alloc_entry(&m_snmp_oid, 31, 0, BER_TYPE_COUNTER) ||	/* snmpSilentDrops */
+	    !mib_alloc_entry(&m_snmp_oid, 32, 0, BER_TYPE_COUNTER))	/* snmpProxyDrops */
+		return -1;
+
+	/*
 	 * The host MIB: additional host info (HOST-RESOURCES-MIB.txt)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
@@ -1558,6 +1573,21 @@ int mib_update(int full)
 		    update_c64(&m_udp_oid,  9, 0, &pos, u.udpinfo.udpOutDatagrams)              == -1)
 			return -1;
 	}
+
+	/*
+	 * SNMPv2-MIB snmp group: the agent's own counters, cheap, so
+	 * refreshed on every update.
+	 * Caution: on changes, adapt the corresponding mib_build() section too!
+	 */
+	if (update_cnt(&m_snmp_oid,  1, 0, &pos, g_snmpstats.in_pkts)             == -1 ||
+	    update_cnt(&m_snmp_oid,  3, 0, &pos, g_snmpstats.bad_versions)        == -1 ||
+	    update_cnt(&m_snmp_oid,  4, 0, &pos, g_snmpstats.bad_community_names) == -1 ||
+	    update_cnt(&m_snmp_oid,  5, 0, &pos, g_snmpstats.bad_community_uses)  == -1 ||
+	    update_cnt(&m_snmp_oid,  6, 0, &pos, g_snmpstats.asn_parse_errs)      == -1 ||
+	    update_int(&m_snmp_oid, 30, 0, &pos, g_trap_dst_len > 0 ? 1 : 2)      == -1 ||
+	    update_cnt(&m_snmp_oid, 31, 0, &pos, g_snmpstats.silent_drops)        == -1 ||
+	    update_cnt(&m_snmp_oid, 32, 0, &pos, 0)                               == -1)
+		return -1;
 
 	/*
 	 * The host MIB: additional host info (HOST-RESOURCES-MIB.txt)

@@ -313,7 +313,7 @@ static int decode_snmp_request(request_t *request, client_t *client)
 
 	if (request->version != SNMP_VERSION_1 && request->version != SNMP_VERSION_2C) {
 		logit(LOG_DEBUG, 0, "Unsupported %s %d", version_msg, request->version);
-		errno = EINVAL;
+		errno = EPROTO;	/* tells the caller apart from ASN.1 errors */
 		return -1;
 	}
 
@@ -952,6 +952,8 @@ static int handle_snmp_getnext(request_t *request, response_t *response, client_
 
 static int handle_snmp_set(request_t *request, response_t *response, client_t *UNUSED(client))
 {
+	/* A valid community used for an operation it does not allow */
+	g_snmpstats.bad_community_uses++;
 	SNMP_VERSION_1_ERROR(response, (request->version == SNMP_VERSION_1)
 			     ? SNMP_STATUS_NO_SUCH_NAME : SNMP_STATUS_NO_ACCESS, 0);
 }
@@ -1059,15 +1061,24 @@ int snmp(client_t *client)
 	memset(&request, 0, sizeof(request));
 	memset(&response, 0, sizeof(response));
 
+	g_snmpstats.in_pkts++;
+
 	/* Decode the request (only checks for syntax of the packet) */
-	if (decode_snmp_request(&request, client) == -1)
+	errno = 0;
+	if (decode_snmp_request(&request, client) == -1) {
+		if (errno == EPROTO)
+			g_snmpstats.bad_versions++;
+		else
+			g_snmpstats.asn_parse_errs++;
 		return -1;
+	}
 
 	/*
 	 * Validate the community string for both SNMP versions.  With --auth
 	 * additionally reject plain SNMPv1, requiring v2c.
 	 */
 	if (strcmp(g_community, request.community)) {
+		g_snmpstats.bad_community_names++;
 		response.error_status = (request.version == SNMP_VERSION_2C) ? SNMP_STATUS_NO_ACCESS : SNMP_STATUS_GEN_ERR;
 		response.error_index = 0;
 
@@ -1120,14 +1131,17 @@ int snmp(client_t *client)
 
 	default:
 		logit(LOG_ERR, 0, "UNHANDLED REQUEST TYPE %d", request.type);
+		g_snmpstats.silent_drops++;
 		client->size = 0;
 		return 0;
 	}
 
 done:
 	/* Encode the request (depending on error status and encode flags) */
-	if (encode_snmp_response(&request, &response, client) == -1)
+	if (encode_snmp_response(&request, &response, client) == -1) {
+		g_snmpstats.silent_drops++;
 		return -1;
+	}
 
 	return 0;
 }

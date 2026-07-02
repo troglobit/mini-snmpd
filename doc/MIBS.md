@@ -127,6 +127,21 @@ Mbit, where the 32-bit ifTable counters wrap too quickly.
 | .8.0 | udpHCInDatagrams  | Counter64 |
 | .9.0 | udpHCOutDatagrams | Counter64 |
 
+## SNMPv2-MIB, snmp group
+
+`1.3.6.1.2.1.11` — the agent's own counters.
+
+| OID   | Object                  | Type      |
+|-------|-------------------------|-----------|
+| .1.0  | snmpInPkts              | Counter32 |
+| .3.0  | snmpInBadVersions       | Counter32 |
+| .4.0  | snmpInBadCommunityNames | Counter32 |
+| .5.0  | snmpInBadCommunityUses  | Counter32 |
+| .6.0  | snmpInASNParseErrs      | Counter32 |
+| .30.0 | snmpEnableAuthenTraps   | INTEGER (enabled if trap sinks set) |
+| .31.0 | snmpSilentDrops         | Counter32 |
+| .32.0 | snmpProxyDrops          | Counter32 (always 0) |
+
 ## HOST-RESOURCES-MIB
 
 `1.3.6.1.2.1.25`
