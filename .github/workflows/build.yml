@@ -1,9 +1,12 @@
 name: Bob the Builder
 
+# Run on all branches, including all pull requests, except the 'dev'
+# branch since that's where we run Coverity Scan (limited tokens/day)
 on:
   push:
     branches:
       - '**'
+      - '!dev'
   pull_request:
     branches:
       - '**'
