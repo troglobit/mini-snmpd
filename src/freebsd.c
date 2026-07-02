@@ -18,6 +18,8 @@
 #include <sys/limits.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/user.h>
+#include <utmpx.h>
 
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -81,6 +83,32 @@ unsigned int get_system_uptime(void)
 
         return time(NULL) - uptime.tv_sec;
 #endif
+}
+
+unsigned int get_process_count(void)
+{
+	int mib[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
+	size_t len = 0;
+
+	if (sysctl(mib, 3, NULL, &len, NULL, 0) == -1 || len == 0)
+		return 0;
+
+	return (unsigned int)(len / sizeof(struct kinfo_proc));
+}
+
+unsigned int get_user_count(void)
+{
+	unsigned int num = 0;
+	struct utmpx *ut;
+
+	setutxent();
+	while ((ut = getutxent())) {
+		if (ut->ut_type == USER_PROCESS)
+			num++;
+	}
+	endutxent();
+
+	return num;
 }
 
 void get_loadinfo(loadinfo_t *loadinfo)

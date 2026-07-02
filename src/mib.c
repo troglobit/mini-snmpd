@@ -747,6 +747,49 @@ static int build_tm(const oid_t *oid, int col, int row, unsigned int tm)
 	return mib_build_entry(oid, col, row, BER_TYPE_TIME_TICKS, (const void *)(intptr_t)tm);
 }
 
+/* Build an OCTET STRING from a raw byte buffer, for values that are not C
+ * strings (e.g. DateAndTime, which contains NUL bytes). */
+static int build_bin(const oid_t *oid, int col, int row, const void *buf, size_t len)
+{
+	value_t *value;
+
+	value = mib_alloc_entry(oid, col, row, BER_TYPE_OCTET_STRING);
+	if (!value)
+		return -1;
+
+	return mib_byte_array_set(&value->oid, &value->data, col, row, buf, len);
+}
+
+/* Encode the current local time as an SNMPv2-TC DateAndTime (RFC 2579),
+ * the 11-byte form that includes the offset from UTC. */
+static void encode_date(unsigned char buf[11], size_t *len)
+{
+	time_t now = time(NULL);
+	struct tm tm;
+	long off;
+	int year;
+
+	localtime_r(&now, &tm);
+	year = tm.tm_year + 1900;
+
+	buf[0]  = (unsigned char)(year >> 8);
+	buf[1]  = (unsigned char)(year & 0xff);
+	buf[2]  = (unsigned char)(tm.tm_mon + 1);
+	buf[3]  = (unsigned char)tm.tm_mday;
+	buf[4]  = (unsigned char)tm.tm_hour;
+	buf[5]  = (unsigned char)tm.tm_min;
+	buf[6]  = (unsigned char)tm.tm_sec;
+	buf[7]  = 0;			/* deci-seconds */
+	off     = tm.tm_gmtoff;
+	buf[8]  = off < 0 ? '-' : '+';
+	if (off < 0)
+		off = -off;
+	buf[9]  = (unsigned char)(off / 3600);
+	buf[10] = (unsigned char)((off % 3600) / 60);
+
+	*len = 11;
+}
+
 static int mib_build_entries(const oid_t *prefix, int column, int row_from, int row_to, int type)
 {
 	int row;
@@ -1062,6 +1105,18 @@ int mib_build(void)
 	 * Caution: on changes, adapt the corresponding mib_update() section too!
 	 */
 	if (!mib_alloc_entry(&m_host_oid, 1, 0, BER_TYPE_TIME_TICKS))
+		return -1;
+	{
+		unsigned char date[11];
+		size_t dlen;
+
+		encode_date(date, &dlen);
+		if (build_bin(&m_host_oid, 2, 0, date, dlen) == -1)	/* hrSystemDate */
+			return -1;
+	}
+	if (build_gge(&m_host_oid, 5, 0, get_user_count())    == -1 ||	/* hrSystemNumUsers */
+	    build_gge(&m_host_oid, 6, 0, get_process_count()) == -1 ||	/* hrSystemProcesses */
+	    build_int(&m_host_oid, 7, 0, 0)                   == -1)	/* hrSystemMaxProcesses, 0 = no limit */
 		return -1;
 
 	/*
@@ -1482,6 +1537,16 @@ int mib_update(int full)
 	 * Caution: on changes, adapt the corresponding mib_build() section too!
 	 */
 	if (full) {
+		unsigned char date[11];
+		size_t dlen;
+
+		encode_date(date, &dlen);
+		if (mib_update_byte_array(&m_host_oid, 2, 0, &pos, date, dlen))	/* hrSystemDate */
+			return -1;
+		if (update_gge(&m_host_oid, 5, 0, &pos, get_user_count())    == -1 ||	/* hrSystemNumUsers */
+		    update_gge(&m_host_oid, 6, 0, &pos, get_process_count()) == -1)	/* hrSystemProcesses */
+			return -1;
+
 		get_meminfo(&mem);
 		if (g_disk_list_length > 0)
 			get_diskinfo(&disk);

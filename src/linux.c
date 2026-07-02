@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <math.h>
+#include <utmp.h>
 
 #include "mini-snmpd.h"
 
@@ -60,6 +61,31 @@ unsigned int get_system_uptime(void)
 		return -1;
 
 	return (unsigned int)(atof(buf) * 100);
+}
+
+unsigned int get_process_count(void)
+{
+	struct sysinfo si;
+
+	if (sysinfo(&si) == -1)
+		return 0;
+
+	return (unsigned int)si.procs;
+}
+
+unsigned int get_user_count(void)
+{
+	unsigned int num = 0;
+	struct utmp *ut;
+
+	setutent();
+	while ((ut = getutent())) {
+		if (ut->ut_type == USER_PROCESS)
+			num++;
+	}
+	endutent();
+
+	return num;
 }
 
 void get_loadinfo(loadinfo_t *loadinfo)

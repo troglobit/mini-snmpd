@@ -133,9 +133,13 @@ Mbit, where the 32-bit ifTable counters wrap too quickly.
 
 ### System, `.1`
 
-| OID  | Object         | Type      |
-|------|----------------|-----------|
-| .1.0 | hrSystemUptime | TimeTicks |
+| OID  | Object               | Type        |
+|------|----------------------|-------------|
+| .1.0 | hrSystemUptime       | TimeTicks   |
+| .2.0 | hrSystemDate         | DateAndTime |
+| .5.0 | hrSystemNumUsers     | Gauge32     |
+| .6.0 | hrSystemProcesses    | Gauge32     |
+| .7.0 | hrSystemMaxProcesses | INTEGER (0, no fixed limit) |
 
 ### Storage, `.2`
 

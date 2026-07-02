@@ -344,6 +344,8 @@ int          ticks_since (const struct timeval *tv_last, struct timeval *tv_now)
 
 unsigned int get_process_uptime (void);
 unsigned int get_system_uptime  (void);
+unsigned int get_process_count  (void);
+unsigned int get_user_count     (void);
 
 void         get_loadinfo       (loadinfo_t *loadinfo);
 void         get_meminfo        (meminfo_t *meminfo);
