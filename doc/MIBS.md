@@ -25,6 +25,16 @@ the interfaces and mount points selected with `-i` and `-d`.
 | .5.0 | sysName     | DisplayString | `gethostname()`                             |
 | .6.0 | sysLocation | DisplayString | `-L`                                        |
 | .7.0 | sysServices | INTEGER       | fixed, layers 1-4 and 7                     |
+| .8.0 | sysORLastChange | TimeTicks | always 0, the table is static               |
+
+`sysORTable`, `.9.1` — advertises the implemented MIB modules: snmpMIB,
+ifMIB, ipMIB, tcpMIB, udpMIB, and hostResourcesMibModule.
+
+| OID | Object     | Type          |
+|-----|------------|---------------|
+| .2  | sysORID    | OID           |
+| .3  | sysORDescr | DisplayString |
+| .4  | sysORUpTime | TimeTicks    |
 
 ## IF-MIB, interfaces group
 

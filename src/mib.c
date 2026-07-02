@@ -44,6 +44,7 @@
  */
 
 static const oid_t m_system_oid         = { { 1, 3, 6, 1, 2, 1, 1               },  7, 8  };
+static const oid_t m_sysor_oid          = { { 1, 3, 6, 1, 2, 1, 1, 9, 1         },  9, 10 };
 static const oid_t m_if_1_oid           = { { 1, 3, 6, 1, 2, 1, 2               },  7, 8  };
 static const oid_t m_if_2_oid           = { { 1, 3, 6, 1, 2, 1, 2, 2, 1         },  9, 10 };
 static const oid_t m_ip_oid             = { { 1, 3, 6, 1, 2, 1, 4               },  7, 8  };
@@ -980,6 +981,40 @@ int mib_build(void)
 	    mib_build_entry(&m_system_oid, 6, 0, BER_TYPE_OCTET_STRING, g_location)    == -1 ||
 	    mib_build_entry(&m_system_oid, 7, 0, BER_TYPE_INTEGER, (const void *)(intptr_t)sysServices) == -1)
 		return -1;
+
+	/*
+	 * sysORTable: advertise the implemented MIB modules (RFC 3418).
+	 * Static, so no mib_update() section.
+	 */
+	{
+		static const struct {
+			const char *oid;
+			const char *descr;
+		} sysor[] = {
+			{ ".1.3.6.1.6.3.1",      "The MIB module for SNMP entities"     },
+			{ ".1.3.6.1.2.1.31",     "The MIB module for network interfaces" },
+			{ ".1.3.6.1.2.1.48",     "The MIB module for IP"                },
+			{ ".1.3.6.1.2.1.49",     "The MIB module for TCP"               },
+			{ ".1.3.6.1.2.1.50",     "The MIB module for UDP"               },
+			{ ".1.3.6.1.2.1.25.7.1", "The MIB module for host resources"    },
+		};
+
+		if (mib_build_entry(&m_system_oid, 8, 0, BER_TYPE_TIME_TICKS, 0) == -1)
+			return -1;	/* sysORLastChange */
+
+		for (i = 0; i < NELEMS(sysor); i++) {
+			if (mib_build_entry(&m_sysor_oid, 2, i + 1, BER_TYPE_OID, sysor[i].oid) == -1)
+				return -1;
+		}
+		for (i = 0; i < NELEMS(sysor); i++) {
+			if (mib_build_entry(&m_sysor_oid, 3, i + 1, BER_TYPE_OCTET_STRING, sysor[i].descr) == -1)
+				return -1;
+		}
+		for (i = 0; i < NELEMS(sysor); i++) {
+			if (mib_build_entry(&m_sysor_oid, 4, i + 1, BER_TYPE_TIME_TICKS, 0) == -1)
+				return -1;
+		}
+	}
 
 	/*
 	 * The interface MIB: network interfaces (IF-MIB.txt)
