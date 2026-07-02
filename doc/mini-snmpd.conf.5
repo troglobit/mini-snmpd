@@ -1,0 +1,137 @@
+.Dd July 2, 2026
+.Dt MINI-SNMPD.CONF 5
+.Os
+.Sh NAME
+.Nm mini-snmpd.conf
+.Nd configuration file for mini-snmpd
+.Sh DESCRIPTION
+.Nm
+is the optional configuration file for
+.Xr mini-snmpd 8 ,
+read at start-up and again on
+.Dv SIGHUP .
+The default path is
+.Pa /etc/mini-snmpd.conf ,
+override it with
+.Fl f .
+The file is only supported when
+.Nm mini-snmpd
+is built with libConfuse; without it all settings are given on the
+command line.
+.Pp
+Settings combine with the command line rather than replacing it: a scalar
+present in the file overrides the matching command-line option, the list
+settings are appended to what
+.Fl d , Fl i ,
+and
+.Fl T
+provided, and a key left out of the file keeps its command-line value.
+.Pp
+The syntax is that of libConfuse: one
+.Ar key No = Ar value
+per line, string values in double quotes, lists as a brace-enclosed,
+comma-separated set.  Anything after a
+.Ql #
+is a comment.
+.Sh SETTINGS
+.Bl -tag -width Ds
+.It Ic community Ar STR
+Community string, default
+.Qq public .
+Same as
+.Fl c .
+.It Ic authentication Ar true Ns | Ns Ar false
+Require the community string to match, thus SNMP version 2c, default
+.Ar false .
+Same as
+.Fl a .
+.It Ic location Ar STR
+.Sy sysLocation ,
+default empty.  Same as
+.Fl L .
+.It Ic contact Ar STR
+.Sy sysContact ,
+default empty.  Same as
+.Fl C .
+.It Ic description Ar STR
+.Sy sysDescr .
+If unset, the
+.Sy PRETTY_NAME
+from
+.Xr os-release 5
+is used.  Same as
+.Fl D .
+.It Ic vendor Ar OID
+.Sy sysObjectID ,
+the vendor OID, default
+.Li .1.3.6.1.4.1 .
+Same as
+.Fl V .
+.It Ic timeout Ar SEC
+Interval between MIB value updates, in seconds, default 1.  Same as
+.Fl t .
+.It Ic disk-table Ar { "DIR", ... }
+Mount points to report in
+.Sy UCD-SNMP-MIB::dskTable ,
+default
+.Ql / .
+Adds to any
+.Fl d .
+.It Ic iface-table Ar { "IFNAME", ... }
+Interfaces to report in the IF-MIB.  A trailing
+.Ql +
+is a prefix wildcard, iptables style, e.g.
+.Ql eth+ ;
+a lone
+.Ql +
+matches all.  With no entry, all interfaces are monitored, loopback
+first.  Adds to any
+.Fl i .
+.It Ic trap-table Ar { "ADDR[:PORT]", ... }
+SNMPv2c trap sinks, default port 162, IPv6 as
+.Ql [addr]:port .
+Adds to any
+.Fl T .
+.El
+.Pp
+When built with ethtool support
+.Pq Fl -enable-ethtool ,
+one or more
+.Ic ethtool
+sections map driver statistics onto IF-MIB counters for the matching
+interfaces:
+.Bd -literal -offset indent
+ethtool "eth*" {
+        rx_bytes      = ifInOctets
+        rx_packets    = ifInUcastPkts
+        tx_bytes      = ifOutOctets
+        tx_packets    = ifOutUcastPkts
+}
+.Ed
+.Pp
+The section title is a shell-style glob matched against the interface
+name; each key names an ethtool driver statistic and each value the
+IF-MIB object it feeds.
+.Sh FILES
+.Bl -tag -width /etc/mini-snmpd.conf -compact
+.It Pa /etc/mini-snmpd.conf
+default configuration file
+.El
+.Sh EXAMPLES
+.Bd -literal -offset indent
+community      = "public"
+authentication = true
+location       = "Exampleville Site 1."
+contact        = "ops@example.com"
+description    = "NAS monitor"
+timeout        = 1
+disk-table     = { "/", "/var" }
+trap-table     = { "192.0.2.1", "[2001:db8::1]:1620" }
+.Ed
+.Sh SEE ALSO
+.Xr mini-snmpd 8
+.Sh AUTHORS
+.Xr mini-snmpd 8
+is maintained by Joachim Wiberg
+.Aq mailto:troglobit@gmail.com
+at GitHub.
