@@ -109,8 +109,8 @@ Up to eight
 sections are supported; an OID already served by a built-in MIB is
 rejected.
 .Pp
-When built with ethtool support
-.Pq Fl -enable-ethtool ,
+Unless built with
+.Fl -disable-ethtool ,
 one or more
 .Ic ethtool
 sections map driver statistics onto IF-MIB counters for the matching

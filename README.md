@@ -171,6 +171,9 @@ $ ./autogen.sh
 $ ./configure && make
 ```
 
+A default `configure` enables `.conf` support and so needs `libConfuse`;
+build with `--without-config` if you do not have it.
+
 GIT sources are a moving target and are not recommended for production
 systems, unless you know what you are doing!
 
