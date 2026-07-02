@@ -390,7 +390,7 @@ int oid_cmp(const oid_t *oid1, const oid_t *oid2)
 	int subid1, subid2;
 	size_t i;
 
-	for (i = 0; i < MAX_NR_OIDS; i++) {
+	for (i = 0; i < MAX_NR_SUBIDS; i++) {
 		subid1 = (oid1->subid_list_length > i) ? (int)oid1->subid_list[i] : -1;
 		subid2 = (oid2->subid_list_length > i) ? (int)oid2->subid_list[i] : -1;
 
