@@ -807,6 +807,23 @@ static int mib_oid_cmp(const void *a, const void *b)
 	return oid_cmp(&((const value_t *)a)->oid, &((const value_t *)b)->oid);
 }
 
+/* Build an entry on a full OID string, for entries oid_build() cannot
+ * express: custom OIDs and multi-subid table indices like the
+ * ipAddressTable's.  Relies on the final sort for its position. */
+static int build_oidstr(const char *oidstr, int type, const void *arg)
+{
+	if (g_mib_length >= MAX_NR_VALUES) {
+		logit(LOG_ERR, 0, "Failed creating '%s': table overflow", oidstr);
+		return -1;
+	}
+
+	if (mib_value(&g_mib[g_mib_length], oidstr, type, arg) == -1)
+		return -1;
+
+	g_mib_length++;
+	return 0;
+}
+
 static int mib_build_entries(const oid_t *prefix, int column, int row_from, int row_to, int type)
 {
 	int row;
@@ -1118,6 +1135,62 @@ int mib_build(void)
 		build_ip_mib(&m_ip_adentryifidx_oid,  BER_TYPE_INTEGER,    netinfo.in_addr, netinfo.ifindex);
 		build_ip_mib(&m_ip_adentrymask_oid,   BER_TYPE_IP_ADDRESS, netinfo.in_addr, netinfo.in_mask);
 		build_ip_mib(&m_ip_adentrybcaddr_oid, BER_TYPE_INTEGER,    netinfo.in_addr, netinfo.in_bcent);
+	}
+
+	/*
+	 * IP-MIB ipAddressTable (RFC 4293): every IPv4/IPv6 address on the
+	 * monitored interfaces, so managers can discover the IPv6 side too.
+	 * The index is addr-type.length.octets, which oid_build() cannot
+	 * express; rows are built as full OID strings and put in order by
+	 * the sort below.  Values are static per build, and the table is
+	 * rebuilt on netlink address events; no mib_update() section.
+	 */
+	{
+		ipaddrinfo_t ipa;
+		size_t j, k, n;
+		char idx[128], oidstr[160];
+
+		get_ipaddrs(&ipa);
+		for (j = 0; j < ipa.count; j++) {
+			int type = ipa.addr[j].family == AF_INET ? 1 : 2;
+			int ll, origin;
+
+			n = snprintf(idx, sizeof(idx), "%d.%zu", type, ipa.addr[j].len);
+			for (k = 0; k < ipa.addr[j].len; k++)
+				n += snprintf(idx + n, sizeof(idx) - n, ".%u", ipa.addr[j].addr[k]);
+
+			/* link-local: fe80::/10 or 169.254/16 */
+			ll = (type == 2 && ipa.addr[j].addr[0] == 0xfe &&
+			      (ipa.addr[j].addr[1] & 0xc0) == 0x80) ||
+			     (type == 1 && ipa.addr[j].addr[0] == 169 && ipa.addr[j].addr[1] == 254);
+			origin = ll ? 5 : 2;	/* linklayer(5) or manual(2) */
+
+#define IPADDR_ENTRY ".1.3.6.1.2.1.4.34.1"
+			snprintf(oidstr, sizeof(oidstr), IPADDR_ENTRY ".3.%s", idx);
+			if (build_oidstr(oidstr, BER_TYPE_INTEGER,	/* ipAddressIfIndex */
+					 (const void *)(intptr_t)ipa.addr[j].ifindex) == -1)
+				return -1;
+
+			snprintf(oidstr, sizeof(oidstr), IPADDR_ENTRY ".4.%s", idx);
+			if (build_oidstr(oidstr, BER_TYPE_INTEGER,	/* ipAddressType: unicast */
+					 (const void *)(intptr_t)1) == -1)
+				return -1;
+
+			snprintf(oidstr, sizeof(oidstr), IPADDR_ENTRY ".5.%s", idx);
+			if (build_oidstr(oidstr, BER_TYPE_OID, ".0.0") == -1)
+				return -1;			/* ipAddressPrefix: none */
+
+			snprintf(oidstr, sizeof(oidstr), IPADDR_ENTRY ".6.%s", idx);
+			if (build_oidstr(oidstr, BER_TYPE_INTEGER,	/* ipAddressOrigin */
+					 (const void *)(intptr_t)origin) == -1)
+				return -1;
+
+			snprintf(oidstr, sizeof(oidstr), IPADDR_ENTRY ".7.%s", idx);
+			if (build_oidstr(oidstr, BER_TYPE_INTEGER,	/* ipAddressStatus: preferred */
+					 (const void *)(intptr_t)1) == -1)
+				return -1;
+#undef IPADDR_ENTRY
+		}
 	}
 
 	/*
@@ -1456,16 +1529,8 @@ int mib_build(void)
 			logit(LOG_ERR, 0, "Custom OID '%s' already served, skipping", g_custom_oid[i]);
 			continue;
 		}
-		if (g_mib_length >= MAX_NR_VALUES) {
-			logit(LOG_ERR, 0, "Failed creating custom OID '%s': table overflow", g_custom_oid[i]);
-			return -1;
-		}
-		if (mib_value(&g_mib[g_mib_length], g_custom_oid[i],
-			      BER_TYPE_OCTET_STRING, g_custom_val[i]) == -1) {
+		if (build_oidstr(g_custom_oid[i], BER_TYPE_OCTET_STRING, g_custom_val[i]) == -1)
 			logit(LOG_ERR, 0, "Failed creating custom OID '%s'", g_custom_oid[i]);
-			continue;
-		}
-		g_mib_length++;
 	}
 
 	/* The getnext and getbulk handlers require the table in ascending

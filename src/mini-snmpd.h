@@ -37,10 +37,13 @@
 
 #define MAX_NR_CLIENTS                                  16
 #define MAX_NR_OIDS                                     70
-#define MAX_NR_SUBIDS                                   20
+/* Deep enough for the RFC 4293 ipAddressTable IPv6 index: the 10-subid
+ * table prefix plus addr-type, length, and 16 address octets = 28 */
+#define MAX_NR_SUBIDS                                   32
 #define MAX_NR_DISKS                                    4
 #define MAX_NR_CPUS                                     64
 #define MAX_NR_SENSORS                                  16
+#define MAX_NR_ADDRS                                    32
 #define MAX_NR_TRAPS                                    4
 #define MAX_NR_CUSTOM                                   8
 #define MAX_NR_VALUES                                   2048
@@ -201,6 +204,17 @@ typedef struct sensinfo_s {
 	char         name[MAX_NR_SENSORS][64];
 	unsigned int temp[MAX_NR_SENSORS];	/* milli-degrees Celsius */
 } sensinfo_t;
+
+/* IPv4/IPv6 addresses on the monitored interfaces, for ipAddressTable */
+typedef struct ipaddrinfo_s {
+	size_t count;
+	struct {
+		int           family;		/* AF_INET or AF_INET6 */
+		unsigned char addr[16];
+		size_t        len;		/* 4 or 16 */
+		unsigned int  ifindex;
+	} addr[MAX_NR_ADDRS];
+} ipaddrinfo_t;
 
 typedef struct diskinfo_s {
 	unsigned int total[MAX_NR_DISKS];
@@ -376,6 +390,7 @@ void         get_meminfo        (meminfo_t *meminfo);
 void         get_cpuinfo        (cpuinfo_t *cpuinfo);
 void         get_cpuload        (cpuload_t *cpuload);
 void         get_sensinfo       (sensinfo_t *sensinfo);
+void         get_ipaddrs        (ipaddrinfo_t *ipaddrs);
 void         get_ipinfo         (ipinfo_t *ipinfo);
 void         get_tcpinfo        (tcpinfo_t *tcpinfo);
 void         get_udpinfo        (udpinfo_t *udpinfo);

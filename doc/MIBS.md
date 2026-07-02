@@ -103,6 +103,18 @@ Mbit, where the 32-bit ifTable counters wrap too quickly.
 | 20.1.3 | ipAdEntNetMask   | IpAddress |
 | 20.1.4 | ipAdEntBcastAddr | INTEGER   |
 
+`ipAddressTable`, `.34.1` — the unified RFC 4293 address table, one row
+per IPv4 and IPv6 address on the monitored interfaces.  Indexed by
+address type, length, and octets.
+
+| OID | Object           | Type                              |
+|-----|------------------|-----------------------------------|
+| .3  | ipAddressIfIndex | INTEGER                           |
+| .4  | ipAddressType    | INTEGER (unicast)                 |
+| .5  | ipAddressPrefix  | OID (`.0.0`)                      |
+| .6  | ipAddressOrigin  | INTEGER (manual, or linklayer for link-local) |
+| .7  | ipAddressStatus  | INTEGER (preferred)               |
+
 ## TCP-MIB
 
 `1.3.6.1.2.1.6` — the scalar counters, not the connection table.

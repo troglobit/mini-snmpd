@@ -18,6 +18,8 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
@@ -403,6 +405,57 @@ int oid_cmp(const oid_t *oid1, const oid_t *oid2)
 	}
 
 	return 0;
+}
+
+/*
+ * All IPv4/IPv6 addresses on the monitored interfaces, with the same
+ * interface index the IF-MIB reports, for the RFC 4293 ipAddressTable.
+ */
+void get_ipaddrs(ipaddrinfo_t *ipaddrs)
+{
+	struct ifaddrs *ifap, *ifa;
+	size_t i;
+
+	memset(ipaddrs, 0, sizeof(*ipaddrs));
+	if (getifaddrs(&ifap))
+		return;
+
+	for (ifa = ifap; ifa && ipaddrs->count < MAX_NR_ADDRS; ifa = ifa->ifa_next) {
+		size_t n = ipaddrs->count;
+
+		if (!ifa->ifa_addr)
+			continue;
+
+		for (i = 0; i < g_interface_list_length; i++) {
+			if (!strcmp(ifa->ifa_name, g_interface_list[i]))
+				break;
+		}
+		if (i == g_interface_list_length)
+			continue;	/* not a monitored interface */
+
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			struct sockaddr_in *sin = (struct sockaddr_in *)ifa->ifa_addr;
+
+			memcpy(ipaddrs->addr[n].addr, &sin->sin_addr, 4);
+			ipaddrs->addr[n].len = 4;
+		}
+#ifdef CONFIG_ENABLE_IPV6
+		else if (ifa->ifa_addr->sa_family == AF_INET6) {
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+
+			memcpy(ipaddrs->addr[n].addr, &sin6->sin6_addr, 16);
+			ipaddrs->addr[n].len = 16;
+		}
+#endif
+		else
+			continue;
+
+		ipaddrs->addr[n].family  = ifa->ifa_addr->sa_family;
+		ipaddrs->addr[n].ifindex = if_nametoindex(ifa->ifa_name);
+		ipaddrs->count++;
+	}
+
+	freeifaddrs(ifap);
 }
 
 int split(const char *str, char *delim, char **list, int max_list_length)

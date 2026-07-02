@@ -1,4 +1,4 @@
-EXTRA_DIST         = lib.sh sanity.sh basic.sh iface.sh conf.sh osrel.sh ipv6.sh srcaddr.sh wildcard.sh ifall.sh netlink.sh hrstorage.sh hrsystem.sh cpuload.sh trap.sh reload.sh droppriv.sh bulk.sh readonly.sh custom.sh stats.sh sysor.sh sensors.sh
+EXTRA_DIST         = lib.sh sanity.sh basic.sh iface.sh conf.sh osrel.sh ipv6.sh srcaddr.sh wildcard.sh ifall.sh netlink.sh hrstorage.sh hrsystem.sh cpuload.sh trap.sh reload.sh droppriv.sh bulk.sh readonly.sh custom.sh stats.sh sysor.sh sensors.sh ipaddr.sh
 CLEANFILES         = *~ *.trs *.log
 
 TEST_EXTENSIONS    = .sh
@@ -26,3 +26,4 @@ TESTS             += custom.sh
 TESTS             += stats.sh
 TESTS             += sysor.sh
 TESTS             += sensors.sh
+TESTS             += ipaddr.sh
