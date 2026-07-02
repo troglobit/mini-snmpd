@@ -56,7 +56,7 @@ jobs:
       - name: Configure
         run: |
           ./autogen.sh
-          ./configure --prefix= --with-config --enable-ethtool
+          ./configure --prefix=
       - name: Build
         run: |
           export PATH=`pwd`/coverity/bin:$PATH

@@ -28,13 +28,13 @@ AC_CHECK_HEADERS(sys/socket.h sys/time.h time.h sys/types.h net/if.h netinet/in.
 AC_CHECK_FUNCS(strstr strtod strtoul strtok getopt)
 
 ### Check for configured features #############################################################
+AC_ARG_WITH([config],
+        AS_HELP_STRING([--without-config], [Disable /etc/mini-snmpd.conf support (libConfuse), enabled by default]),
+	[with_config=$withval], [with_config=yes])
+
 AC_ARG_WITH(vendor,
         AS_HELP_STRING([--with-vendor=OID], [Set a different vendor OID, default: .1.3.6.1.4.1]),
 	[vendor="$withval"], [vendor=".1.3.6.1.4.1"])
-
-AC_ARG_WITH([config],
-        AS_HELP_STRING([--with-config], [Enable /etc/mini-snmpd.conf support using libConfuse]),
-	[with_config=$withval], [with_config=no])
 
 AC_ARG_WITH(systemd,
      [AS_HELP_STRING([--with-systemd=DIR], [Directory for systemd service files])],,
@@ -57,12 +57,12 @@ AC_ARG_ENABLE(ipv6,
    	[enable_ipv6=$enableval], [enable_ipv6=yes])
 
 AC_ARG_ENABLE(ethtool,
-   AS_HELP_STRING([--enable-ethtool], [Enable ethtool interface stats, disabled by default]),
-   	[enable_ethtool=$enableval], [enable_ethtool=no])
+   AS_HELP_STRING([--disable-ethtool], [Disable ethtool interface stats, enabled by default with --with-config]),
+   	[enable_ethtool=$enableval], [enable_ethtool=yes])
 
 AC_ARG_ENABLE(test,
-   AS_HELP_STRING([--enable-test], [Enable tests, requires unshare and net-snmp tools]),
-   	[enable_test=$enableval], [enable_test=no])
+   AS_HELP_STRING([--disable-test], [Disable tests, enabled by default, `make check` requires unshare and net-snmp tools]),
+   	[enable_test=$enableval], [enable_test=yes])
 
 ### Enable features ###########################################################################
 AS_IF([test "x$with_vendor" != "xno"],[
@@ -87,6 +87,12 @@ AS_IF([test "x$enable_demo" = "xyes"],[
 
 AS_IF([test "x$enable_ipv6" != "xno"],[
    AC_DEFINE(CONFIG_ENABLE_IPV6, 1, [Define to enable IPv6 support.])])
+
+# The ethtool implementation is built with the .conf parser and uses its
+# section syntax, so it degrades gracefully without libConfuse
+AS_IF([test "x$enable_ethtool" != "xno" -a "x$with_config" = "xno"],[
+   AC_MSG_NOTICE([ethtool statistics require --with-config (libConfuse), disabling])
+   enable_ethtool=no])
 
 AS_IF([test "x$enable_ethtool" != "xno"],[
    AC_DEFINE(CONFIG_ENABLE_ETHTOOL, 1, [Define to enable ethtool stats.])])

@@ -25,5 +25,5 @@ release: distcheck
 	done
 
 # Workaround for systemd unit file duing distcheck
-DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd) --enable-test --with-config --enable-ethtool
+DISTCHECK_CONFIGURE_FLAGS = --with-systemd=$$dc_install_base/$(systemd)
 DISTCLEANFILES = *~ *.bak *.map .*.d *.d DEADJOE semantic.cache *.gdb *.elf core core.*

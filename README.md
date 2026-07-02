@@ -138,10 +138,10 @@ $ make -j5
 $ sudo make install-strip
 ```
 
-To use the `/etc/mini-snmpd.conf` support, both the `pkgconfig` and
-`libConfuse` packages must be installed.  Installing from pre-built
-packages differ between systems, check naming and suffix (`-dev`) to
-match your system.
+The `/etc/mini-snmpd.conf` support is enabled by default and needs the
+`pkgconfig` and `libConfuse` packages; use `--without-config` to build
+without it.  Installing from pre-built packages differ between systems,
+check naming and suffix (`-dev`) to match your system.
 
 > [!NOTE]
 > mini-snmpd-X.Y.tar.gz is not an actual release.  See the [releases

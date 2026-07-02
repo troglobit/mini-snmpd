@@ -33,7 +33,7 @@ jobs:
       - name: Configure
         run: |
           ./autogen.sh
-          ./configure --prefix= --with-config --enable-ethtool --enable-test
+          ./configure --prefix=
       - name: Build
         run: |
           make V=1
