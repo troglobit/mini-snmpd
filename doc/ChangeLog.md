@@ -3,8 +3,8 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
-[v2.0][UNRELEASED]
-------------------
+[v2.0][] - 2026-07-02
+---------------------
 
 > [!IMPORTANT]
 > A few defaults changed this cycle, hence the major version bump:
@@ -35,8 +35,18 @@ All notable changes to the project are documented in this file.
 - Reload the configuration on `SIGHUP`: re-read the `.conf` over the command
   line and rebuild the MIB, leaving the listening sockets untouched so the
   daemon can reload after dropping privileges
-- Extend HOST-RESOURCES-MIB with `hrMemorySize`, `hrStorageTable`, and
-  `hrProcessorTable` (per-CPU load)
+- Extend HOST-RESOURCES-MIB with `hrSystemDate`, `hrSystemNumUsers`,
+  `hrSystemProcesses`, `hrMemorySize`, `hrStorageTable`, `hrProcessorTable`
+  (per-CPU load), and matching `hrDeviceTable` processor rows
+- Add IP-MIB `ipAddressTable` (RFC 4293), so managers can discover the IPv6
+  addresses of the dual-stack daemon
+- Add the SNMPv2-MIB snmp group, the agent's own counters, and `sysORTable`,
+  advertising the implemented MIB modules
+- Add LM-SENSORS-MIB temperature sensors from `/sys/class/hwmon` (Linux)
+- Serve custom static responses on any OID from `custom` sections in the
+  `.conf` file, e.g. to emulate an HP JetDirect print server (issue #29)
+- Add mini-snmpd.conf(5) man page, documenting the `.conf` settings
+- Reorganize the source tree: code in `src/`, documentation in `doc/`
 - `sysDescr` defaults to `PRETTY_NAME` from os-release(5) when no description
   is set with `-D` or in the `.conf` file
 - Increase `MAX_NR_OIDS` from 20 to 70, allowing more variable bindings per
@@ -49,6 +59,8 @@ All notable changes to the project are documented in this file.
 
 - Fix #32: build failure with `--with-config` because `ethtool-conf.h` was
   missing from the release tarball
+- Fix possible stack overflow when copying an over-long `-i` interface name
+  into the ethtool ioctls, found by Coverity Scan
 - Drop privileges correctly with `-u`: take the primary group from the
   user's passwd entry instead of a group named after the user, which need
   not exist (`-u nobody` would refuse to start), and drop root's
@@ -267,7 +279,8 @@ This is the first feature-complete version.  SNMP get, getnext, and
 getbulk are supported on UDP and TCP connections.
 
 
-[UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v1.7...HEAD
+[UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v2.0...HEAD
+[v2.0]:        https://github.com/troglobit/mini-snmpd/compare/v1.7...v2.0
 [v1.7]:        https://github.com/troglobit/mini-snmpd/compare/v1.6...v1.7
 [v1.6]:        https://github.com/troglobit/mini-snmpd/compare/v1.5...v1.6
 [v1.5]:        https://github.com/troglobit/mini-snmpd/compare/v1.4...v1.5
