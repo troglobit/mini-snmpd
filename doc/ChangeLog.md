@@ -3,11 +3,11 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
-[v2.0][] - 2026-07-02
+[v2.0][] - 2026-07-04
 ---------------------
 
 > [!IMPORTANT]
-> A few defaults changed this cycle, hence the major version bump:
+> This release has quite a few changes, hence the major bump:
 >
 > - With no `-i`, all interfaces are now monitored, loopback first on
 >   `ifIndex` 1.  Previously none were monitored unless explicitly listed.
