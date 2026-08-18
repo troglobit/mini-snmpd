@@ -1060,11 +1060,29 @@ int snmp_packet_complete(const client_t *client)
 	if (decode_len(client->packet, client->size, &pos, &type, &len) == -1)
 		return -1;
 
-	if (type != BER_TYPE_SEQUENCE || len < 1 || len > (client->size - pos)) {
+	if (type != BER_TYPE_SEQUENCE || len < 1) {
 		logit(LOG_DEBUG, 0, "Unexpected SNMP header type %02X length %zu", type, len);
 		errno = EINVAL;
 		return -1;
 	}
+
+	/*
+	 * A message larger than our buffer can never complete, so drop it now
+	 * rather than stalling until the client's read window is exhausted.
+	 */
+	if (len + pos > sizeof(client->packet)) {
+		logit(LOG_DEBUG, 0, "SNMP message too large, %zu bytes", len + pos);
+		errno = EMSGSIZE;
+		return -1;
+	}
+
+	/*
+	 * Over TCP the message can be split across segments, so a declared
+	 * length beyond what has arrived is not an error -- it just means we
+	 * have to wait for the rest.
+	 */
+	if (len > (client->size - pos))
+		return 0;
 
 	/* Return whether we received the whole packet */
 	return ((client->size - pos) == len) ? 1 : 0;
