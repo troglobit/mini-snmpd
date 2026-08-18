@@ -139,17 +139,17 @@ static void link_prune(unsigned int gen)
 /* Send a linkUp/linkDown trap for interface @i (RFC 3418 varbinds) */
 static void link_trap(size_t i, unsigned int admin, unsigned int oper, const char *trap)
 {
-	struct { const char *col; unsigned int val; } vbs[] = {
-		{ ".1.3.6.1.2.1.2.2.1.1.%zu", (unsigned int)(i + 1) },	/* ifIndex */
-		{ ".1.3.6.1.2.1.2.2.1.7.%zu", admin },			/* ifAdminStatus */
-		{ ".1.3.6.1.2.1.2.2.1.8.%zu", oper },			/* ifOperStatus */
+	struct { int col; unsigned int val; } vbs[] = {
+		{ 1, (unsigned int)(i + 1) },	/* ifIndex */
+		{ 7, admin },			/* ifAdminStatus */
+		{ 8, oper },			/* ifOperStatus */
 	};
 	value_t vb[NELEMS(vbs)];
 	size_t j, n = 0;
 	char buf[48];
 
 	for (j = 0; j < NELEMS(vbs); j++) {
-		snprintf(buf, sizeof(buf), vbs[j].col, i + 1);
+		snprintf(buf, sizeof(buf), ".1.3.6.1.2.1.2.2.1.%d.%zu", vbs[j].col, i + 1);
 		if (mib_value(&vb[j], buf, BER_TYPE_INTEGER, (const void *)(intptr_t)vbs[j].val))
 			goto done;
 		n++;
