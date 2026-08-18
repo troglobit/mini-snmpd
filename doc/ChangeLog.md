@@ -10,6 +10,7 @@ All notable changes to the project are documented in this file.
 
 - Zero-fill memory from the internal `allocate()` helper
 - Build the interface trap OIDs without a run-time format string
+- Give `ethtool_init()` a proper prototype
 
 [v2.0][] - 2026-07-04
 ---------------------

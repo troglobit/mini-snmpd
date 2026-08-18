@@ -60,7 +60,7 @@ static struct ethtool_s {
 /* ethtool socket */
 static int fd = -1;
 
-static int ethtool_init()
+static int ethtool_init(void)
 {
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0)
