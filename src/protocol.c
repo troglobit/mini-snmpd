@@ -188,6 +188,35 @@ static int decode_str(const unsigned char *packet, size_t size, size_t *pos, siz
 	return 0;
 }
 
+static size_t get_hdrlen(size_t len);
+
+/*
+ * Length of the minimal BER encoding of @oid, type/length header included.
+ * Must match encode_snmp_oid() exactly: encode_snmp_varbind() reserves this
+ * many octets for the OID and encode_snmp_oid() then writes them.  Derive it
+ * from the decoded sub-ids, not the received framing, so the two still agree
+ * when a peer sends a non-minimal (redundantly padded) encoding.
+ */
+static size_t get_oidlen(const oid_t *oid)
+{
+	size_t i, len = 1;
+
+	for (i = 2; i < oid->subid_list_length; i++) {
+		if (oid->subid_list[i] >= (1 << 28))
+			len += 5;
+		else if (oid->subid_list[i] >= (1 << 21))
+			len += 4;
+		else if (oid->subid_list[i] >= (1 << 14))
+			len += 3;
+		else if (oid->subid_list[i] >= (1 << 7))
+			len += 2;
+		else
+			len += 1;
+	}
+
+	return len + get_hdrlen(len);
+}
+
 /* Fetch the value as C string (user must have made sure the length is ok) */
 static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, size_t len, oid_t *value)
 {
@@ -196,19 +225,6 @@ static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, siz
 		errno = EINVAL;
 		return -1;
 	}
-
-	value->encoded_length = len;
-	if (len > 0xFFFF) {
-		logit(LOG_ERR, 0, "could not decode: internal error");
-		return -1;
-	}
-
-	if (len > 0xFF)
-		value->encoded_length += 4;
-	else if (len > 0x7F)
-		value->encoded_length += 3;
-	else
-		value->encoded_length += 2;
 
 	value->subid_list_length = 0;
 	if (!len) {
@@ -253,6 +269,8 @@ static int decode_oid(const unsigned char *packet, size_t size, size_t *pos, siz
 		}
 		value->subid_list_length++;
 	}
+
+	value->encoded_length = (short)get_oidlen(value);
 
 	return 0;
 }
