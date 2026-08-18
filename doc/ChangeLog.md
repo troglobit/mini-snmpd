@@ -3,6 +3,13 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
+[v2.1][] - unreleased
+---------------------
+
+### Fixes
+
+- Zero-fill memory from the internal `allocate()` helper
+
 [v2.0][] - 2026-07-04
 ---------------------
 
@@ -280,6 +287,7 @@ getbulk are supported on UDP and TCP connections.
 
 
 [UNRELEASED]:  https://github.com/troglobit/mini-snmpd/compare/v2.0...HEAD
+[v2.1]:        https://github.com/troglobit/mini-snmpd/compare/v2.0...v2.1
 [v2.0]:        https://github.com/troglobit/mini-snmpd/compare/v1.7...v2.0
 [v1.7]:        https://github.com/troglobit/mini-snmpd/compare/v1.6...v1.7
 [v1.6]:        https://github.com/troglobit/mini-snmpd/compare/v1.5...v1.6
