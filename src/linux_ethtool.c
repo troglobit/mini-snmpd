@@ -163,7 +163,7 @@ static void ethtool_xlate_intf(cfg_t *cfg, int intf, const char *iname)
 
 void ethtool_xlate_cfg(cfg_t *cfg)
 {
-	cfg_t *ethtool;
+	cfg_t *sec;
 	const char *iname;
 	unsigned int i, j;
 	int intf;
@@ -172,14 +172,14 @@ void ethtool_xlate_cfg(cfg_t *cfg)
 		return;
 
 	for (i = 0; i < cfg_size(cfg, "ethtool"); i++) {
-		ethtool = cfg_getnsec(cfg, "ethtool", i);
-		iname = cfg_title(ethtool);
+		sec = cfg_getnsec(cfg, "ethtool", i);
+		iname = cfg_title(sec);
 		logit(LOG_INFO, 0, "Parsing ethtool section '%s'", iname);
 
 		/* exact match? */
 		intf = find_ifname((char *)iname);
 		if (intf >= 0) {
-			ethtool_xlate_intf(ethtool, intf, iname);
+			ethtool_xlate_intf(sec, intf, iname);
 			continue;
 		}
 
@@ -187,7 +187,7 @@ void ethtool_xlate_cfg(cfg_t *cfg)
 		if (strcspn(iname, "*?[")) {
 			for (j = 0; j < g_interface_list_length; j++) {
 				if (!fnmatch(iname, g_interface_list[j], 0))
-					ethtool_xlate_intf(ethtool, j, g_interface_list[j]);
+					ethtool_xlate_intf(sec, j, g_interface_list[j]);
 			}
 		}
 	}

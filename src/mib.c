@@ -1304,7 +1304,6 @@ int mib_build(void)
 	 */
 	{
 		cpuload_t cpu;
-		char name[16];
 
 		get_cpuload(&cpu);
 		g_ncpu = cpu.ncpu;
