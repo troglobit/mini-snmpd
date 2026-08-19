@@ -13,6 +13,7 @@ All notable changes to the project are documented in this file.
 - Fix encoded-length accounting for decoded OIDs, by Noam Rathaus
 - Zero-fill memory from the internal `allocate()` helper
 - Build the interface trap OIDs without a run-time format string
+- Avoid needless variable shadowing under `-Wshadow`
 
 [v2.0][] - 2026-07-04
 ---------------------
