@@ -20,8 +20,6 @@
 #include "ethtool-conf.h"
 #include "mini-snmpd.h"
 
-static cfg_t *cfg = NULL;
-
 static void conf_errfunc(cfg_t *cfg, const char *format, va_list args)
 {
 	char fmt[80];
@@ -175,6 +173,7 @@ int read_config(char *file)
 	unsigned int i;
 	char *str;
 	int rc = 0;
+	cfg_t *cfg;
 
 	/* Effective config always starts from the command-line baseline; the
 	 * file is then overlaid.  This makes the function idempotent, so a

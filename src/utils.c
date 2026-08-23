@@ -36,7 +36,7 @@
 
 void *allocate(size_t len)
 {
-	char *buf = malloc(len);
+	char *buf = calloc(1, len);
 
 	if (!buf) {
 		logit(LOG_DEBUG, errno, "Failed allocating memory");
