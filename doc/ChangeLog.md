@@ -3,7 +3,7 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
-[v2.1][unreleased]
+[v2.1][] - 2026-08-29
 ---------------------
 
 ### Fixes
